@@ -4,93 +4,121 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MISAGI S.A.C. — Portal de Gestión</title>
+  <link rel="icon" type="image/png" href="assets/misagi-icon.png">
+  <!-- Tema REAL compartido (define marca, botones, tablas, etc.) -->
   <link rel="stylesheet" href="assets/theme.css">
-  <style>
-    .login-wrap { min-height: 100vh; display: grid; grid-template-columns: 1.05fr .95fr; }
-    .login-hero { background: linear-gradient(165deg, rgba(18,80,45,.80) 0%, rgba(10,46,27,.92) 100%), #12502d url('assets/portada.png') center/cover no-repeat;
-      color: #fff; padding: 54px 50px; display: flex; flex-direction: column; justify-content: space-between; }
-    .lh-lockup { display: flex; align-items: center; gap: 13px; }
-    .lh-mark { width: 46px; height: 46px; border-radius: 13px; background: rgba(255,255,255,.14);
-      display: grid; place-items: center; font-family: 'Space Grotesk'; font-weight: 800; font-size: 22px; }
-    .lh-name { font-family: 'Space Grotesk'; font-weight: 700; font-size: 20px; line-height: 1; }
-    .lh-name small { display: block; font-size: 11px; font-weight: 500; opacity: .8; margin-top: 3px; letter-spacing: 1px; }
-    .lh-title { font-family: 'Space Grotesk'; font-size: 30px; line-height: 1.15; margin-bottom: 12px; }
-    .lh-tag { opacity: .9; font-size: 15px; max-width: 380px; margin-bottom: 26px; }
-    .lh-list { list-style: none; display: grid; gap: 14px; }
-    .lh-list li { position: relative; padding-left: 24px; font-size: 14.5px; opacity: .95; }
-    .lh-list li::before { content: ''; position: absolute; left: 0; top: 5px; width: 9px; height: 9px;
-      border-radius: 3px; background: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.2); }
-    .lh-foot { font-size: 12px; opacity: .7; }
-    .login-pane { display: grid; place-items: center; padding: 40px 30px; background: var(--bg-primary); }
-    .login-card { width: 100%; max-width: 390px; }
-    .login-card .brand-row { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; }
-    .login-card .mark { width: 44px; height: 44px; border-radius: 12px; background: var(--verde);
-      display: grid; place-items: center; font-weight: 800; color: #fff; font-family: 'Space Grotesk'; font-size: 20px; }
-    .login-card h1 { font-size: 21px; color: var(--azul-d); }
-    .login-card .sub { color: var(--text-muted); font-size: 12.5px; margin-top: 3px; }
-    .login-card label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted);
-      text-transform: uppercase; letter-spacing: .3px; margin: 0 0 6px; }
-    .login-card input { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 12px 13px;
-      font-size: 14px; font-family: inherit; margin-bottom: 16px; background: #fff; }
-    .login-card input:focus { outline: none; border-color: var(--verde); box-shadow: 0 0 0 3px var(--verde-l); }
-    .login-card .go { width: 100%; }
-    .login-foot { font-size: 11px; color: var(--text-muted); margin-top: 20px; text-align: center; line-height: 1.5; }
-    @media (max-width: 820px) { .login-wrap { grid-template-columns: 1fr; } .login-hero { display: none; } }
 
-    .portal-body { display: flex; align-items: flex-start; }
-    .portal-side { width: 244px; flex-shrink: 0; padding: 24px 18px; border-right: 1px solid var(--border);
-      min-height: calc(100vh - 57px); background: var(--bg-secondary); }
-    .portal-main { flex: 1; padding: 26px; min-width: 0; }
-    .side-title { font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); font-weight: 700; margin: 4px 0 12px; }
-    .gps-link { display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-bottom: 10px;
-      border: 1px solid var(--border); border-radius: var(--radius-xs); color: var(--azul); font-weight: 600;
-      font-size: .9rem; transition: var(--transition); background: var(--bg-card); }
-    .gps-link:hover { border-color: var(--verde); color: var(--verde-d); background: var(--verde-l); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
-    .gps-link::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--verde); flex-shrink: 0; }
-    .side-note { font-size: .72rem; color: var(--text-muted); margin-top: 6px; line-height: 1.4; }
-    .hello { font-family: 'Space Grotesk'; font-size: 24px; margin-bottom: 4px; }
-    .hello-sub { color: var(--text-muted); margin-bottom: 8px; }
-    .grupo { margin: 26px 0; }
-    .grupo h2 { font-size: 1.02rem; color: var(--azul-d); margin-bottom: 14px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(225px, 1fr)); gap: 16px; }
-    .app-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 18px; box-shadow: var(--shadow-sm); transition: var(--transition); display: block; }
-    a.app-card { border-left: 3px solid var(--verde); }
-    a.app-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
-    .app-card.disabled { opacity: .6; }
-    .app-top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-    .app-icon { font-size: 1.2rem; line-height: 1; }
-    .app-name { font-weight: 700; color: var(--text-primary); }
-    .app-desc { font-size: .82rem; color: var(--text-secondary); margin-bottom: 14px; }
-    .app-tag { font-size: .8rem; font-weight: 700; color: var(--verde-d); }
-    .pill-soon { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; background: #eef2f0; color: var(--text-secondary); }
-    @media (max-width: 720px) { .portal-body { flex-direction: column; }
-      .portal-side { width: 100%; min-height: auto; border-right: none; border-bottom: 1px solid var(--border); } }
+  <!-- Capa de mejoras del front (login + launcher). Va DESPUÉS del tema. -->
+  <style>
+    /* ===== HEADER (logo real + avatar) ===== */
+    .msg-header .brand-mark{width:34px;height:34px;border-radius:9px;background:#fff;display:grid;place-items:center;padding:5px;box-shadow:0 2px 8px rgba(0,0,0,.22)}
+    .msg-header .brand-mark img{width:100%;height:100%;object-fit:contain;display:block}
+    .msg-header .brand{letter-spacing:1px;font-size:17px}
+    .msg-user-wrap{display:flex;align-items:center;gap:11px}
+    .msg-user .avatar{width:36px;height:36px;border-radius:50%;background:var(--verde);color:#fff;display:grid;place-items:center;font-family:'Space Grotesk';font-weight:700;font-size:14px;flex-shrink:0}
+
+    /* ===== LOGIN ===== */
+    .login-wrap{min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr}
+    .login-hero{position:relative;color:#fff;padding:54px 50px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;background:#0a2e50 url('assets/portada.png') center/cover no-repeat}
+    .hero-carousel{position:absolute;inset:0;z-index:0}
+    .hc-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.6s ease;transform:scale(1.05);animation:hcZoom 9s ease-out forwards;animation-play-state:paused}
+    .hc-slide.on{opacity:1;animation-play-state:running}
+    @keyframes hcZoom{from{transform:scale(1.12)}to{transform:scale(1)}}
+    .login-hero::after{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(7,30,46,.74) 0%,rgba(10,40,30,.40) 55%,rgba(10,46,27,.12) 100%),linear-gradient(0deg,rgba(7,30,46,.55) 0%,rgba(7,30,46,0) 45%);pointer-events:none}
+    .login-hero>*{position:relative;z-index:2}
+    .hc-dots{position:absolute;right:50px;bottom:24px;z-index:3;display:flex;gap:7px}
+    .hc-dots button{width:8px;height:8px;border-radius:50%;border:none;background:rgba(255,255,255,.5);cursor:pointer;padding:0;transition:width .3s,background .3s}
+    .hc-dots button.on{background:#fff;width:22px;border-radius:4px}
+    .lh-lockup{display:flex;align-items:center;gap:13px}
+    .lh-mark{width:48px;height:48px;border-radius:50%;background:#fff;display:grid;place-items:center;padding:8px;box-shadow:0 8px 22px rgba(0,0,0,.4)}
+    .lh-mark img{width:100%;height:100%;object-fit:contain;display:block}
+    .lh-name{font-family:'Space Grotesk';font-weight:700;font-size:20px;line-height:1;letter-spacing:1px}
+    .lh-name small{display:block;font-size:11px;font-weight:500;opacity:.85;margin-top:4px;letter-spacing:3px}
+    .lh-title{font-family:'Space Grotesk';font-size:34px;line-height:1.12;margin:0 0 14px;max-width:14ch}
+    .lh-tag{opacity:.93;font-size:15px;max-width:38ch;margin:0 0 28px;line-height:1.55}
+    .lh-list{list-style:none;display:grid;gap:14px;padding:0;margin:0}
+    .lh-list li{position:relative;padding-left:27px;font-size:14.5px;opacity:.96}
+    .lh-list li::before{content:'';position:absolute;left:0;top:6px;width:9px;height:9px;border-radius:3px;background:var(--verde);box-shadow:0 0 0 4px rgba(255,255,255,.25)}
+    .lh-foot{font-size:11px;opacity:.75;letter-spacing:1px;text-transform:uppercase;font-weight:600}
+
+    .login-pane{display:grid;place-items:center;padding:40px 30px;background:var(--bg-primary)}
+    .login-card{width:100%;max-width:392px}
+    .login-card .brand-logo{height:46px;width:auto;display:block;margin-bottom:18px}
+    .login-card h1{font-size:21px;color:var(--azul-d);margin:0 0 2px}
+    .login-card .sub{color:var(--text-muted);font-size:12.5px;margin:0 0 22px}
+    .login-card .field{position:relative}
+    .login-card .field .toggle{position:absolute;right:8px;bottom:7px;background:none;border:none;color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;padding:6px}
+    .login-card .field .toggle:hover{color:var(--azul)}
+    .login-card .go{width:100%;margin-top:6px}
+    .login-foot{font-size:11px;color:var(--text-muted);margin-top:20px;text-align:center;line-height:1.5}
+    @media(max-width:820px){.login-wrap{grid-template-columns:1fr}.login-hero{display:none}}
+
+    /* ===== PORTAL / LAUNCHER ===== */
+    .portal-body{display:flex;align-items:flex-start}
+    .portal-side{width:248px;flex-shrink:0;padding:24px 18px;border-right:1px solid var(--border);min-height:calc(100vh - 57px);background:var(--bg-secondary)}
+    .portal-main{flex:1;padding:30px 34px;min-width:0}
+    .side-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-weight:700;margin:4px 0 12px}
+    .gps-link{display:flex;align-items:center;gap:10px;padding:12px 14px;margin-bottom:10px;border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--azul);font-weight:600;font-size:.9rem;transition:var(--transition);background:var(--bg-card)}
+    .gps-link:hover{border-color:var(--verde);color:var(--verde-d);background:var(--verde-l);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+    .gps-link::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--verde);flex-shrink:0;box-shadow:0 0 0 3px var(--verde-l)}
+    .side-note{font-size:.72rem;color:var(--text-muted);margin-top:6px;line-height:1.45}
+
+    .hello{font-family:'Space Grotesk';font-size:26px;margin:0 0 4px}
+    .hello-sub{color:var(--text-muted);margin-bottom:8px}
+    .grupo{margin:30px 0}
+    .grupo h2{font-family:'Space Grotesk';font-size:.95rem;color:var(--azul-d);margin:0 0 14px;display:flex;align-items:center;gap:9px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+    .app-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-sm);transition:var(--transition);display:flex;flex-direction:column;gap:11px;min-height:152px;color:inherit}
+    a.app-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--border-hover)}
+    .app-card.disabled{opacity:.6}
+    .app-top{display:flex;align-items:center;gap:12px}
+    .app-icon{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:20px;line-height:1;background:var(--verde-l);flex-shrink:0}
+    .grupo:nth-of-type(3n+2) .app-icon{background:var(--azul-l)}
+    .grupo:nth-of-type(3n) .app-icon{background:var(--amber-l)}
+    .app-name{font-weight:700;font-size:15px;color:var(--text-primary)}
+    .app-desc{font-size:.83rem;color:var(--text-secondary);flex:1}
+    .app-tag{font-weight:700;font-size:.85rem;color:var(--verde-d)}
+    .pill-soon{align-self:flex-start;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;background:#eef2f0;color:var(--text-secondary)}
+    @media(max-width:720px){.portal-body{flex-direction:column}.portal-side{width:100%;min-height:auto;border-right:none;border-bottom:1px solid var(--border)}}
   </style>
 </head>
 <body>
   <div id="login" class="login-wrap">
     <aside class="login-hero">
-      <div class="lh-lockup"><span class="lh-mark">M</span><div class="lh-name">MISAGI<small>S.A.C.</small></div></div>
+      <div class="hero-carousel" id="heroCar">
+        <div class="hc-slide on" style="background-image:url('assets/portada.png')"></div>
+        <div class="hc-slide" style="background-image:url('assets/flota-3.jpg')"></div>
+        <div class="hc-slide" style="background-image:url('assets/flota-1.jpg')"></div>
+        <div class="hc-slide" style="background-image:url('assets/flota-4.jpg')"></div>
+      </div>
+      <div class="hc-dots" id="heroDots"></div>
+      <div class="lh-lockup"><span class="lh-mark"><img src="assets/misagi-icon.png" alt="MISAGI"></span><div class="lh-name">MISAGI<small>S.A.C.</small></div></div>
       <div>
-        <h2 class="lh-title">Portal de Gestion Interna</h2>
+        <h2 class="lh-title">Portal de Gestión Interna</h2>
         <p class="lh-tag">Operaciones, flota, personal y finanzas en un solo lugar, con el acceso que te corresponde.</p>
         <ul class="lh-list">
-          <li>Cada quien ve solo sus modulos</li>
+          <li>Cada quien ve solo sus módulos</li>
           <li>Datos centralizados y seguros</li>
           <li>Rastreo GPS de la flota a un clic</li>
         </ul>
       </div>
-      <div class="lh-foot">Transporte de carga - MISAGI S.A.C.</div>
+      <div class="lh-foot">Transporte de carga · MISAGI S.A.C.</div>
     </aside>
     <main class="login-pane">
       <div class="login-card">
-        <div class="brand-row"><span class="mark">M</span><div><h1>Iniciar sesion</h1><div class="sub">Acceso del personal - MISAGI S.A.C.</div></div></div>
+        <img class="brand-logo" src="assets/misagi-logo.png" alt="MISAGI S.A.C.">
+        <h1>Iniciar sesión</h1>
+        <div class="sub">Acceso del personal · MISAGI S.A.C.</div>
         <form id="loginForm">
-          <label for="email">Correo</label>
-          <input type="email" id="email" autocomplete="username" required placeholder="tucorreo@misagi.com">
-          <label for="password">Contrasena</label>
-          <input type="password" id="password" autocomplete="current-password" required placeholder="********">
+          <div class="field">
+            <label for="email">Correo</label>
+            <input type="email" id="email" autocomplete="username" required placeholder="tucorreo@misagi.com">
+          </div>
+          <div class="field">
+            <label for="password">Contraseña</label>
+            <input type="password" id="password" autocomplete="current-password" required placeholder="••••••••">
+            <button type="button" class="toggle" id="pwToggle" aria-label="Mostrar contraseña">Mostrar</button>
+          </div>
           <div id="loginError" class="msg-alert error hidden" role="alert" aria-live="assertive"></div>
           <button type="submit" class="btn btn-primary go" id="loginBtn">Ingresar</button>
         </form>
@@ -101,20 +129,23 @@
 
   <div id="portal" class="hidden">
     <header class="msg-header">
-      <span class="brand-mark">M</span>
+      <span class="brand-mark"><img src="assets/misagi-icon.png" alt="MISAGI"></span>
       <div class="brand">MISAGI</div>
       <div class="spacer"></div>
-      <div class="msg-user"><strong id="userName">-</strong><span id="userBadge"></span></div>
+      <div class="msg-user-wrap">
+        <div class="msg-user"><strong id="userName">-</strong><span id="userBadge"></span></div>
+        <span class="avatar" id="userAvatar">–</span>
+      </div>
       <button class="btn btn-ghost" id="logoutBtn">Salir</button>
     </header>
     <div class="portal-body">
       <aside class="portal-side" id="sidebar">
         <div class="side-title">Rastreo GPS</div>
         <div id="gpsLinks"></div>
-        <div class="side-note">Se abren en una pestana nueva. Cada GPS usa su propio acceso.</div>
+        <div class="side-note">Se abren en una pestaña nueva. Cada GPS usa su propio acceso.</div>
       </aside>
       <main class="portal-main">
-        <div class="hello" id="hello">Hola</div>
+        <h1 class="hello" id="hello">Hola</h1>
         <div class="hello-sub" id="helloSub"></div>
         <div id="menu"></div>
       </main>
@@ -127,10 +158,28 @@
   <script src="assets/firebase-config.js"></script>
   <script src="assets/auth.js"></script>
   <script src="assets/portal.js"></script>
+
   <script>
     var $login = document.getElementById("login");
     var $portal = document.getElementById("portal");
     var $err = document.getElementById("loginError");
+
+    (function heroCarousel(){
+      var car=document.getElementById('heroCar'), dotsEl=document.getElementById('heroDots');
+      if(!car) return;
+      var slides=[].slice.call(car.querySelectorAll('.hc-slide')), i=0;
+      slides.forEach(function(_,n){var b=document.createElement('button');if(n===0)b.className='on';b.onclick=function(){go(n);};dotsEl.appendChild(b);});
+      var dots=[].slice.call(dotsEl.children);
+      function go(n){slides[i].classList.remove('on');dots[i].classList.remove('on');i=(n+slides.length)%slides.length;slides[i].classList.add('on');dots[i].classList.add('on');}
+      var timer=setInterval(function(){go(i+1);},5500);
+      dotsEl.addEventListener('click',function(){clearInterval(timer);timer=setInterval(function(){go(i+1);},5500);});
+    })();
+
+    (function(){
+      var t=document.getElementById('pwToggle'), p=document.getElementById('password');
+      t.addEventListener('click',function(){var s=p.type==='password';p.type=s?'text':'password';t.textContent=s?'Ocultar':'Mostrar';});
+    })();
+
     var MISAGI_GPS = [
       { nombre: "OneTrack", url: "https://app.onetrack.pe/new/?login=1#openCar=842905" },
       { nombre: "Tracklog", url: "https://www.tracklogweb.com/#/login?returnUrl=%2Fmap" }
@@ -152,6 +201,8 @@
         cont.appendChild(a);
       });
     }
+    function initials(name){return (name||"").trim().split(/\s+/).slice(0,2).map(function(w){return w.charAt(0).toUpperCase();}).join("")||"–";}
+
     document.getElementById("loginForm").addEventListener("submit", async function (e) {
       e.preventDefault();
       $err.classList.add("hidden");
@@ -172,8 +223,9 @@
         var nombre = sesion.perfil.nombre || sesion.user.email;
         var primer = (nombre || "").split(" ")[0];
         document.getElementById("userName").textContent = nombre;
+        document.getElementById("userAvatar").textContent = initials(nombre);
         document.getElementById("hello").textContent = "Hola, " + primer;
-        document.getElementById("helloSub").textContent = "Estos son los modulos disponibles para tu cuenta.";
+        document.getElementById("helloSub").textContent = "Estos son los módulos disponibles para tu cuenta.";
         var esAdmin = MISAGI.esAdmin(sesion.perfil);
         var badge = document.getElementById("userBadge");
         badge.className = "badge " + (esAdmin ? "admin" : "conductor");
@@ -187,11 +239,11 @@
     });
     function traducirError(err) {
       var m = (err && err.code) || (err && err.message) || "";
-      if (m.includes("wrong-password") || m.includes("invalid-credential")) return "Correo o contrasena incorrectos.";
+      if (m.includes("wrong-password") || m.includes("invalid-credential")) return "Correo o contraseña incorrectos.";
       if (m.includes("user-not-found")) return "No existe un usuario con ese correo.";
       if (m.includes("too-many-requests")) return "Demasiados intentos. Espera un momento.";
       if (m.includes("REEMPLAZAR") || m.includes("api-key")) return "Falta configurar Firebase (assets/firebase-config.js).";
-      return err.message || "No se pudo iniciar sesion.";
+      return err.message || "No se pudo iniciar sesión.";
     }
   </script>
 </body>
