@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asistencia — MISAGI S.A.C.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/theme.css">
+  <style>
+    .marcaje { display: flex; gap: 14px; flex-wrap: wrap; margin: 18px 0; }
+    .marcaje .btn { flex: 1; min-width: 160px; justify-content: center; padding: 18px; font-size: 1rem; }
+    .btn-entrada { background: var(--misagi-green); color: #fff; }
+    .btn-salida { background: var(--warning); color: #fff; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-secondary); font-size: 0.78rem; text-transform: uppercase; letter-spacing: .03em; }
+    .pill { padding: 2px 10px; border-radius: 999px; font-size: .75rem; font-weight: 700; }
+    .pill.entrada { background: #ecfdf5; color: #047857; }
+    .pill.salida { background: #fffbeb; color: #b45309; }
+    .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../index.html">← MISAGI · Asistencia</a>
+    <div class="spacer"></div>
+    <div class="msg-user"><strong id="userName">—</strong><span id="userTipo"></span></div>
+    <button class="btn btn-ghost" id="logoutBtn">Salir</button>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <h2 style="color:var(--misagi-blue);margin-bottom:4px;">Mi marcaje de hoy</h2>
+      <p style="color:var(--text-muted);font-size:.85rem;" id="hoyLabel"></p>
+      <div class="marcaje">
+        <button class="btn btn-entrada" id="btnEntrada">🟢 Marcar Entrada</button>
+        <button class="btn btn-salida" id="btnSalida">🟠 Marcar Salida</button>
+      </div>
+      <div id="msg" class="msg-alert hidden"></div>
+      <table id="misMarcas"><thead><tr><th>Acción</th><th>Hora</th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <!-- Solo administradores -->
+    <div class="card hidden" id="panelAdmin" style="margin-top:20px;">
+      <div class="toolbar">
+        <h2 style="color:var(--misagi-blue);flex:1;">Reporte de asistencia</h2>
+        <label style="font-size:.82rem;color:var(--text-secondary);">Fecha</label>
+        <input type="date" id="fechaFiltro" style="padding:8px;border:1px solid var(--border);border-radius:10px;">
+      </div>
+      <table id="reporte"><thead><tr><th>Colaborador</th><th>Acción</th><th>Hora</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../../assets/firebase-config.js"></script>
+  <script src="../../assets/auth.js"></script>
+  <script>
+    const hoy = () => new Date().toISOString().slice(0, 10);
+    const db = () => firebase.firestore();
+    let sesion = null;
+
+    function showMsg(text, ok) {
+      const m = document.getElementById("msg");
+      m.textContent = text; m.className = "msg-alert " + (ok ? "ok" : "error");
+      setTimeout(() => m.classList.add("hidden"), 4000);
+    }
+
+    async function marcar(accion) {
+      try {
+        await db().collection("asistencia").add({
+          uid: sesion.user.uid,
+          nombre: sesion.perfil.nombre || sesion.user.email,
+          tipo: sesion.perfil.tipo || "—",
+          accion,
+          fecha: hoy(),
+          ts: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showMsg("Marcaje de " + accion + " registrado.", true);
+        cargarMisMarcas();
+        if (MISAGI.esAdmin(sesion.perfil)) cargarReporte();
+      } catch (e) { showMsg("No se pudo registrar: " + e.message, false); }
+    }
+
+    function fmtHora(ts) { return ts && ts.toDate ? ts.toDate().toLocaleTimeString("es-PE", {hour:'2-digit',minute:'2-digit'}) : "…"; }
+
+    async function cargarMisMarcas() {
+      const snap = await db().collection("asistencia")
+        .where("uid", "==", sesion.user.uid).where("fecha", "==", hoy()).get();
+      const filas = snap.docs.map(d => d.data()).sort((a,b)=>(a.ts?.seconds||0)-(b.ts?.seconds||0));
+      document.querySelector("#misMarcas tbody").innerHTML = filas.length
+        ? filas.map(f => `<tr><td><span class="pill ${f.accion}">${f.accion}</span></td><td>${fmtHora(f.ts)}</td></tr>`).join("")
+        : `<tr><td colspan="2" style="color:var(--text-muted)">Sin marcas hoy.</td></tr>`;
+    }
+
+    async function cargarReporte() {
+      const fecha = document.getElementById("fechaFiltro").value || hoy();
+      const snap = await db().collection("asistencia").where("fecha", "==", fecha).get();
+      const filas = snap.docs.map(d => d.data()).sort((a,b)=>(a.ts?.seconds||0)-(b.ts?.seconds||0));
+      document.querySelector("#reporte tbody").innerHTML = filas.length
+        ? filas.map(f => `<tr><td>${f.nombre}</td><td><span class="pill ${f.accion}">${f.accion}</span></td><td>${fmtHora(f.ts)}</td></tr>`).join("")
+        : `<tr><td colspan="3" style="color:var(--text-muted)">Sin registros para esta fecha.</td></tr>`;
+    }
+
+    (async function init() {
+      sesion = await MISAGI.requireAccess("rrhh");   // exige sesión + permiso RRHH
+      document.getElementById("userName").textContent = sesion.perfil.nombre || sesion.user.email;
+      document.getElementById("userTipo").textContent = sesion.perfil.tipo || "";
+      document.getElementById("hoyLabel").textContent = new Date().toLocaleDateString("es-PE", {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+      document.getElementById("btnEntrada").onclick = () => marcar("entrada");
+      document.getElementById("btnSalida").onclick = () => marcar("salida");
+      document.getElementById("logoutBtn").onclick = () => MISAGI.logout();
+      cargarMisMarcas();
+      if (MISAGI.esAdmin(sesion.perfil)) {
+        document.getElementById("panelAdmin").classList.remove("hidden");
+        const f = document.getElementById("fechaFiltro"); f.value = hoy(); f.onchange = cargarReporte;
+        cargarReporte();
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+/* ==========================================================================
+   MISAGI S.A.C. — Tema visual compartido (look "Portal 2")
+   Un solo archivo de estilos para TODO el sistema. Cambiar la marca aquí
+   se refleja en el portal y en los 14 módulos.
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+:root {
+  /* Marca */
+  --verde: #1A6B3C;        --verde-d: #12502d;   --verde-l: #e7f2eb;
+  --azul: #0D3B66;         --azul-d: #0a2e50;    --azul-l: #e8eef5;
+  --amber: #b9701a;        --amber-l: #fbeede;
+  /* Alias compatibles con el código existente */
+  --misagi-blue: #0D3B66;  --misagi-blue-light: #1a5a9e;
+  --misagi-green: #1A6B3C; --misagi-green-light: #2f8052; --misagi-green-text: #12502d;
+
+  --bg-primary: #f6f8f6;   --bg-secondary: #ffffff;  --bg-card: #ffffff;
+  --text-primary: #16201b; --text-secondary: #475a52; --text-muted: #65726b;
+  --border: #e3e8e4;       --border-hover: rgba(26,107,60,.35);
+  --shadow-sm: 0 1px 2px rgba(16,32,24,.05);
+  --shadow: 0 1px 2px rgba(16,32,24,.05), 0 8px 24px rgba(16,32,24,.06);
+  --shadow-lg: 0 12px 40px rgba(16,32,24,.14);
+  --radius: 14px;          --radius-sm: 12px;     --radius-xs: 10px;
+  --transition: .25s cubic-bezier(.2,.8,.2,1);
+  --danger: #b02531;       --danger-light: #fbe7e9;
+  --warning: #b9701a;      --ok: #1A6B3C;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-primary); color: var(--text-primary);
+  line-height: 1.5; min-height: 100vh; font-size: 14px;
+}
+h1, h2, h3, .font-display { font-family: 'Space Grotesk', 'Inter', sans-serif; letter-spacing: .2px; }
+a { color: var(--misagi-blue-light); text-decoration: none; }
+
+/* ---- Encabezado de módulo (barra azul oscuro) ---- */
+.msg-header {
+  display: flex; align-items: center; gap: 16px; padding: 13px 22px;
+  background: var(--azul); color: #fff; box-shadow: var(--shadow-sm);
+  position: sticky; top: 0; z-index: 50;
+}
+.msg-header .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: #fff; font-family: 'Space Grotesk', sans-serif; }
+.msg-header .brand img { height: 30px; }
+.msg-header .spacer { flex: 1; }
+.msg-header .msg-user { font-size: .85rem; color: #cdd9e6; text-align: right; }
+.msg-header .msg-user strong { color: #fff; display: block; }
+.msg-header .btn-ghost { background: rgba(255,255,255,.10); color: #fff; border: 1px solid rgba(255,255,255,.25); }
+.msg-header .btn-ghost:hover { background: rgba(255,255,255,.20); color: #fff; }
+.brand-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--verde);
+  display: grid; place-items: center; font-weight: 800; color: #fff; font-family: 'Space Grotesk', sans-serif; }
+
+/* ---- Botones ---- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+  border: none; border-radius: var(--radius-xs); padding: 11px 16px; min-height: 44px;
+  font-family: inherit; font-weight: 700; font-size: .9rem; transition: var(--transition);
+}
+.btn-primary { background: var(--verde); color: #fff; }
+.btn-primary:hover { background: var(--verde-d); }
+.btn-primary:disabled { background: #c3ccc6; cursor: not-allowed; }
+.btn-ghost { background: #fff; color: var(--azul); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--verde); background: var(--verde-l); color: var(--verde-d); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-sm { padding: 7px 12px; min-height: 0; font-size: .8rem; border-radius: 8px; }
+
+/* ---- Tarjetas / contenedores ---- */
+.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; }
+.container { max-width: 1120px; margin: 0 auto; padding: 24px; }
+
+/* ---- Formularios ---- */
+.field { margin-bottom: 15px; }
+.field label { display: block; font-size: .72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; margin-bottom: 6px; }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 11px 13px; border: 1px solid var(--border); border-radius: var(--radius-xs);
+  font-family: inherit; font-size: .95rem; background: var(--bg-secondary); color: var(--text-primary);
+}
+.field textarea { resize: vertical; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--verde); box-shadow: 0 0 0 3px var(--verde-l); }
+
+/* ---- Estados ---- */
+.msg-alert { padding: 11px 14px; border-radius: var(--radius-xs); font-size: .88rem; margin: 10px 0; }
+.msg-alert.error { background: var(--danger-light); color: var(--danger); }
+.msg-alert.ok { background: var(--verde-l); color: var(--verde-d); }
+.hidden { display: none !important; }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; }
+.badge.admin { background: #fde9c8; color: #8a5310; }
+.badge.conductor { background: var(--verde-l); color: var(--verde-d); }
+
+/* ---- Tablas (motor de módulos) ---- */
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+thead th { text-align: left; padding: 11px 12px; color: var(--text-muted); font-size: .72rem;
+  text-transform: uppercase; letter-spacing: .3px; border-bottom: 1px solid var(--border); background: #fafbfa; }
+tbody td { padding: 11px 12px; border-bottom: 1px solid var(--border); }
+tbody tr:hover { background: #f8fafd; }
+
+/* ---- Modal ---- */
+.modal-overlay { position: fixed; inset: 0; background: rgba(16,32,24,.45); display: grid; place-items: center; z-index: 100; padding: 20px; }
+.modal-box { background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow-lg); width: 100%; max-width: 460px; max-height: 90vh; overflow: auto; padding: 24px; }
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.modal-head h3 { color: var(--azul-d); font-size: 1.05rem; }
+.modal-x { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--text-muted); }
+
+.pill { display: inline-block; padding: 4px 10px; border-radius: 8px; font-size: .75rem; font-weight: 700;
+  background: var(--verde-l); color: var(--verde-d); font-family: 'Space Grotesk', sans-serif; }
+
+/* ---- Accesibilidad ---- */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
+textarea:focus-visible, .app-card:focus-visible, .gps-link:focus-visible {
+  outline: 3px solid var(--misagi-blue-light); outline-offset: 2px;
+}
+.btn { min-height: 44px; }
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+  a.app-card:hover, .gps-link:hover { transform: none; }
+}

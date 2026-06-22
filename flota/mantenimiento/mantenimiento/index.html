@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MISAGI S.A.C.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../assets/theme.css">
+</head>
+<body>
+  <div class="container"><p style="color:var(--text-muted)">Cargando…</p></div>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../../../assets/firebase-config.js"></script>
+  <script src="../../../assets/auth.js"></script>
+  <script src="../../../assets/crud.js"></script>
+  <script>
+  MISAGI.modulo({ area:"mantenimiento", coleccion:"mantenimiento", modulo:"mantenimiento", titulo:"Mantenimiento",
+  campos:[
+    {k:"unidad",label:"Unidad",tipo:"text",req:true},
+    {k:"fecha",label:"Fecha",tipo:"date"},
+    {k:"tipo",label:"Tipo",tipo:"select",opciones:["Preventivo","Correctivo"]},
+    {k:"descripcion",label:"Descripción",tipo:"textarea"},
+    {k:"estado",label:"Estado",tipo:"select",opciones:["Pendiente","En proceso","Completado"]},
+    {k:"costo",label:"Costo (S/)",tipo:"number"},
+    {k:"responsable",label:"Responsable",tipo:"text"}],
+  columnas:["unidad","fecha","tipo","estado","costo"] });
+  </script>
+</body>
+</html>

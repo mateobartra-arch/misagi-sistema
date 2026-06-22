@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MISAGI S.A.C.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../assets/theme.css">
+</head>
+<body>
+  <div class="container"><p style="color:var(--text-muted)">Cargando…</p></div>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../../../assets/firebase-config.js"></script>
+  <script src="../../../assets/auth.js"></script>
+  <script src="../../../assets/crud.js"></script>
+  <script>
+  MISAGI.modulo({ area:"operaciones", coleccion:"operaciones", modulo:"tracker", titulo:"Tracker de Conductores",
+  campos:[
+    {k:"conductor",label:"Conductor",tipo:"text",req:true},
+    {k:"unidad",label:"Unidad",tipo:"text"},
+    {k:"fecha",label:"Fecha",tipo:"date"},
+    {k:"codigo",label:"Código",tipo:"text"},
+    {k:"estado",label:"Estado",tipo:"select",opciones:["Activo","Descanso","Falta","Vacaciones"]},
+    {k:"observacion",label:"Observación",tipo:"textarea"}],
+  columnas:["conductor","unidad","fecha","estado"] });
+  </script>
+</body>
+</html>

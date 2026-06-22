@@ -1,0 +1,9 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**", "migracion/**", "*.md"]
+  },
+  "firestore": {
+    "rules": "migracion/firestore.rules"
+  }
+}

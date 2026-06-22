@@ -1,0 +1,43 @@
+rules_version = '2';
+// ==========================================================================
+// MISAGI S.A.C. — Reglas de seguridad de Firestore
+// Subir con:  firebase deploy --only firestore:rules
+// Principio: NADA es accesible sin sesión, y cada módulo solo lo ve quien
+// tiene el área correspondiente en su documento de usuario.
+// ==========================================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- Helpers ----
+    function logueado() { return request.auth != null; }
+    function perfil() { return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data; }
+    function activo() { return logueado() && perfil().activo == true; }
+    function esAdmin() { return activo() && ('admin' in perfil().areas); }
+    function tieneArea(a) { return activo() && (esAdmin() || (a in perfil().areas)); }
+
+    // ---- usuarios: perfil + permisos ----
+    match /usuarios/{uid} {
+      allow read: if request.auth.uid == uid || esAdmin();
+      allow create, update, delete: if esAdmin();   // alta/baja solo admin
+    }
+
+    // ---- Asistencia (área rrhh) ----
+    match /asistencia/{doc} {
+      allow create: if logueado() && request.resource.data.uid == request.auth.uid;
+      allow read:   if tieneArea('rrhh');           // admin/RRHH ven todo; ver propio se filtra en cliente
+      allow update, delete: if esAdmin();
+    }
+
+    // ---- Colecciones por área (módulos futuros) ----
+    match /operaciones/{doc}    { allow read, write: if tieneArea('operaciones'); }
+    match /mantenimiento/{doc}  { allow read, write: if tieneArea('mantenimiento'); }
+    match /rrhh/{doc}           { allow read, write: if tieneArea('rrhh'); }
+    match /finanzas/{doc}       { allow read, write: if tieneArea('finanzas'); }
+    match /proveedores/{doc}    { allow read, write: if tieneArea('proveedores'); }
+    match /planificacion/{doc}  { allow read, write: if tieneArea('planificacion'); }
+    match /imagen/{doc}         { allow read, write: if tieneArea('imagen'); }
+
+    // Todo lo no declarado queda BLOQUEADO por defecto.
+    match /{document=**} { allow read, write: if false; }
+  }
+}
