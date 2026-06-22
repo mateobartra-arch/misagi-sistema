@@ -6,3 +6,8 @@ serviceAccount*.json
 .env
 node_modules/
 .DS_Store
+
+# Logs de Firebase CLI
+*.log
+firebase-debug.log
+firestore-debug.log
