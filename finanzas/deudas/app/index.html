@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MISAGI S.A.C. — Control de Deudas</title>
+    <meta name="description" content="Dashboard de planeamiento financiero y control de deudas de MISAGI S.A.C.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- LOGIN SCREEN -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-card">
+            <div class="login-brand">
+                <div class="brand-icon-lg">M</div>
+                <h1 class="login-title">MISAGI S.A.C.</h1>
+                <p class="login-sub">Planeamiento Financiero — Control de Deudas</p>
+            </div>
+            <form onsubmit="handleLogin(event)">
+                <div class="login-field">
+                    <label>Contraseña de Acceso</label>
+                    <div class="login-input-wrap">
+                        <input type="password" id="loginPassword" required placeholder="Ingrese la contraseña"
+                            autocomplete="off">
+                        <button type="button" class="toggle-pw" onclick="togglePasswordVisibility()">👁</button>
+                    </div>
+                    <div class="login-error" id="loginError"></div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full" id="loginBtn">
+                    <span id="loginBtnText">Ingresar</span>
+                </button>
+            </form>
+            <div class="login-footer">Acceso restringido — Solo personal autorizado</div>
+        </div>
+    </div>
+
+    <div class="bg-decoration"></div>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">M</div>
+            <div class="brand-text">
+                <span class="brand-name">MISAGI</span>
+                <span class="brand-sub">S.A.C.</span>
+            </div>
+        </div>
+        <div class="nav-links">
+            <button class="nav-link active" data-page="overview" onclick="navigateTo('overview')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                    <rect x="14" y="14" width="7" height="7" rx="1" />
+                </svg>
+                <span>Resumen</span>
+            </button>
+            <button class="nav-link" data-page="debts" onclick="navigateTo('debts')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                </svg>
+                <span>Deudas</span>
+            </button>
+            <button class="nav-link" data-page="schedule" onclick="navigateTo('schedule')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                <span>Cronograma</span>
+            </button>
+            <button class="nav-link" data-page="payments" onclick="navigateTo('payments')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22,12 18,12 15,21 9,3 6,12 2,12" />
+                </svg>
+                <span>Pagos</span>
+            </button>
+        </div>
+        <div class="sidebar-footer">
+            <div class="sidebar-badge"><span class="dot"></span> Sincronizado</div>
+            <div class="sync-status" id="syncStatus">En línea</div>
+        </div>
+    </nav>
+
+    <!-- Mobile Header -->
+    <header class="mobile-header" id="mobileHeader">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <span class="mobile-title">MISAGI S.A.C.</span>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent" style="display:none">
+
+        <!-- ==================== PAGE 1: OVERVIEW ==================== -->
+        <section class="page active" id="page-overview">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Resumen General</h1>
+                    <p class="page-subtitle">Planeamiento Financiero — Vista panorámica</p>
+                </div>
+                <div class="header-meta-pills">
+                    <span class="pill">💲 USD</span>
+                    <span class="pill">📅 Inicio: Ene 2026</span>
+                    <span class="pill pill-accent" id="pillFreeDate">🎯 Libre: —</span>
+                </div>
+            </div>
+            <div class="kpi-grid">
+                <div class="kpi-card" style="--accent:#ef4444">
+                    <div class="kpi-icon">📊</div>
+                    <div class="kpi-label">Deuda Inicial Total</div>
+                    <div class="kpi-value" id="kpiInitial">$0</div>
+                    <div class="kpi-trend" id="kpiInitialSub"></div>
+                </div>
+                <div class="kpi-card" style="--accent:#f59e0b">
+                    <div class="kpi-icon">💰</div>
+                    <div class="kpi-label">Deuda Actual</div>
+                    <div class="kpi-value" id="kpiCurrent">$0</div>
+                    <div class="kpi-trend down" id="kpiCurrentSub"></div>
+                </div>
+                <div class="kpi-card" style="--accent:#10b981">
+                    <div class="kpi-icon">✅</div>
+                    <div class="kpi-label">Total Abonado</div>
+                    <div class="kpi-value" id="kpiPaid">$0</div>
+                    <div class="kpi-trend up" id="kpiPaidSub"></div>
+                </div>
+                <div class="kpi-card" style="--accent:#6366f1">
+                    <div class="kpi-icon">📅</div>
+                    <div class="kpi-label">Pago Mínimo Mensual</div>
+                    <div class="kpi-value" id="kpiMonthly">$0</div>
+                    <div class="kpi-trend" id="kpiMonthlySub"></div>
+                </div>
+            </div>
+            <div class="progress-section">
+                <div class="progress-header"><span>Progreso General de Pago</span><span class="progress-pct"
+                        id="progressPct">0%</span></div>
+                <div class="progress-bar-track">
+                    <div class="progress-bar-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-footer"><span id="progressPaid">$0 pagado</span><span id="progressRemaining">$0
+                        restante</span></div>
+            </div>
+            <div class="charts-row">
+                <div class="chart-card">
+                    <h3>Evolución de Deuda Total</h3>
+                    <div class="chart-wrap"><canvas id="debtChart"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <h3>Pago Total por Mes</h3>
+                    <div class="chart-wrap"><canvas id="paymentChart"></canvas></div>
+                </div>
+            </div>
+            <div class="section-card">
+                <h3>Línea de Tiempo — Liberación de Deudas</h3>
+                <p class="section-desc">Orden en que se completará cada deuda según el plan actual</p>
+                <div class="timeline-scroll">
+                    <div class="timeline" id="timeline"></div>
+                </div>
+            </div>
+            <div class="mini-cards-section">
+                <h3>Vista Rápida de Deudas</h3>
+                <div class="mini-grid" id="miniDebtGrid"></div>
+            </div>
+        </section>
+
+        <!-- ==================== PAGE 2: DEBTS ==================== -->
+        <section class="page" id="page-debts">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Gestión de Deudas</h1>
+                    <p class="page-subtitle">Agregar, editar y eliminar deudas</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal('addDebt')"><span>＋</span> Nueva Deuda</button>
+            </div>
+            <div class="debt-full-grid" id="debtFullGrid"></div>
+        </section>
+
+        <!-- ==================== PAGE 3: SCHEDULE ==================== -->
+        <section class="page" id="page-schedule">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Cronograma de Pagos</h1>
+                    <p class="page-subtitle">Detalle mes a mes de cada deuda</p>
+                </div>
+                <div class="schedule-select-wrap">
+                    <label>Seleccionar deuda:</label>
+                    <select id="scheduleSelect" onchange="renderScheduleTable()"></select>
+                </div>
+            </div>
+            <div class="schedule-summary" id="scheduleSummary"></div>
+            <div class="table-wrap">
+                <table class="data-table" id="scheduleTable">
+                    <thead>
+                        <tr>
+                            <th>Mes</th>
+                            <th>Fecha</th>
+                            <th>Balance</th>
+                            <th>Interés</th>
+                            <th>Pago Esperado</th>
+                            <th>Pago Actual</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scheduleBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==================== PAGE 4: PAYMENTS ==================== -->
+        <section class="page" id="page-payments">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Registro de Pagos</h1>
+                    <p class="page-subtitle">Registrar pagos y ver historial</p>
+                </div>
+                <button class="btn btn-success" onclick="openModal('registerPayment')"><span>💵</span> Registrar
+                    Pago</button>
+            </div>
+            <div class="payments-stats" id="paymentsStats"></div>
+            <div class="section-card">
+                <h3>Historial de Pagos Registrados</h3>
+                <div class="table-wrap">
+                    <table class="data-table" id="paymentsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Deuda</th>
+                                <th>Monto</th>
+                                <th>Mes</th>
+                                <th>Fecha de Registro</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentsBody"></tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="paymentsEmpty">
+                    <div class="empty-icon">📋</div>
+                    <p>No hay pagos registrados aún</p>
+                    <button class="btn btn-success btn-sm" onclick="openModal('registerPayment')">Registrar primer
+                        pago</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ==================== MODALS ==================== -->
+    <div class="modal-overlay" id="modal-addDebt" onclick="closeModalOverlay(event)">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Nueva Deuda</h3><button class="modal-close" onclick="closeModal('addDebt')">✕</button>
+            </div>
+            <form onsubmit="handleAddDebt(event)">
+                <div class="form-group"><label>Nombre</label><input type="text" id="addName" required
+                        placeholder="Ej: Préstamo BCP"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Monto Inicial ($)</label><input type="number" id="addAmount" required
+                            min="1" step="0.01"></div>
+                    <div class="form-group"><label>Pago Mensual ($)</label><input type="number" id="addPayment" required
+                            min="1" step="0.01"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Interés Anual (%)</label><input type="number" id="addInterest"
+                            value="0" min="0" step="0.01"></div>
+                    <div class="form-group"><label>Fecha de Inicio</label><input type="month" id="addDate" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Agregar Deuda</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-editDebt" onclick="closeModalOverlay(event)">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Editar Deuda</h3><button class="modal-close" onclick="closeModal('editDebt')">✕</button>
+            </div>
+            <form onsubmit="handleEditDebt(event)">
+                <input type="hidden" id="editId">
+                <div class="form-group"><label>Nombre</label><input type="text" id="editName" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Monto Inicial ($)</label><input type="number" id="editAmount"
+                            required min="0" step="0.01"></div>
+                    <div class="form-group"><label>Saldo Actual ($)</label><input type="number" id="editBalance"
+                            required min="0" step="0.01"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Pago Mensual ($)</label><input type="number" id="editPayment"
+                            required min="0" step="0.01"></div>
+                    <div class="form-group"><label>Total Pagado ($)</label><input type="number" id="editTotalPaid"
+                            required min="0" step="0.01"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Interés Anual (%)</label><input type="number" id="editInterest"
+                            min="0" step="0.01"></div>
+                    <div class="form-group"><label>Meses Restantes</label><input type="number" id="editMonths" required
+                            min="0"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Fecha Inicio</label><input type="month" id="editStartDate" required>
+                    </div>
+                    <div class="form-group"><label>Fecha Final</label><input type="month" id="editEndDate" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Fecha Exacta de Pago</label>
+                    <input type="date" id="editPaymentDate">
+                    <small style="color:#6b7280;font-size:11px;display:block;margin-top:4px">Día exacto en que se realiza el pago mensual (opcional)</small>
+                </div>
+                <div class="modal-actions"><button type="button" class="btn btn-danger" onclick="handleDeleteDebt()">🗑
+                        Eliminar</button><button type="submit" class="btn btn-primary">💾 Guardar</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-registerPayment" onclick="closeModalOverlay(event)">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Registrar Pago</h3><button class="modal-close" onclick="closeModal('registerPayment')">✕</button>
+            </div>
+            <form onsubmit="handleRegisterPayment(event)">
+                <div class="form-group"><label>Deuda</label><select id="payDebtSelect" required></select></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Monto ($)</label><input type="number" id="payAmount" required
+                            min="0.01" step="0.01"></div>
+                    <div class="form-group"><label>Mes del Pago</label><input type="month" id="payDate" required></div>
+                </div>
+                <button type="submit" class="btn btn-success btn-full">Registrar Pago</button>
+            </form>
+        </div>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,21 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno (si usas en el futuro)
+.env
+.env.local
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Firebase (local)
+.firebase/
+firebase-debug.log

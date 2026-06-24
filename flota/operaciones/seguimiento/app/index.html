@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="MISASI S.A.C. - Dashboard de Seguimiento de Unidades de Transporte. Control diario de flota, métricas de rendimiento y análisis de productividad.">
+  <title>MISASI S.A.C. — Seguimiento de Unidades</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── FILTRO POR RUTA ── */
+    .route-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .route-filter-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary, #94a3b8);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-right: 4px;
+    }
+    .route-btn {
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      background: transparent;
+      color: var(--text-secondary, #94a3b8);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      letter-spacing: 0.3px;
+    }
+    .route-btn:hover {
+      border-color: rgba(255,255,255,0.3);
+      color: #fff;
+    }
+    .route-btn.active {
+      color: #fff;
+      border-color: transparent;
+    }
+    .route-btn[data-route="TODAS"].active  { background: #6366f1; }
+    .route-btn[data-route="HUDBAY"].active  { background: #2980b9; }
+    .route-btn[data-route="SOUTHERN"].active { background: #27ae60; }
+    .route-btn[data-route="HIERRO"].active   { background: #f39c12; }
+    .route-btn[data-route="RACIEMSA"].active { background: #0EA5E9; }
+    .route-filter-count {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--text-muted, #64748b);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ==================== SIDEBAR ==================== -->
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <a href="#" class="sidebar-logo">
+        <div class="sidebar-logo-icon">🚛</div>
+        <div class="sidebar-logo-text">
+          <span class="company">MISASI S.A.C.</span>
+          <span class="subtitle">Seguimiento Unidades</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-section-title">Menú Principal</div>
+
+      <a href="#" class="nav-item active" data-page="resumen">
+        <span class="icon">📊</span>
+        <span>Resumen General</span>
+      </a>
+      <a href="#" class="nav-item" data-page="seguimiento">
+        <span class="icon">📅</span>
+        <span>Seguimiento Diario</span>
+      </a>
+      <a href="#" class="nav-item" data-page="metricas">
+        <span class="icon">📈</span>
+        <span>Métricas y Vueltas</span>
+      </a>
+      <a href="#" class="nav-item" data-page="paradas">
+        <span class="icon">⚠️</span>
+        <span>Análisis de Paradas</span>
+      </a>
+
+      <div class="nav-section-title" style="margin-top: 24px;">Leyenda</div>
+      <div style="padding: 8px 16px; font-size: 10px;">
+        <div class="leyenda-item" style="margin-bottom: 4px;">
+          <span class="leyenda-color" style="background: var(--southern);"></span>
+          <span>S1→S2 = 1 vuelta SOUTHERN</span>
+        </div>
+        <div class="leyenda-item" style="margin-bottom: 4px;">
+          <span class="leyenda-color" style="background: var(--hudbay);"></span>
+          <span>H1→H2→H3 = 1 vuelta HUDBAY</span>
+        </div>
+        <div class="leyenda-item" style="margin-bottom: 4px;">
+          <span class="leyenda-color" style="background: var(--hierro);"></span>
+          <span>A1→A2→A3 = 1 vuelta HIERRO</span>
+        </div>
+        <div class="leyenda-item" style="margin-bottom: 4px;">
+          <span class="leyenda-color" style="background: #0EA5E9;"></span>
+          <span>R1→R2→R3→R4→R5 = 1 vuelta RACIEMSA</span>
+        </div>
+        <div class="leyenda-item" style="margin-bottom: 4px;">
+          <span class="leyenda-color" style="background: var(--mant);"></span>
+          <span>M = Mantenimiento</span>
+        </div>
+        <div class="leyenda-item" style="margin-bottom: 4px;">
+          <span class="leyenda-color" style="background: var(--taller);"></span>
+          <span>T = Taller</span>
+        </div>
+        <div class="leyenda-item">
+          <span class="leyenda-color" style="background: var(--parada);"></span>
+          <span>P = Sin conductor</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      MISASI S.A.C. © 2026<br>
+      Seguimiento de Unidades v1.1
+    </div>
+  </nav>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <main class="main-content">
+
+    <!-- TOP BAR -->
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <div>
+          <h1 id="page-title" class="page-title">Resumen General</h1>
+          <p id="page-subtitle" class="page-subtitle">Vista general del estado de la flota</p>
+        </div>
+      </div>
+      <div class="top-bar-right">
+        <div class="month-selector">
+          <label>📅 Mes:</label>
+          <select id="month-select">
+            <option value="0">Enero 2026</option>
+            <option value="1">Febrero 2026</option>
+            <option value="2">Marzo 2026</option>
+            <option value="3">Abril 2026</option>
+            <option value="4">Mayo 2026</option>
+            <option value="5">Junio 2026</option>
+            <option value="6">Julio 2026</option>
+            <option value="7">Agosto 2026</option>
+            <option value="8">Septiembre 2026</option>
+            <option value="9">Octubre 2026</option>
+            <option value="10">Noviembre 2026</option>
+            <option value="11">Diciembre 2026</option>
+          </select>
+        </div>
+        <button onclick="refrescarDatos()" class="refresh-btn" title="Refrescar datos del Sheet">🔄</button>
+        <div class="live-badge">
+          <span class="live-dot"></span>
+          CONECTADO A SHEETS
+        </div>
+      </div>
+    </header>
+
+    <div class="page-container">
+
+      <!-- ============================================================ -->
+      <!-- PAGE 1: RESUMEN GENERAL                                      -->
+      <!-- ============================================================ -->
+      <div id="page-resumen" class="page active">
+
+        <!-- ✅ FILTRO POR RUTA -->
+        <div class="route-filter-bar">
+          <span class="route-filter-label">🔍 Filtrar por ruta:</span>
+          <button class="route-btn active" data-route="TODAS"    onclick="filtrarRuta('TODAS')">Todas</button>
+          <button class="route-btn"        data-route="HUDBAY"   onclick="filtrarRuta('HUDBAY')">🟦 HUDBAY</button>
+          <button class="route-btn"        data-route="SOUTHERN" onclick="filtrarRuta('SOUTHERN')">🟩 SOUTHERN</button>
+          <button class="route-btn"        data-route="HIERRO"   onclick="filtrarRuta('HIERRO')">🟧 HIERRO</button>
+          <button class="route-btn"        data-route="RACIEMSA" onclick="filtrarRuta('RACIEMSA')">🔵 RACIEMSA</button>
+          <span class="route-filter-count" id="route-filter-count"></span>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpi-grid">
+          <div class="kpi-card" style="--kpi-color: var(--accent-purple);">
+            <div class="kpi-label">Total Vueltas</div>
+            <div class="kpi-value" id="kpi-total-vueltas">—</div>
+            <div class="kpi-detail">
+              <span id="kpi-detail-hudbay">HUDBAY: —</span> ·
+              <span id="kpi-detail-southern">SOUTHERN: —</span> ·
+              <span id="kpi-detail-hierro">HIERRO: —</span> ·
+              <span id="kpi-detail-raciemsa" style="color:#0EA5E9;">RACIEMSA: —</span>
+            </div>
+            <div class="kpi-icon">🔄</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color: var(--accent-blue);">
+            <div class="kpi-label">Días en Ruta</div>
+            <div class="kpi-value" id="kpi-dias-ruta">—</div>
+            <div class="kpi-detail">Días operativos totales</div>
+            <div class="kpi-icon">🛣️</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color: var(--accent-orange);">
+            <div class="kpi-label">Días Parados</div>
+            <div class="kpi-value" id="kpi-dias-parados">—</div>
+            <div class="kpi-detail">Sin conductor + sin asignar</div>
+            <div class="kpi-icon">⏸️</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color: var(--accent-red);">
+            <div class="kpi-label">Días Mantenimiento</div>
+            <div class="kpi-value" id="kpi-dias-mant">—</div>
+            <div class="kpi-detail">Mantenimiento + Taller</div>
+            <div class="kpi-icon">🔧</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color: var(--accent-green);">
+            <div class="kpi-label">Operatividad</div>
+            <div class="kpi-value" id="kpi-operatividad">—</div>
+            <div class="kpi-detail">% días en ruta del total</div>
+            <div class="kpi-icon">✅</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color: var(--accent-cyan);">
+            <div class="kpi-label">Unidades Activas</div>
+            <div class="kpi-value" id="kpi-unidades">—</div>
+            <div class="kpi-detail">Flota total registrada</div>
+            <div class="kpi-icon">🚛</div>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><span class="icon">🍩</span> Distribución de Estado</span>
+            </div>
+            <div class="card-body">
+              <div style="max-width: 320px; margin: 0 auto; position: relative;">
+                <canvas id="chart-donut-resumen"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><span class="icon">📊</span> Vueltas por Unidad</span>
+            </div>
+            <div class="card-body">
+              <div style="position: relative; height: 280px;">
+                <canvas id="chart-barras-resumen"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fleet Status -->
+        <div class="card grid-full">
+          <div class="card-header">
+            <span class="card-title"><span class="icon">🚛</span> Estado de la Flota</span>
+            <span id="fleet-filter-badge" style="font-size:11px;color:#94a3b8;margin-left:12px;"></span>
+          </div>
+          <div class="card-body">
+            <div id="fleet-status-container" class="fleet-status-grid">
+              <!-- Dynamic content -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- PAGE 2: SEGUIMIENTO DIARIO                                   -->
+      <!-- ============================================================ -->
+      <div id="page-seguimiento" class="page">
+
+        <!-- Leyenda -->
+        <div class="leyenda">
+          <div class="leyenda-item"><span class="leyenda-color" style="background: var(--southern);"></span> S1/S2 – SOUTHERN</div>
+          <div class="leyenda-item"><span class="leyenda-color" style="background: var(--hudbay);"></span> H1/H2/H3 – HUDBAY</div>
+          <div class="leyenda-item"><span class="leyenda-color" style="background: var(--hierro);"></span> A1/A2/A3 – HIERRO</div>
+          <div class="leyenda-item"><span class="leyenda-color" style="background: #0EA5E9;"></span> R1/R2/R3/R4/R5 – RACIEMSA</div>
+          <div class="leyenda-item"><span class="leyenda-color" style="background: var(--mant);"></span> M – Mantenimiento</div>
+          <div class="leyenda-item"><span class="leyenda-color" style="background: var(--taller);"></span> T – Taller</div>
+          <div class="leyenda-item"><span class="leyenda-color" style="background: var(--parada);"></span> P – Sin Conductor</div>
+          <div class="leyenda-item"><span class="leyenda-color" style="background: rgba(107,114,128,0.3);"></span> — Sin Asignar</div>
+        </div>
+
+        <!-- Tracking Grid -->
+        <div class="card grid-full">
+          <div class="card-header">
+            <span class="card-title"><span class="icon">📅</span> Grilla de Seguimiento Diario</span>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <div class="tracking-grid-container">
+              <table class="tracking-grid">
+                <thead>
+                  <tr id="tracking-grid-header"></tr>
+                </thead>
+                <tbody id="tracking-grid-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary Table — con columna RACIEMSA -->
+        <div class="card grid-full">
+          <div class="card-header">
+            <span class="card-title"><span class="icon">📋</span> Resumen de Operación</span>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Tracto</th>
+                  <th style="text-align:center">V. HUDBAY</th>
+                  <th style="text-align:center">V. SOUTHERN</th>
+                  <th style="text-align:center">V. HIERRO</th>
+                  <th style="text-align:center;color:#0EA5E9;">V. RACIEMSA</th>
+                  <th style="text-align:center">TOTAL</th>
+                  <th style="text-align:center">Días Ruta</th>
+                  <th style="text-align:center">Parados</th>
+                  <th style="text-align:center">Mantenim.</th>
+                  <th style="text-align:center">Operatividad</th>
+                </tr>
+              </thead>
+              <tbody id="seguimiento-resumen-body"></tbody>
+              <tfoot>
+                <tr id="seguimiento-resumen-totals" style="background: rgba(59,130,246,0.08); font-weight: 700;"></tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- PAGE 3: MÉTRICAS Y VUELTAS                                   -->
+      <!-- ============================================================ -->
+      <div id="page-metricas" class="page">
+
+        <!-- Comparativa por mes -->
+        <div class="card grid-full">
+          <div class="card-header">
+            <span class="card-title"><span class="icon">📅</span> Comparativa Mensual — Vueltas por Mes</span>
+          </div>
+          <div class="card-body">
+            <div id="month-comparison-container" class="month-comparison-grid">
+              <!-- Dynamic month cards -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Comparativa mensual chart + Tendencia -->
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><span class="icon">📊</span> Comparativa Mensual</span>
+            </div>
+            <div class="card-body">
+              <div style="position: relative; height: 300px;">
+                <canvas id="chart-comparativa-mensual"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><span class="icon">📈</span> Tendencia por Operación</span>
+            </div>
+            <div class="card-body">
+              <div style="position: relative; height: 300px;">
+                <canvas id="chart-tendencia-mensual"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vueltas del mes + Radar -->
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><span class="icon">📊</span> Vueltas por Unidad — Mes Seleccionado</span>
+            </div>
+            <div class="card-body">
+              <div style="position: relative; height: 300px;">
+                <canvas id="chart-vueltas-metricas"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><span class="icon">🎯</span> Radar de Rendimiento por Unidad</span>
+            </div>
+            <div class="card-body">
+              <div style="max-width: 400px; margin: 0 auto; position: relative;">
+                <canvas id="chart-radar-unidades"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- PAGE 4: ANÁLISIS DE PARADAS                                  -->
+      <!-- ============================================================ -->
+      <div id="page-paradas" class="page">
+
+        <!-- KPIs Paradas -->
+        <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="kpi-card" style="--kpi-color: var(--accent-orange);">
+            <div class="kpi-label">Días Parados</div>
+            <div class="kpi-value" id="paradas-total-parados">—</div>
+            <div class="kpi-detail">Sin conductor disponible</div>
+            <div class="kpi-icon">⏸️</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color: var(--accent-red);">
+            <div class="kpi-label">Días Mantenimiento</div>
+            <div class="kpi-value" id="paradas-total-mant">—</div>
+            <div class="kpi-detail">Mantenimiento + Taller</div>
+            <div class="kpi-icon">🔧</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color: var(--text-muted);">
+            <div class="kpi-label">Sin Asignar</div>
+            <div class="kpi-value" id="paradas-total-sinasignar">—</div>
+            <div class="kpi-detail">Días sin operación asignada</div>
+            <div class="kpi-icon">❓</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color: var(--accent-yellow);">
+            <div class="kpi-label">% Inactividad</div>
+            <div class="kpi-value" id="paradas-pct-inactivo">—</div>
+            <div class="kpi-detail">Del total de días-unidad</div>
+            <div class="kpi-icon">📉</div>
+          </div>
+        </div>
+
+        <!-- Detail Table -->
+        <div class="card grid-full">
+          <div class="card-header">
+            <span class="card-title"><span class="icon">📋</span> Detalle de Paradas por Unidad</span>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Tracto</th>
+                  <th style="text-align:center">Empresa</th>
+                  <th style="text-align:center">Días Ruta</th>
+                  <th style="text-align:center">Parados (P)</th>
+                  <th style="text-align:center">Mantenim. (M/T)</th>
+                  <th style="text-align:center">Sin Asignar</th>
+                  <th style="text-align:center">Total Días</th>
+                  <th style="text-align:center">% Inactividad</th>
+                </tr>
+              </thead>
+              <tbody id="paradas-detail-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><span class="icon">📊</span> Días por Tipo de Estado</span>
+            </div>
+            <div class="card-body">
+              <div style="position: relative; height: 300px;">
+                <canvas id="chart-apiladas-paradas"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><span class="icon">📈</span> % Operatividad por Unidad</span>
+            </div>
+            <div class="card-body">
+              <div style="position: relative; height: 300px;">
+                <canvas id="chart-operatividad-paradas"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card grid-full">
+          <div class="card-header">
+            <span class="card-title"><span class="icon">🍩</span> Distribución General de Tiempo</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="max-width: 350px; margin: 0 auto;">
+              <canvas id="chart-donut-paradas"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script src="data.js"></script>
+  <script src="charts.js"></script>
+  <script src="app.js"></script>
+
+  <!-- ✅ FILTRO POR RUTA — lógica inline, sin tocar app.js -->
+  <script>
+    var _rutaActiva = 'TODAS';
+
+    function filtrarRuta(ruta) {
+      _rutaActiva = ruta;
+
+      // Actualizar botones activos
+      document.querySelectorAll('.route-btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.route === ruta);
+      });
+
+      // Re-renderizar las tarjetas de flota con el filtro aplicado
+      var metricas = getMetricasActuales();
+      if (!metricas) return;
+
+      var unidadesFiltradas = filtrarUnidadesPorRuta(metricas.unidades, ruta);
+
+      // Badge de conteo
+      var countEl = document.getElementById('route-filter-count');
+      var badgeEl = document.getElementById('fleet-filter-badge');
+      if (ruta === 'TODAS') {
+        if (countEl) countEl.textContent = unidadesFiltradas.length + ' unidades';
+        if (badgeEl) badgeEl.textContent = '';
+      } else {
+        if (countEl) countEl.textContent = unidadesFiltradas.length + ' de ' + metricas.unidades.length + ' unidades con ruta ' + ruta;
+        if (badgeEl) badgeEl.textContent = 'Filtrando: ' + ruta + ' (' + unidadesFiltradas.length + ' unidades)';
+      }
+
+      // Renderizar tarjetas filtradas
+      renderFleetStatusFiltrado(unidadesFiltradas);
+
+      // Actualizar KPIs con el subconjunto filtrado
+      actualizarKPIsFiltrados(unidadesFiltradas, metricas.diasEnMes, ruta);
+    }
+
+    function filtrarUnidadesPorRuta(unidades, ruta) {
+      if (ruta === 'TODAS') return unidades;
+
+      // Mapa: qué campo de vueltas corresponde a cada ruta
+      var campoVueltas = {
+        'HUDBAY':   'vueltasHudbay',
+        'SOUTHERN': 'vueltasSouthern',
+        'HIERRO':   'vueltasHierro',
+        'RACIEMSA': 'vueltasRaciemsa',
+      };
+
+      var campo = campoVueltas[ruta];
+      if (!campo) return unidades;
+
+      // Mostrar unidades que tienen AL MENOS 1 vuelta en esa ruta
+      return unidades.filter(function(u) { return (u[campo] || 0) > 0; });
+    }
+
+    function actualizarKPIsFiltrados(unidades, diasEnMes, ruta) {
+      if (ruta === 'TODAS') {
+        // Restaurar KPIs originales — re-renderizar normalmente
+        var metricas = getMetricasActuales();
+        if (metricas) renderResumen(metricas);
+        return;
+      }
+
+      // Calcular totales del subconjunto
+      var totalVueltas  = 0;
+      var diasRuta      = unidades.reduce(function(s,u){ return s + u.diasRuta; }, 0);
+      var diasParados   = unidades.reduce(function(s,u){ return s + u.diasParados + u.diasSinAsignar; }, 0);
+      var diasMant      = unidades.reduce(function(s,u){ return s + u.diasMantenimiento; }, 0);
+      var vueltasH      = unidades.reduce(function(s,u){ return s + u.vueltasHudbay; }, 0);
+      var vueltasS      = unidades.reduce(function(s,u){ return s + u.vueltasSouthern; }, 0);
+      var vueltasA      = unidades.reduce(function(s,u){ return s + u.vueltasHierro; }, 0);
+      var vueltasR      = unidades.reduce(function(s,u){ return s + (u.vueltasRaciemsa||0); }, 0);
+      totalVueltas = vueltasH + vueltasS + vueltasA + vueltasR;
+
+      var totalDias = diasRuta + diasParados + diasMant;
+      var operatividad = totalDias > 0 ? (diasRuta / totalDias * 100).toFixed(1) : '0.0';
+
+      // Solo actualizar los KPIs de vueltas y días, no el de unidades
+      var elTV = document.getElementById('kpi-total-vueltas');
+      var elDR = document.getElementById('kpi-dias-ruta');
+      var elDP = document.getElementById('kpi-dias-parados');
+      var elDM = document.getElementById('kpi-dias-mant');
+      var elOp = document.getElementById('kpi-operatividad');
+      var elH  = document.getElementById('kpi-detail-hudbay');
+      var elSo = document.getElementById('kpi-detail-southern');
+      var elHi = document.getElementById('kpi-detail-hierro');
+      var elRa = document.getElementById('kpi-detail-raciemsa');
+
+      if (elTV) elTV.textContent = totalVueltas;
+      if (elDR) elDR.textContent = diasRuta;
+      if (elDP) elDP.textContent = diasParados;
+      if (elDM) elDM.textContent = diasMant;
+      if (elOp) elOp.textContent = operatividad + '%';
+      if (elH)  elH.textContent  = 'HUDBAY: '   + vueltasH;
+      if (elSo) elSo.textContent = 'SOUTHERN: ' + vueltasS;
+      if (elHi) elHi.textContent = 'HIERRO: '   + vueltasA;
+      if (elRa) elRa.textContent = 'RACIEMSA: ' + vueltasR;
+
+      // KPI de unidades muestra cuántas tienen esa ruta
+      var elU = document.getElementById('kpi-unidades');
+      if (elU) elU.textContent = unidades.length;
+    }
+
+    function renderFleetStatusFiltrado(unidades) {
+      var container = document.getElementById('fleet-status-container');
+      if (!container) return;
+
+      if (unidades.length === 0) {
+        container.innerHTML = '<div style="padding:32px;text-align:center;color:#64748b;width:100%;">Sin unidades con ruta ' + _rutaActiva + ' en este mes.</div>';
+        return;
+      }
+
+      container.innerHTML = unidades.map(function(u) {
+        var raciemsaLine = (u.vueltasRaciemsa || 0) > 0
+          ? '<div style="margin-top:8px;font-size:11px;color:#0EA5E9;font-weight:600;">RACIEMSA: ' + u.vueltasRaciemsa + ' vuelta' + (u.vueltasRaciemsa !== 1 ? 's' : '') + '</div>'
+          : '';
+
+        return '<div class="fleet-unit-card">' +
+          '<div class="fleet-unit-header">' +
+          '<div><div class="fleet-unit-name">' + u.tracto + '</div>' +
+          '<div class="fleet-unit-empresa">' + u.empresa + '</div></div>' +
+          '<span class="badge ' + (u.operatividad >= 70 ? 'badge-green' : u.operatividad >= 50 ? 'badge-yellow' : 'badge-red') + '">' +
+          u.operatividad.toFixed(0) + '% Op.</span>' +
+          '</div>' +
+          '<div class="fleet-unit-stats">' +
+          '<div class="fleet-unit-stat"><div class="fleet-unit-stat-value text-blue">' + u.totalVueltas + '</div><div class="fleet-unit-stat-label">Vueltas</div></div>' +
+          '<div class="fleet-unit-stat"><div class="fleet-unit-stat-value text-green">' + u.diasRuta + '</div><div class="fleet-unit-stat-label">Dias Ruta</div></div>' +
+          '<div class="fleet-unit-stat"><div class="fleet-unit-stat-value text-yellow">' + u.diasParados + '</div><div class="fleet-unit-stat-label">Parados</div></div>' +
+          '<div class="fleet-unit-stat"><div class="fleet-unit-stat-value text-red">' + u.diasMantenimiento + '</div><div class="fleet-unit-stat-label">Mantenim.</div></div>' +
+          '</div>' +
+          raciemsaLine +
+          '<div style="margin-top:12px;"><div class="progress-bar"><div class="progress-fill" style="width:' + u.operatividad + '%"></div></div></div>' +
+          '</div>';
+      }).join('');
+    }
+
+    // Resetear filtro cuando cambia el mes
+    var _origChangeMonth = typeof changeMonth === 'function' ? changeMonth : null;
+    document.addEventListener('DOMContentLoaded', function() {
+      var sel = document.getElementById('month-select');
+      if (sel) {
+        sel.addEventListener('change', function() {
+          // Resetear al cambiar mes
+          _rutaActiva = 'TODAS';
+          document.querySelectorAll('.route-btn').forEach(function(btn) {
+            btn.classList.toggle('active', btn.dataset.route === 'TODAS');
+          });
+          var countEl = document.getElementById('route-filter-count');
+          var badgeEl = document.getElementById('fleet-filter-badge');
+          if (countEl) countEl.textContent = '';
+          if (badgeEl) badgeEl.textContent = '';
+        });
+      }
+    });
+  </script>
+
+</body>
+</html>

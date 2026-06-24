@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="MISAGI Driver Tracking — Seguimiento de asistencia y operaciones de conductores en tiempo real">
+  <title>MISAGI Driver Tracking</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">
+        <div class="logo-fallback">M</div>
+      </div>
+      <div>
+        <h1>MISAGI</h1>
+        <span>Driver Tracking</span>
+      </div>
+    </div>
+
+    <ul class="sidebar-nav">
+      <li><a class="active" data-page="dashboard" onclick="showPage('dashboard')">
+          <span class="nav-icon">📊</span> <span>Dashboard</span>
+        </a></li>
+      <li><a data-page="conductores" onclick="showPage('conductores')">
+          <span class="nav-icon">👤</span> <span>Conductores</span>
+        </a></li>
+      <li><a data-page="reportes" onclick="showPage('reportes')">
+          <span class="nav-icon">📋</span> <span>Reportes Mensuales</span>
+        </a></li>
+      <li><a data-page="calendario" onclick="showPage('calendario')">
+          <span class="nav-icon">📅</span> <span>Calendario</span>
+        </a></li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <div class="update-info">
+        <span class="status-dot"></span> Conectado a Google Sheets<br>
+        <span id="lastUpdate">Cargando...</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- ============ DASHBOARD ============ -->
+    <div id="page-dashboard" class="section-page active">
+      <div class="page-header">
+        <h2>📊 Dashboard General</h2>
+        <p>Resumen en tiempo real — MISAGI Servicios Generales</p>
+      </div>
+
+      <div id="loading" class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Conectando con Google Sheets...</p>
+      </div>
+
+      <div id="dashboard-content" style="display:none;">
+        <div class="kpi-row" id="kpiRow"></div>
+        <div class="legend" id="legend"></div>
+        <div class="driver-grid" id="driverGrid"></div>
+        <div class="charts-row">
+          <div class="chart-card">
+            <h3>🍩 Distribución por Operación</h3>
+            <div class="chart-container"><canvas id="chartDonut"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h3>📈 Días Trabajados por Conductor</h3>
+            <div class="chart-container"><canvas id="chartBar"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CONDUCTORES ============ -->
+    <div id="page-conductores" class="section-page">
+      <div class="page-header">
+        <h2>👤 Detalle de Conductor</h2>
+        <p>Selecciona un conductor para ver su historial completo</p>
+      </div>
+      <div class="report-controls">
+        <select id="selectDriver" onchange="showDriverDetail()">
+          <option value="">— Seleccionar conductor —</option>
+        </select>
+      </div>
+      <div id="driverDetail" class="detail-panel"></div>
+      <div class="chart-card" id="driverChartCard" style="display:none;">
+        <h3>📊 Distribución de operaciones</h3>
+        <div class="chart-container"><canvas id="chartDriverDetail"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ============ REPORTES ============ -->
+    <div id="page-reportes" class="section-page">
+      <div class="page-header">
+        <h2>📋 Reportes Mensuales</h2>
+        <p>Tabla detallada de asistencia por mes</p>
+      </div>
+      <div class="report-controls">
+        <select id="selectMonth" onchange="generateReport()">
+          <option value="">— Seleccionar mes —</option>
+        </select>
+        <button class="primary" onclick="window.print()">🖨️ Imprimir</button>
+      </div>
+      <div id="reportSummary" class="summary-text" style="display:none;"></div>
+      <div id="reportTable" class="report-table-wrapper"></div>
+    </div>
+
+    <!-- ============ CALENDARIO ============ -->
+    <div id="page-calendario" class="section-page">
+      <div class="page-header">
+        <h2>📅 Vista Calendario</h2>
+        <p>Calendario interactivo con operaciones por conductor</p>
+      </div>
+      <div class="calendar-controls">
+        <select id="calendarDriver" onchange="renderCalendar()">
+          <option value="">— Seleccionar conductor —</option>
+        </select>
+        <select id="calendarMonth" onchange="renderCalendar()">
+          <option value="">— Seleccionar mes —</option>
+        </select>
+      </div>
+      <div class="legend" id="calendarLegend"></div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

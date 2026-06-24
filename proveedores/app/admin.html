@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MISAGI S.A.C. — Panel Administrador</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles-tables.css" />
+  <link rel="stylesheet" href="styles-admin.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>" />
+</head>
+<body>
+
+<div class="dashboard-layout" id="adminLayout" style="visibility:hidden">
+
+  <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+  <!-- ================================================================
+       SIDEBAR ADMIN
+       ================================================================ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__header">
+      <div class="sidebar__brand">
+        <div class="sidebar__brand-icon" style="background:linear-gradient(135deg,#dc3545,#a71d2a);" aria-hidden="true">⚙️</div>
+        <div>
+          <div class="sidebar__brand-name">MISAGI S.A.C.</div>
+          <div class="sidebar__brand-sub" style="color:#f88;">Panel Admin</div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar__nav" role="menubar">
+      <a class="nav-item active" data-section="empresas"    href="#empresas"    role="menuitem"><span class="nav-item__icon">🏢</span><span>Empresas</span></a>
+      <a class="nav-item"        data-section="facturas"    href="#facturas"    role="menuitem"><span class="nav-item__icon">🧾</span><span>Facturación</span></a>
+      <a class="nav-item"        data-section="config-docs" href="#config-docs" role="menuitem"><span class="nav-item__icon">📋</span><span>Config. Documentos</span></a>
+      <div class="divider" style="margin:0.5rem 0;"></div>
+      <button class="nav-item nav-item--danger" id="logoutBtn" type="button">
+        <span class="nav-item__icon">🔐</span><span>Cerrar Sesión</span>
+      </button>
+    </nav>
+
+    <div class="sidebar__footer">
+      <div class="sidebar__user">
+        <div class="sidebar__avatar" id="userAvatar" style="background:linear-gradient(135deg,#dc3545,#a71d2a);">A</div>
+        <div style="overflow:hidden;">
+          <div style="font-size:0.78rem;color:#f88;font-weight:700;">ADMINISTRADOR</div>
+          <div class="sidebar__user-email" id="userEmail">cargando...</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================================================================
+       CONTENIDO
+       ================================================================ -->
+  <div class="main-content">
+
+    <header class="topbar">
+      <button class="hamburger" id="hamburgerBtn" aria-label="Menú" aria-expanded="false">☰</button>
+      <span class="topbar__title">Admin — MISAGI S.A.C.</span>
+      <span style="width:32px"></span>
+    </header>
+
+    <!-- ---- SECCIÓN: Empresas ---- -->
+    <section class="page-content" id="section-empresas">
+      <div class="page-header">
+        <h1 class="page-header__title">Empresas Proveedoras</h1>
+        <p class="page-header__subtitle">Gestión y verificación de empresas registradas en el portal.</p>
+      </div>
+
+      <div id="empresasLoader" style="display:none;justify-content:center;padding:2rem;">
+        <span style="color:var(--text-muted);">⏳ Cargando empresas...</span>
+      </div>
+
+      <div class="glass-card table-wrapper">
+        <table class="data-table" aria-label="Empresas proveedoras">
+          <thead>
+            <tr>
+              <th>RUC / Razón Social</th>
+              <th>Representante</th>
+              <th>Contacto</th>
+              <th>Registro</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="empresasBody"></tbody>
+        </table>
+        <div id="empresasEmpty" class="empty-state" style="display:none;">
+          <div class="empty-state__icon">🏢</div>
+          <div class="empty-state__title">Sin empresas registradas</div>
+          <div class="empty-state__desc">Los proveedores se registrarán a través del portal.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         SECCIÓN: FACTURACIÓN (ADMIN)
+         ================================================================ -->
+    <section class="page-content" id="section-facturas" style="display:none">
+      <div class="page-header">
+        <h1 class="page-header__title">Facturación — Todas las Empresas</h1>
+        <p class="page-header__subtitle">Revisa facturas pendientes, aprueba pagos y sube vouchers.</p>
+      </div>
+
+      <div class="table-toolbar">
+        <div class="factura-tabs" role="tablist">
+          <button class="factura-tab active" data-filtro-admin="todos"       role="tab">Todas</button>
+          <button class="factura-tab"        data-filtro-admin="pendiente"   role="tab">Pendientes</button>
+          <button class="factura-tab"        data-filtro-admin="en_revision" role="tab">En Revisión</button>
+          <button class="factura-tab"        data-filtro-admin="pagado"      role="tab">Pagadas</button>
+        </div>
+      </div>
+
+      <div id="adminFacturasLoader" style="display:none;justify-content:center;padding:2rem;">
+        <span style="color:var(--text-muted);">⏳ Cargando facturas...</span>
+      </div>
+
+      <div class="glass-card table-wrapper">
+        <table class="data-table" aria-label="Facturas de todas las empresas">
+          <thead>
+            <tr>
+              <th>N° Factura</th>
+              <th>Empresa</th>
+              <th>Monto</th>
+              <th>Vencimiento</th>
+              <th>Estado</th>
+              <th>Archivos</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="adminFacturasBody"></tbody>
+        </table>
+        <div id="adminFacturasEmpty" class="empty-state" style="display:none;">
+          <div class="empty-state__icon">🧾</div>
+          <div class="empty-state__title">Sin facturas</div>
+          <div class="empty-state__desc">Los proveedores aún no han subido facturas.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         SECCIÓN: CONFIGURACIÓN DE DOCUMENTOS
+         ================================================================ -->
+    <section class="page-content" id="section-config-docs" style="display:none">
+      <div class="page-header">
+        <h1 class="page-header__title">Configuración de Documentos</h1>
+        <p class="page-header__subtitle">
+          Define qué documentos debe subir el proveedor por cada tipo de vehículo.
+          Los cambios aplican inmediatamente para nuevos registros.
+        </p>
+      </div>
+
+      <!-- Tabs de tipos de vehículo -->
+      <div class="type-tabs" id="typeTabs" role="tablist">
+        <button class="type-tab active" data-tipo="tracto"      role="tab" aria-selected="true">🚛 Tracto</button>
+        <button class="type-tab"        data-tipo="encapsulado" role="tab">📦 Encapsulado</button>
+        <button class="type-tab"        data-tipo="plataforma"  role="tab">🏗️ Plataforma</button>
+        <button class="type-tab"        data-tipo="otro"        role="tab">🔧 Otro</button>
+      </div>
+
+      <!-- Panel de configuración de documentos -->
+      <div class="glass-card" style="padding:1.5rem;" id="configDocsPanel">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:0.8rem;">
+          <div>
+            <div style="font-size:1rem;font-weight:700;color:var(--text-primary);" id="configTipoLabel">Tracto</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);">Lista de documentos requeridos u opcionales</div>
+          </div>
+          <div style="display:flex;gap:0.8rem;flex-wrap:wrap;">
+            <button class="btn btn-ghost" id="btnAddDoc" type="button">+ Agregar documento</button>
+            <button class="btn btn-primary" id="btnSaveConfig" type="button">💾 Guardar cambios</button>
+          </div>
+        </div>
+
+        <!-- Lista de documentos configurados -->
+        <div id="docsList"></div>
+
+        <!-- Estado de guardado -->
+        <div id="saveStatus" style="display:none;margin-top:1rem;"></div>
+
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- ================================================================
+     MODAL — AGREGAR / EDITAR DOCUMENTO REQUERIDO
+     ================================================================ -->
+<div class="modal-backdrop" id="modalDocBackdrop" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal__header">
+      <h2 class="modal__title" id="modalDocTitulo">Nuevo Documento</h2>
+      <button class="modal__close" id="btnCerrarModalDoc">✕</button>
+    </div>
+    <div class="modal__body">
+      <div class="form-grid" style="grid-template-columns:1fr;">
+
+        <div class="form-group">
+          <label class="form-label" for="doc_nombre">Nombre del documento <span class="required">*</span></label>
+          <input class="form-input" type="text" id="doc_nombre"
+            placeholder="Ej: Certificado de Inspección, Póliza de Seguro..." maxlength="80" />
+          <span class="form-error" id="err-doc_nombre"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="doc_id">ID interno (sin espacios) <span class="required">*</span></label>
+          <input class="form-input" type="text" id="doc_id"
+            placeholder="cert_inspeccion, poliza_seguro..." maxlength="40"
+            style="font-family:monospace;" />
+          <span class="form-hint">Solo letras, números y guiones bajos. Se usa como clave en Firestore.</span>
+          <span class="form-error" id="err-doc_id"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-check" for="doc_requerido">
+            <input type="checkbox" id="doc_requerido" checked />
+            <span>Documento <strong>requerido</strong> (el proveedor no puede omitirlo)</span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="form-check" for="doc_con_vencimiento">
+            <input type="checkbox" id="doc_con_vencimiento" checked />
+            <span>Tiene <strong>fecha de vencimiento</strong></span>
+          </label>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button class="btn btn-ghost"   id="btnCancelarDoc" type="button">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardarDoc"  type="button">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     MODAL — VER DETALLE EMPRESA
+     ================================================================ -->
+<div class="modal-backdrop" id="modalEmpresaBackdrop" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal__header">
+      <h2 class="modal__title" id="modalEmpresaTitulo">Detalle de Empresa</h2>
+      <button class="modal__close" id="btnCerrarModalEmpresa">✕</button>
+    </div>
+    <div class="modal__body" id="modalEmpresaBody" style="font-size:0.88rem;"></div>
+    <div class="modal__footer" id="modalEmpresaFooter"></div>
+  </div>
+</div>
+
+<!-- ================================================================
+     SCRIPTS
+     ================================================================ -->
+<script type="module">
+  import { auth }   from "./firebase-config.js";
+  import {
+    getUserProfile, getAllEmpresas, getAllUsuarios,
+    getConfigDocumentos, saveConfigDocumentos,
+    setEstadoEmpresa, updateFactura, DOCS_DEFAULT
+  } from "./js/firestore.js";
+  import { formatCurrency, formatDate, escapeHtml, initSidebar, showToast } from "./js/ui.js";
+  import { router }     from "./js/router.js";
+  import { signOut, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  /* ----------------------------------------------------------------
+     GUARD: solo admins
+     ---------------------------------------------------------------- */
+  let currentUid = null;
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.replace("index.html"); return; }
+
+    const perfil = await getUserProfile(user.uid);
+    if (perfil?.rol !== "admin") {
+      // Si no es admin, redirigir al portal de proveedor
+      window.location.replace(perfil?.id_empresa ? "dashboard.html" : "registro-empresa.html");
+      return;
+    }
+
+    currentUid = user.uid;
+    document.getElementById("adminLayout").style.visibility = "visible";
+    document.getElementById("userEmail").textContent  = user.email ?? "";
+    document.getElementById("userAvatar").textContent = (user.email ?? "A").charAt(0).toUpperCase();
+    cargarEmpresas();
+  });
+
+  /* ----------------------------------------------------------------
+     CERRAR SESIÓN
+     ---------------------------------------------------------------- */
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await signOut(auth);
+    window.location.replace("index.html");
+  });
+
+  /* ================================================================
+     SECCIÓN: EMPRESAS
+     ================================================================ */
+  async function cargarEmpresas() {
+    document.getElementById("empresasLoader").style.display = "flex";
+    try {
+      const empresas = await getAllEmpresas();
+      renderEmpresas(empresas);
+    } catch (err) {
+      console.error(err);
+      showToast("Error al cargar empresas.", "error");
+    } finally {
+      document.getElementById("empresasLoader").style.display = "none";
+    }
+  }
+
+  function renderEmpresas(lista) {
+    const tbody = document.getElementById("empresasBody");
+    const empty = document.getElementById("empresasEmpty");
+    if (!lista.length) {
+      tbody.innerHTML = "";
+      empty.style.display = "block";
+      return;
+    }
+    empty.style.display = "none";
+
+    const estadoBadge = (e) => ({
+      activo:                  `<span class="badge badge--success">Activo</span>`,
+      pendiente_verificacion:  `<span class="badge badge--warning">Pendiente</span>`,
+      rechazado:               `<span class="badge badge--danger">Rechazado</span>`,
+    }[e] ?? `<span class="badge badge--info">${escapeHtml(e)}</span>`);
+
+    tbody.innerHTML = lista.map(e => `
+      <tr>
+        <td>
+          <div class="cell-name">${escapeHtml(e.razon_social ?? "—")}</div>
+          <div class="cell-sub">RUC: ${escapeHtml(e.ruc ?? "—")}</div>
+        </td>
+        <td>
+          ${escapeHtml(e.representante?.nombres ?? "—")}
+          <div class="cell-sub">${escapeHtml(e.representante?.cargo ?? "")}</div>
+        </td>
+        <td>
+          ${escapeHtml(e.telefono ?? "—")}
+          <div class="cell-sub">${escapeHtml(e.email ?? "")}</div>
+        </td>
+        <td style="font-size:0.8rem;">${formatDate(e.fecha_creacion)}</td>
+        <td>${estadoBadge(e.estado)}</td>
+        <td>
+          <div class="row-actions">
+            <button class="btn-icon" title="Ver detalle" data-action="ver" data-id="${e.id}">👁️</button>
+            ${e.estado !== 'activo'
+              ? `<button class="btn-icon" title="Aprobar" data-action="aprobar" data-id="${e.id}" style="color:#5dd896;">✅</button>`
+              : `<button class="btn-icon btn-icon--danger" title="Rechazar" data-action="rechazar" data-id="${e.id}">❌</button>`
+            }
+          </div>
+        </td>
+      </tr>
+    `).join("");
+
+    // Guardar lista para el modal de detalle
+    window._empresasList = lista;
+  }
+
+  // Delegación de eventos en la tabla de empresas
+  document.getElementById("empresasBody")?.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-action]");
+    if (!btn) return;
+    const { action, id } = btn.dataset;
+    if (action === "ver")     abrirDetalleEmpresa(id);
+    if (action === "aprobar") await cambiarEstadoEmpresa(id, "activo");
+    if (action === "rechazar") await cambiarEstadoEmpresa(id, "rechazado");
+  });
+
+  async function cambiarEstadoEmpresa(id, estado) {
+    try {
+      await setEstadoEmpresa(id, estado);
+      showToast(`Empresa ${estado === 'activo' ? 'aprobada' : 'rechazada'} correctamente.`,
+        estado === 'activo' ? 'success' : 'error');
+      cargarEmpresas();
+    } catch {
+      showToast("Error al cambiar estado.", "error");
+    }
+  }
+
+  function abrirDetalleEmpresa(id) {
+    const e = (window._empresasList ?? []).find(x => x.id === id);
+    if (!e) return;
+
+    document.getElementById("modalEmpresaTitulo").textContent = e.razon_social ?? "Empresa";
+
+    const row = (label, val) => `
+      <div class="review-item">
+        <span>${escapeHtml(label)}</span>
+        <strong>${escapeHtml(String(val ?? "—"))}</strong>
+      </div>`;
+
+    document.getElementById("modalEmpresaBody").innerHTML = `
+      <div class="review-section">
+        <h3 class="review-section__title">🏢 Datos de la Empresa</h3>
+        <div class="review-grid">
+          ${row("RUC",             e.ruc)}
+          ${row("Razón Social",    e.razon_social)}
+          ${row("Nom. Comercial",  e.nombre_comercial)}
+          ${row("Dirección",       e.direccion)}
+          ${row("Departamento",    e.departamento)}
+          ${row("Ciudad",          e.ciudad)}
+          ${row("Teléfono",        e.telefono)}
+          ${row("Email",           e.email)}
+        </div>
+      </div>
+      <div class="review-section">
+        <h3 class="review-section__title">🏦 Datos Bancarios</h3>
+        <div class="review-grid">
+          ${row("Banco",           e.datos_bancarios?.banco)}
+          ${row("Moneda",          e.datos_bancarios?.moneda)}
+          ${row("N° Cuenta",       e.datos_bancarios?.numero_cuenta)}
+          ${row("CCI",             e.datos_bancarios?.cci)}
+          ${row("Cta. Detracción", e.datos_bancarios?.cuenta_detraccion)}
+          ${row("Titular",         e.datos_bancarios?.titular)}
+        </div>
+      </div>
+      <div class="review-section">
+        <h3 class="review-section__title">👤 Representante Legal</h3>
+        <div class="review-grid">
+          ${row("Nombres",  e.representante?.nombres)}
+          ${row("DNI",      e.representante?.dni)}
+          ${row("Cargo",    e.representante?.cargo)}
+          ${row("Teléfono", e.representante?.telefono)}
+          ${row("Email",    e.representante?.email)}
+        </div>
+      </div>
+    `;
+
+    // Footer con botones de acción según estado
+    const footer = document.getElementById("modalEmpresaFooter");
+    footer.innerHTML = `
+      <button class="btn btn-ghost" id="btnCerrarDetalleEmpresa">Cerrar</button>
+      ${e.estado !== 'activo'
+        ? `<button class="btn btn-primary" data-action="aprobar" data-id="${e.id}">✅ Aprobar</button>`
+        : `<button class="btn btn-danger"  data-action="rechazar" data-id="${e.id}">❌ Rechazar</button>`
+      }
+    `;
+
+    footer.querySelector("[data-action]")?.addEventListener("click", async (ev) => {
+      const { action, id } = ev.currentTarget.dataset;
+      cerrarModalEmpresa();
+      await cambiarEstadoEmpresa(id, action === "aprobar" ? "activo" : "rechazado");
+    });
+    document.getElementById("btnCerrarDetalleEmpresa")?.addEventListener("click", cerrarModalEmpresa);
+
+    document.getElementById("modalEmpresaBackdrop").classList.add("open");
+  }
+
+  function cerrarModalEmpresa() {
+    document.getElementById("modalEmpresaBackdrop").classList.remove("open");
+  }
+  document.getElementById("btnCerrarModalEmpresa")?.addEventListener("click", cerrarModalEmpresa);
+  document.getElementById("modalEmpresaBackdrop")?.addEventListener("click", (e) => {
+    if (e.target.id === "modalEmpresaBackdrop") cerrarModalEmpresa();
+  });
+
+  /* ================================================================
+     SECCIÓN: CONFIG DOCUMENTOS
+     ================================================================ */
+  let tipoActual    = "tracto";
+  let docsActuales  = [];   // copia editable del array de docs
+  let editDocIndex  = null; // null = nuevo, number = edición
+
+  async function cargarConfigTipo(tipo) {
+    tipoActual = tipo;
+    const labels = { tracto:"Tracto", encapsulado:"Encapsulado", plataforma:"Plataforma", otro:"Otro" };
+    document.getElementById("configTipoLabel").textContent = labels[tipo] ?? tipo;
+
+    try {
+      docsActuales = JSON.parse(JSON.stringify(await getConfigDocumentos(tipo))); // deep clone
+      renderDocsList();
+    } catch {
+      showToast("Error al cargar config.", "error");
+    }
+  }
+
+  function renderDocsList() {
+    const container = document.getElementById("docsList");
+    if (!docsActuales.length) {
+      container.innerHTML = `<div class="empty-state" style="padding:1.5rem;">
+        <div class="empty-state__icon" style="font-size:2rem;">📋</div>
+        <div class="empty-state__desc">Sin documentos. Usa "+ Agregar documento" para comenzar.</div>
+      </div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="docs-config-list">
+        ${docsActuales.map((d, i) => `
+          <div class="doc-config-item" data-index="${i}">
+            <div class="doc-config-item__drag" aria-hidden="true">⠿</div>
+            <div class="doc-config-item__info">
+              <span class="doc-config-item__name">${escapeHtml(d.nombre)}</span>
+              <span class="doc-config-item__id">${escapeHtml(d.id)}</span>
+            </div>
+            <div class="doc-config-item__badges">
+              <span class="badge ${d.requerido ? 'badge--info' : 'badge--warning'}"
+                style="cursor:pointer;" title="Clic para cambiar"
+                data-toggle="requerido" data-index="${i}">
+                ${d.requerido ? 'Requerido' : 'Opcional'}
+              </span>
+              <span class="badge ${d.con_vencimiento ? 'badge--success' : 'badge--info'}"
+                style="cursor:pointer;" title="Clic para cambiar"
+                data-toggle="vencimiento" data-index="${i}">
+                ${d.con_vencimiento ? '📅 Con venc.' : 'Sin venc.'}
+              </span>
+            </div>
+            <div class="doc-config-item__actions">
+              <button class="btn-icon" title="Editar" data-action="editar-doc" data-index="${i}">✏️</button>
+              <button class="btn-icon btn-icon--danger" title="Eliminar" data-action="eliminar-doc" data-index="${i}">🗑️</button>
+            </div>
+          </div>
+        `).join("")}
+      </div>`;
+
+    // Eventos de toggle y acciones
+    container.querySelectorAll("[data-toggle]").forEach(el => {
+      el.addEventListener("click", () => {
+        const i = parseInt(el.dataset.index);
+        if (el.dataset.toggle === "requerido")   docsActuales[i].requerido    = !docsActuales[i].requerido;
+        if (el.dataset.toggle === "vencimiento") docsActuales[i].con_vencimiento = !docsActuales[i].con_vencimiento;
+        renderDocsList();
+      });
+    });
+
+    container.querySelectorAll("[data-action]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const i = parseInt(btn.dataset.index);
+        if (btn.dataset.action === "editar-doc")   abrirModalDoc(i);
+        if (btn.dataset.action === "eliminar-doc") {
+          docsActuales.splice(i, 1);
+          renderDocsList();
+        }
+      });
+    });
+  }
+
+  // Tabs
+  document.getElementById("typeTabs")?.addEventListener("click", (e) => {
+    const tab = e.target.closest("[data-tipo]");
+    if (!tab) return;
+    document.querySelectorAll(".type-tab").forEach(t => {
+      t.classList.toggle("active", t === tab);
+      t.setAttribute("aria-selected", t === tab ? "true" : "false");
+    });
+    cargarConfigTipo(tab.dataset.tipo);
+  });
+
+  // Guardar config
+  document.getElementById("btnSaveConfig")?.addEventListener("click", async () => {
+    const btn = document.getElementById("btnSaveConfig");
+    const status = document.getElementById("saveStatus");
+    btn.disabled = true; btn.textContent = "Guardando...";
+    try {
+      const labels = { tracto:"Tracto", encapsulado:"Encapsulado", plataforma:"Plataforma", otro:"Otro" };
+      await saveConfigDocumentos(tipoActual, labels[tipoActual], docsActuales, currentUid);
+      status.innerHTML = `<span style="color:#5dd896;">✅ Guardado correctamente. Los proveedores verán esta configuración al registrar nuevos vehículos.</span>`;
+      status.style.display = "block";
+      showToast("Configuración guardada.", "success");
+      setTimeout(() => { status.style.display = "none"; }, 4000);
+    } catch {
+      showToast("Error al guardar.", "error");
+    } finally {
+      btn.disabled = false; btn.textContent = "💾 Guardar cambios";
+    }
+  });
+
+  // Agregar documento
+  document.getElementById("btnAddDoc")?.addEventListener("click", () => abrirModalDoc(null));
+
+  /* ---- Modal de documento ---- */
+  function abrirModalDoc(index) {
+    editDocIndex = index;
+    const titulo = document.getElementById("modalDocTitulo");
+    document.getElementById("doc_nombre").value = "";
+    document.getElementById("doc_id").value     = "";
+    document.getElementById("doc_requerido").checked      = true;
+    document.getElementById("doc_con_vencimiento").checked = true;
+    document.getElementById("err-doc_nombre").textContent = "";
+    document.getElementById("err-doc_id").textContent     = "";
+
+    if (index !== null) {
+      const d = docsActuales[index];
+      titulo.textContent = "Editar Documento";
+      document.getElementById("doc_nombre").value              = d.nombre;
+      document.getElementById("doc_id").value                  = d.id;
+      document.getElementById("doc_requerido").checked         = d.requerido;
+      document.getElementById("doc_con_vencimiento").checked   = d.con_vencimiento;
+      document.getElementById("doc_id").readOnly               = true;
+    } else {
+      titulo.textContent = "Nuevo Documento";
+      document.getElementById("doc_id").readOnly = false;
+      // Auto-generar ID al escribir nombre
+      document.getElementById("doc_nombre").oninput = (e) => {
+        document.getElementById("doc_id").value = e.target.value
+          .toLowerCase().trim()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+          .replace(/[^a-z0-9]+/g, "_")
+          .replace(/^_|_$/g,"");
+      };
+    }
+    document.getElementById("modalDocBackdrop").classList.add("open");
+    document.getElementById("doc_nombre").focus();
+  }
+
+  function cerrarModalDoc() {
+    document.getElementById("modalDocBackdrop").classList.remove("open");
+    document.getElementById("doc_nombre").oninput = null;
+    editDocIndex = null;
+  }
+
+  document.getElementById("btnCerrarModalDoc")?.addEventListener("click", cerrarModalDoc);
+  document.getElementById("btnCancelarDoc")?.addEventListener("click", cerrarModalDoc);
+  document.getElementById("modalDocBackdrop")?.addEventListener("click", (e) => {
+    if (e.target.id === "modalDocBackdrop") cerrarModalDoc();
+  });
+
+  document.getElementById("btnGuardarDoc")?.addEventListener("click", () => {
+    const nombre = document.getElementById("doc_nombre").value.trim();
+    const id     = document.getElementById("doc_id").value.trim();
+    const errN   = document.getElementById("err-doc_nombre");
+    const errI   = document.getElementById("err-doc_id");
+    let ok = true;
+
+    if (!nombre) { errN.textContent = "Ingresa el nombre del documento."; ok = false; }
+    else errN.textContent = "";
+
+    if (!id || !/^[a-z0-9_]+$/.test(id)) {
+      errI.textContent = "ID inválido. Solo letras minúsculas, números y guiones bajos.";
+      ok = false;
+    } else {
+      // Verificar ID único (excepto cuando editamos el mismo)
+      const duplicado = docsActuales.some((d, i) => d.id === id && i !== editDocIndex);
+      if (duplicado) { errI.textContent = "Ya existe un documento con ese ID."; ok = false; }
+      else errI.textContent = "";
+    }
+
+    if (!ok) return;
+
+    const docData = {
+      id,
+      nombre,
+      requerido:       document.getElementById("doc_requerido").checked,
+      con_vencimiento: document.getElementById("doc_con_vencimiento").checked,
+      orden:           editDocIndex !== null ? docsActuales[editDocIndex].orden : docsActuales.length + 1,
+    };
+
+    if (editDocIndex !== null) {
+      docsActuales[editDocIndex] = docData;
+    } else {
+      docsActuales.push(docData);
+    }
+
+    cerrarModalDoc();
+    renderDocsList();
+  });
+
+  /* ---- Router y Sidebar ---- */
+  const SECTIONS = ["empresas", "facturas", "config-docs"];
+  router(SECTIONS, async (sec) => {
+    if (sec === "empresas")    cargarEmpresas();
+    if (sec === "facturas")    cargarAdminFacturas();
+    if (sec === "config-docs") cargarConfigTipo(tipoActual);
+  });
+  initSidebar();
+
+  /* ================================================================
+     SECCIÓN ADMIN: FACTURAS
+     ================================================================ */
+  let todasFacturasAdmin = [];
+  let empresasMap        = {};
+
+  async function cargarAdminFacturas() {
+    document.getElementById("adminFacturasLoader").style.display = "flex";
+    try {
+      const empresas = await getAllEmpresas();
+      empresasMap = Object.fromEntries(empresas.map(e => [e.id, e.razon_social ?? e.ruc ?? e.id]));
+
+      const { getFacturas } = await import("./js/firestore.js");
+      const resultados = await Promise.all(
+        empresas.map(e => getFacturas(e.id).then(fs => fs.map(f => ({ ...f, _empresa: empresasMap[e.id] }))))
+      );
+      todasFacturasAdmin = resultados.flat().sort((a, b) => {
+        const ta = a.tiempos?.fecha_carga?.toDate?.() ?? new Date(0);
+        const tb = b.tiempos?.fecha_carga?.toDate?.() ?? new Date(0);
+        return tb - ta;
+      });
+      renderAdminFacturas(todasFacturasAdmin);
+    } catch (err) {
+      console.error(err);
+      showToast("Error al cargar facturas.", "error");
+    } finally {
+      document.getElementById("adminFacturasLoader").style.display = "none";
+    }
+  }
+
+  function renderAdminFacturas(lista) {
+    const tbody = document.getElementById("adminFacturasBody");
+    const empty = document.getElementById("adminFacturasEmpty");
+    if (!lista.length) {
+      tbody.innerHTML = ""; empty.style.display = "block"; return;
+    }
+    empty.style.display = "none";
+
+    const estadoBadge = (e) => ({
+      pendiente:   `<span class="badge badge--warning">⏳ Pendiente</span>`,
+      en_revision: `<span class="badge badge--info">🔍 En revisión</span>`,
+      pagado:      `<span class="badge badge--success">✅ Pagado</span>`,
+      vencido:     `<span class="badge badge--danger">🔴 Vencido</span>`,
+    }[e] ?? `<span class="badge badge--info">${escapeHtml(e)}</span>`);
+
+    const fmtVenc = (f) => {
+      const fv = f.tiempos?.fecha_vencimiento;
+      if (!fv) return "—";
+      const d    = fv?.toDate ? fv.toDate() : new Date(fv);
+      const dias = Math.floor((d - new Date()) / (1000 * 60 * 60 * 24));
+      if (f.estado === "pagado") return `<span class="expiry-badge expiry-badge--ok">✅ ${formatDate(fv)}</span>`;
+      if (dias < 0)   return `<span class="expiry-badge expiry-badge--expired">🔴 ${formatDate(fv)}</span>`;
+      if (dias <= 7)  return `<span class="expiry-badge expiry-badge--warning">🟡 ${formatDate(fv)}</span>`;
+      return `<span class="expiry-badge expiry-badge--ok">🟢 ${formatDate(fv)}</span>`;
+    };
+
+    tbody.innerHTML = lista.map(f => `
+      <tr>
+        <td>
+          <div class="cell-name">${escapeHtml(f.numero_factura ?? "—")}</div>
+          <div class="cell-sub">${formatDate(f.tiempos?.fecha_carga)}</div>
+        </td>
+        <td><div style="font-size:0.82rem;color:var(--text-primary);">${escapeHtml(f._empresa ?? "—")}</div></td>
+        <td style="font-weight:700;color:var(--text-primary);">
+          ${escapeHtml(formatCurrency(parseFloat(f.monto_total ?? 0), f.moneda ?? "PEN"))}
+        </td>
+        <td>${fmtVenc(f)}</td>
+        <td>${estadoBadge(f.estado)}</td>
+        <td>
+          ${f.archivos?.pdf_url ? `<a href="${f.archivos.pdf_url}" target="_blank" class="btn-icon" title="PDF">📄</a>` : ""}
+          ${f.archivos?.xml_url ? `<a href="${f.archivos.xml_url}" target="_blank" class="btn-icon" title="XML">📋</a>` : ""}
+        </td>
+        <td>
+          <div class="row-actions">
+            ${f.estado !== "pagado"
+              ? `<button class="btn-icon" style="color:#5dd896;" title="Marcar pagado"
+                   data-action-fact="pagar" data-id="${f.id}">✅</button>
+                 <button class="btn-icon" title="Marcar en revisión"
+                   data-action-fact="revision" data-id="${f.id}">🔍</button>`
+              : ""}
+          </div>
+        </td>
+      </tr>
+    `).join("");
+
+    tbody.querySelectorAll("[data-action-fact]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const nuevoEstado = btn.dataset.actionFact === "pagar" ? "pagado" : "en_revision";
+        try {
+          await updateFactura(btn.dataset.id, {
+            estado: nuevoEstado,
+            ...(nuevoEstado === "pagado" ? { "auditoria_pago.fecha_pago": new Date() } : {}),
+          });
+          showToast(`Factura marcada como ${nuevoEstado}.`, "success");
+          await cargarAdminFacturas();
+        } catch { showToast("Error al actualizar.", "error"); }
+      });
+    });
+  }
+
+  document.querySelectorAll("[data-filtro-admin]").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll("[data-filtro-admin]").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      const f = tab.dataset.filtroAdmin;
+      renderAdminFacturas(f === "todos" ? todasFacturasAdmin : todasFacturasAdmin.filter(x => x.estado === f));
+    });
+  });
+
+  // Cargar config inicial al entrar
+  cargarConfigTipo("tracto");
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { cerrarModalDoc(); cerrarModalEmpresa(); }
+  });
+</script>
+
+</body>
+</html>

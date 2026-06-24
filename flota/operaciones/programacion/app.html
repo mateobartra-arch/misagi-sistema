@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MISAGI — Programación de Vehículos v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0d1b2a;--navy2:#112235;--blue:#1e4d8c;--blue-mid:#1a6bbd;--blue-lt:#2196f3;
+  --accent:#00b4d8;--accent2:#0077b6;--white:#f0f4f8;--gray:#8899aa;--gray2:#4a6080;
+  --success:#00c896;--warning:#f4a800;--danger:#e63946;--servosa:#e63946;
+  --card-bg:rgba(26,48,80,.72);--glass:rgba(255,255,255,.05);
+  --border:rgba(0,180,216,.22);--border2:rgba(0,180,216,.12);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Exo 2',sans-serif;background:var(--navy);color:var(--white);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 20% 20%,rgba(30,77,140,.35) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(0,119,182,.2) 0%,transparent 60%);pointer-events:none;z-index:0;}
+header{position:sticky;top:0;z-index:100;background:rgba(13,27,42,.97);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:62px;gap:10px;}
+.logo-block{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.logo-badge{background:linear-gradient(135deg,var(--blue),var(--blue-mid));border:1px solid var(--accent);border-radius:8px;padding:5px 13px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:17px;letter-spacing:2px;color:#fff;box-shadow:0 0 14px rgba(0,180,216,.3);}
+.logo-sub{font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;font-weight:500;}
+.hdr-date{font-size:11px;color:var(--gray);flex-shrink:0;}
+.hdr-date span{color:var(--accent);font-weight:600;}
+nav{display:flex;gap:3px;}
+.ntab{padding:6px 13px;border-radius:6px;border:1px solid transparent;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Rajdhani',sans-serif;letter-spacing:.5px;background:transparent;color:var(--gray);white-space:nowrap;}
+.ntab:hover{color:var(--white);background:var(--glass);}
+.ntab.active{background:linear-gradient(135deg,var(--blue),var(--blue-mid));border-color:var(--accent);color:#fff;box-shadow:0 0 10px rgba(0,180,216,.25);}
+.page{display:none;position:relative;z-index:1;}
+.page.active{display:block;}
+.wrap{max-width:880px;margin:0 auto;padding:26px 16px 80px;}
+.wrap2{max-width:1180px;margin:0 auto;padding:26px 16px 80px;}
+.wrap3{max-width:1000px;margin:0 auto;padding:26px 16px 80px;}
+.ptitle{text-align:center;margin-bottom:22px;}
+.ptitle h2{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;letter-spacing:2px;}
+.ptitle p{color:var(--gray);font-size:12px;margin-top:3px;}
+.sbar{background:rgba(0,180,216,.07);border:1px solid var(--border2);border-radius:8px;padding:8px 13px;font-size:11px;color:var(--gray);margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--gray2);flex-shrink:0;}
+.sdot.on{background:var(--success);box-shadow:0 0 5px rgba(0,200,150,.5);animation:pulse 2s infinite;}
+.sdot.warn{background:var(--warning);}
+.sb{background:var(--card-bg);border:1px solid var(--border);border-radius:13px;padding:20px;margin-bottom:14px;backdrop-filter:blur(8px);transition:border-color .25s;}
+.sb.ok{border-color:rgba(0,200,150,.35);}
+.sh{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.snum{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;flex-shrink:0;box-shadow:0 0 8px rgba(0,180,216,.3);transition:background .3s;}
+.snum.done{background:linear-gradient(135deg,var(--success),#00a876);}
+.slbl{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:.8px;}
+.ssub{font-size:11px;color:var(--gray);margin-top:1px;}
+.fg{margin-bottom:11px;}
+label.fl{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);font-weight:600;margin-bottom:4px;}
+select,input[type=text],input[type=date]{width:100%;background:rgba(13,27,42,.85);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--white);font-family:'Exo 2',sans-serif;font-size:13px;outline:none;transition:border-color .2s;appearance:none;}
+select:focus,input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,180,216,.1);}
+select option{background:var(--navy2);}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.cg2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.scard{border:2px solid var(--border);border-radius:10px;padding:14px 11px;cursor:pointer;transition:all .2s;text-align:center;background:rgba(255,255,255,.03);position:relative;overflow:hidden;}
+.scard:hover{border-color:var(--accent);transform:translateY(-2px);}
+.scard.m{border-color:var(--blue-lt);background:rgba(33,150,243,.12);}
+.scard.s{border-color:var(--servosa);background:rgba(230,57,70,.12);}
+.scard .ck{position:absolute;top:6px;right:6px;width:16px;height:16px;border-radius:50%;background:var(--success);display:flex;align-items:center;justify-content:center;font-size:9px;opacity:0;transition:opacity .2s;}
+.scard.m .ck,.scard.s .ck{opacity:1;}
+.ci{font-size:24px;margin-bottom:6px;}
+.cn{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;letter-spacing:1px;}
+.cn.m{color:var(--blue-lt);}
+.cn.s{color:var(--servosa);}
+.cs{font-size:10px;color:var(--gray);margin-top:1px;}
+.ef{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border2);animation:fadeIn .3s ease;}
+.ef.vis{display:block;}
+.ttog{display:flex;gap:7px;margin-bottom:9px;}
+.tbtn{flex:1;padding:6px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--gray);font-family:'Rajdhani',sans-serif;font-weight:600;font-size:12px;cursor:pointer;transition:all .2s;}
+.tbtn.act{background:rgba(0,180,216,.15);border-color:var(--accent);color:var(--white);}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px;}
+.rc{border:2px solid var(--border);border-radius:9px;padding:10px 12px;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.03);display:flex;align-items:center;gap:8px;position:relative;}
+.rc:hover{border-color:var(--accent);}
+.rc.sel{border-color:var(--accent);background:rgba(0,180,216,.1);box-shadow:0 0 12px rgba(0,180,216,.15);}
+.ri{font-size:17px;}
+.rn{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:.3px;}
+.rk{font-size:10px;color:var(--gray);}
+.rchk{position:absolute;right:9px;color:var(--success);font-size:13px;opacity:0;transition:opacity .2s;}
+.rc.sel .rchk{opacity:1;}
+.frow-d{display:grid;grid-template-columns:1fr auto;gap:9px;align-items:end;}
+.btn-hoy{padding:8px 13px;background:linear-gradient(135deg,var(--accent2),var(--blue-mid));border:none;border-radius:7px;color:#fff;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;}
+.pcard{display:none;margin-top:9px;padding:9px 12px;background:rgba(0,119,182,.08);border:1px solid rgba(0,119,182,.22);border-radius:7px;font-size:11px;color:var(--gray);}
+.pcard.vis{display:flex;gap:16px;flex-wrap:wrap;}
+.pcard .lbl{color:var(--accent);font-weight:600;margin-right:3px;}
+.sdiv{height:1px;background:linear-gradient(to right,transparent,var(--border),transparent);margin:16px 0;}
+/* MULTI-UNIDAD */
+.uid-item{background:rgba(13,27,42,.7);border:1px solid var(--border);border-radius:11px;overflow:hidden;margin-bottom:11px;transition:border-color .2s;}
+.uid-item.expanded{border-color:rgba(0,180,216,.4);}
+.uid-hdr{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;background:rgba(26,48,80,.4);}
+.uid-badge{background:linear-gradient(135deg,var(--blue),var(--blue-mid));border-radius:6px;padding:3px 11px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;flex-shrink:0;}
+.uid-summary{flex:1;font-size:11px;color:var(--gray);}
+.uid-summary b{color:var(--white);font-weight:600;}
+.uid-ok{color:var(--success);font-size:12px;opacity:0;transition:opacity .2s;white-space:nowrap;}
+.uid-ok.vis{opacity:1;}
+.uid-tog{color:var(--gray);font-size:15px;transition:transform .2s;margin-left:6px;}
+.uid-item.expanded .uid-tog{transform:rotate(180deg);}
+.uid-body{padding:16px;border-top:1px solid var(--border2);display:none;animation:fadeIn .25s ease;}
+.uid-item.expanded .uid-body{display:block;}
+.btn-del{background:rgba(230,57,70,.1);border:1px solid rgba(230,57,70,.3);border-radius:6px;padding:5px 11px;color:var(--danger);font-family:'Rajdhani',sans-serif;font-weight:600;font-size:11px;cursor:pointer;margin-top:12px;}
+.btn-del:hover{background:rgba(230,57,70,.22);}
+.btn-add-u{width:100%;padding:12px;background:rgba(0,180,216,.07);border:2px dashed rgba(0,180,216,.3);border-radius:11px;color:var(--accent);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;cursor:pointer;transition:all .2s;margin-bottom:18px;}
+.btn-add-u:hover{background:rgba(0,180,216,.14);border-color:var(--accent);}
+.btn-add-u:disabled{opacity:.35;cursor:not-allowed;}
+.cta{display:flex;justify-content:center;margin-top:24px;}
+.btn-gen{padding:13px 42px;background:linear-gradient(135deg,var(--blue),var(--blue-mid));border:1px solid var(--accent);border-radius:10px;color:#fff;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:16px;letter-spacing:2px;cursor:pointer;transition:all .2s;box-shadow:0 0 18px rgba(0,180,216,.25);}
+.btn-gen:hover{transform:translateY(-2px);box-shadow:0 0 28px rgba(0,180,216,.4);}
+/* PAGE 2 */
+.prev-acts{display:flex;gap:9px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+.ba{padding:8px 20px;border-radius:8px;border:1px solid;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:.3px;cursor:pointer;transition:all .2s;}
+.ba:hover{transform:translateY(-1px);opacity:.9;}
+.ba-back{background:transparent;border-color:var(--border);color:var(--gray);}
+.ba-png{background:linear-gradient(135deg,var(--blue),var(--blue-mid));border-color:var(--accent);color:#fff;}
+.ba-clip{background:linear-gradient(135deg,#5e1a8a,#9c27b0);border-color:#ce93d8;color:#fff;}
+.ba-save{background:linear-gradient(135deg,var(--success),#009975);border-color:var(--success);color:#fff;}
+#excel-wrapper{overflow-x:auto;border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.55);}
+#capture-area{background:#fff;padding:12px;min-width:960px;font-family:Arial,sans-serif;}
+.et{border-collapse:collapse;width:100%;font-size:10.5px;}
+.et td{border:1px solid #9e9e9e;padding:3px 5px;text-align:center;white-space:nowrap;}
+.tr-tit td{background:#1e4d8c;color:#fff;font-weight:700;font-size:13px;letter-spacing:1px;padding:7px;border-color:#1e4d8c;}
+.tr-gu td{background:#1e4d8c;color:#fff;font-weight:700;font-size:9px;padding:3px;border-color:#154380;}
+.tr-gp td{background:#2196f3;color:#fff;font-weight:700;font-size:9px;padding:3px;border-color:#1565c0;}
+.tr-ch td{background:#bbdefb;color:#0d1b2a;font-weight:700;font-size:9px;}
+.tr-d td{background:#fff;color:#111;}
+.tr-d:nth-child(even) td{background:#f5f9ff;}
+.tipbox{margin-top:13px;padding:10px 14px;background:rgba(0,180,216,.06);border:1px solid var(--border2);border-radius:8px;font-size:11px;color:var(--gray);}
+.tipbox strong{color:var(--white);}
+/* ESTADO PROGRAMACION */
+.estado-bar{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:18px;padding:12px 20px;border-radius:10px;border:2px solid;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px;letter-spacing:1px;transition:all .4s;}
+.estado-bar.proyectado{background:rgba(244,168,0,.1);border-color:rgba(244,168,0,.6);color:#f4a800;}
+.estado-bar.confirmado{background:rgba(0,180,216,.1);border-color:var(--accent);color:var(--accent);}
+.estado-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.estado-bar.proyectado .estado-dot{background:#f4a800;box-shadow:0 0 8px rgba(244,168,0,.7);animation:pulse 1.5s infinite;}
+.estado-bar.confirmado .estado-dot{background:var(--accent);box-shadow:0 0 8px rgba(0,180,216,.7);}
+.btn-confirmar{padding:10px 28px;background:linear-gradient(135deg,var(--success),#009975);border:1px solid var(--success);border-radius:8px;color:#fff;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;cursor:pointer;transition:all .2s;box-shadow:0 0 14px rgba(0,200,150,.3);}
+.btn-confirmar:hover{transform:translateY(-2px);box-shadow:0 0 24px rgba(0,200,150,.5);}
+.btn-revertir{padding:8px 18px;background:transparent;border:1px solid rgba(244,168,0,.5);border-radius:8px;color:#f4a800;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:all .2s;}
+.btn-revertir:hover{background:rgba(244,168,0,.1);}
+/* Tabla proyectada = franja naranja en titulo */
+.tr-tit-proyectado td{background:#b35a00 !important;color:#fff !important;}
+.tr-tit-confirmado td{background:#1e4d8c !important;color:#fff !important;}
+.badge-estado{display:inline-block;padding:2px 10px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px;margin-left:8px;vertical-align:middle;}
+.badge-proyectado{background:#f4a800;color:#000;}
+.badge-confirmado{background:var(--accent);color:#000;}
+/* PAGE 3 */
+.hfilt{display:flex;gap:9px;margin-bottom:18px;flex-wrap:wrap;align-items:center;}
+.hfilt input{flex:1;min-width:170px;}
+.pc{background:var(--card-bg);border:1px solid var(--border);border-radius:11px;padding:16px;margin-bottom:9px;display:flex;align-items:center;gap:16px;transition:all .2s;}
+.pc:hover{border-color:var(--accent);}
+.pc-date{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:20px;color:var(--accent);text-align:center;min-width:68px;}
+.pc-date small{display:block;font-size:9px;color:var(--gray);font-family:'Exo 2',sans-serif;font-weight:400;}
+.pc-div{width:1px;height:44px;background:var(--border);}
+.pc-info{flex:1;}
+.pc-name{font-weight:600;font-size:13px;color:var(--white);}
+.pc-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;}
+.ptag{background:rgba(0,180,216,.15);border:1px solid rgba(0,180,216,.3);border-radius:4px;padding:1px 7px;font-size:10px;color:var(--accent);font-weight:600;}
+.ptag.r{background:rgba(0,200,150,.1);border-color:rgba(0,200,150,.3);color:var(--success);}
+.ptag.n{background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.3);color:#c9a84c;}
+.pc-acts{display:flex;gap:5px;}
+.bsm{padding:4px 10px;border-radius:5px;border:1px solid;font-size:11px;font-family:'Rajdhani',sans-serif;font-weight:600;cursor:pointer;}
+.bsm-v{background:transparent;border-color:var(--accent);color:var(--accent);}
+.bsm-d{background:transparent;border-color:rgba(230,57,70,.4);color:var(--danger);}
+.empty{text-align:center;padding:48px 20px;color:var(--gray);}
+.empty .bi{font-size:42px;margin-bottom:12px;opacity:.4;}
+#toast{position:fixed;bottom:20px;right:20px;background:var(--success);color:#fff;padding:10px 17px;border-radius:8px;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;z-index:9999;opacity:0;transform:translateY(16px);transition:all .3s;pointer-events:none;box-shadow:0 4px 18px rgba(0,200,150,.4);}
+#toast.show{opacity:1;transform:translateY(0);}
+#toast.err{background:var(--danger);box-shadow:0 4px 18px rgba(230,57,70,.4);}
+.ldg{text-align:center;padding:16px;color:var(--gray);font-size:12px;}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-right:6px;vertical-align:middle;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@media(max-width:600px){.fr2,.cg2{grid-template-columns:1fr;}.ntab{padding:5px 7px;font-size:10px;}.logo-badge{font-size:13px;}header{padding:0 10px;}}
+
+/* ── MODAL BASE DE DATOS ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:999;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);}
+.modal-overlay.hidden{display:none;}
+.modal-box{background:#112235;border:1px solid var(--border);border-radius:16px;width:100%;max-width:860px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.modal-hdr h3{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:1px;}
+.modal-close{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--gray);font-size:18px;cursor:pointer;padding:2px 10px;transition:all .2s;}
+.modal-close:hover{color:var(--white);border-color:var(--accent);}
+.modal-tabs{display:flex;gap:4px;padding:12px 22px 0;border-bottom:1px solid var(--border);flex-shrink:0;}
+.mtab{padding:7px 16px;border-radius:6px 6px 0 0;border:1px solid transparent;font-size:12px;font-weight:600;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:.5px;background:transparent;color:var(--gray);border-bottom:none;}
+.mtab.active{background:var(--navy);border-color:var(--border);border-bottom-color:var(--navy);color:var(--white);}
+.modal-body{padding:18px 22px;overflow-y:auto;flex:1;}
+.db-table{width:100%;border-collapse:collapse;font-size:12px;}
+.db-table th{background:#1a3050;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.8px;padding:8px 10px;text-align:left;font-size:10px;border-bottom:1px solid var(--border);}
+.db-table td{padding:6px 8px;border-bottom:1px solid var(--border2);vertical-align:middle;}
+.db-table tr:hover td{background:rgba(0,180,216,.04);}
+.db-inp{background:rgba(13,27,42,.9);border:1px solid var(--border);border-radius:5px;padding:5px 8px;color:var(--white);font-size:12px;font-family:'Exo 2',sans-serif;width:100%;outline:none;}
+.db-inp:focus{border-color:var(--accent);}
+.btn-db-add{padding:8px 18px;background:linear-gradient(135deg,var(--success),#009975);border:none;border-radius:7px;color:#fff;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;cursor:pointer;margin-top:12px;transition:all .2s;}
+.btn-db-add:hover{opacity:.85;}
+.btn-db-del{background:transparent;border:1px solid rgba(230,57,70,.4);border-radius:5px;color:var(--danger);font-size:11px;padding:3px 8px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;}
+.btn-db-del:hover{background:rgba(230,57,70,.15);}
+.btn-db-icon{background:linear-gradient(135deg,var(--blue),var(--blue-mid));border:1px solid var(--accent);border-radius:7px;color:#fff;font-size:12px;padding:5px 12px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.5px;transition:all .2s;}
+.btn-db-icon:hover{opacity:.85;}
+.db-footer{display:flex;gap:10px;justify-content:flex-end;padding:14px 22px;border-top:1px solid var(--border);flex-shrink:0;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo-block">
+    <div class="logo-badge">MISAGI</div>
+    <div>
+      <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;">S.A.C.</div>
+      <div class="logo-sub">Programación de Vehículos</div>
+    </div>
+  </div>
+  <nav>
+    <button class="ntab active" onclick="goPage(1)">① Programar</button>
+    <button class="ntab" onclick="goPage(2)">② Vista Previa</button>
+    <button class="ntab" onclick="goPage(3)">③ Historial</button>
+  </nav>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div class="hdr-date">Hoy: <span id="hdr-d">—</span></div>
+    <button class="btn-db-icon" onclick="openDB()" title="Editar base de datos">⚙️ Base de datos</button>
+  </div>
+</header>
+
+<div class="page active" id="page1">
+<div class="wrap">
+  <div class="ptitle"><h2>NUEVA PROGRAMACIÓN</h2><p>Completa los pasos — sin escribir nada manualmente</p></div>
+  <div class="sbar"><div class="sdot" id="cdot"></div><span id="ctxt">Conectando...</span></div>
+
+  <div class="sb" id="sb1">
+    <div class="sh"><div class="snum" id="sn1">1</div><div><div class="slbl">FECHA DE PROGRAMACIÓN</div><div class="ssub">Fecha de salida a ruta</div></div></div>
+    <div class="frow-d">
+      <div class="fg" style="margin:0">
+        <label class="fl">Fecha</label>
+        <input type="date" id="inp-fecha" onchange="chkFecha()"
+          style="cursor:pointer"
+          onclick="this.showPicker && this.showPicker()">
+      </div>
+      <button class="btn-hoy" onclick="setHoy()">📅 HOY</button>
+    </div>
+  </div>
+
+  <div class="sb" id="sb2">
+    <div class="sh"><div class="snum" id="sn2">2</div><div><div class="slbl">RUTA DEL DÍA</div><div class="ssub">Aplica a todas las unidades</div></div></div>
+    <div class="rgrid" id="rutas-grid"><div class="ldg"><span class="spin"></span>Cargando rutas...</div></div>
+  </div>
+
+  <div class="sb" id="sb3">
+    <div class="sh">
+      <div class="snum" id="sn3">3</div>
+      <div>
+        <div class="slbl">UNIDADES <span id="u-count-lbl" style="color:var(--accent);font-size:13px;font-weight:400">(0/5)</span></div>
+        <div class="ssub">Agrega entre 1 y 5 vehículos a la programación</div>
+      </div>
+    </div>
+    <div id="ulista"></div>
+    <button class="btn-add-u" id="btn-add" onclick="addUnidad()">+ AGREGAR UNIDAD</button>
+  </div>
+
+  <div class="cta"><button class="btn-gen" onclick="generar()">GENERAR PROGRAMACIÓN →</button></div>
+</div>
+</div>
+
+<div class="page" id="page2">
+<div class="wrap2">
+  <div class="ptitle"><h2>VISTA PREVIA</h2><p>Revisa antes de guardar o compartir</p></div>
+  <!-- BANNER DE ESTADO -->
+  <div class="estado-bar proyectado" id="estado-bar">
+    <div class="estado-dot"></div>
+    <span id="estado-txt">⚠️ PROGRAMACIÓN PROYECTADA — Revisa y confirma antes de guardar</span>
+  </div>
+
+  <div class="prev-acts">
+    <button class="ba ba-back" onclick="goPage(1)">← Editar</button>
+    <button class="ba ba-png" onclick="capturar()">📸 Descargar PNG</button>
+    <button class="ba ba-clip" onclick="copiarClip()">📋 Copiar imagen</button>
+    <div id="btn-confirmar-wrap">
+      <button class="btn-confirmar" onclick="confirmarProg()">✅ CONFIRMAR PROGRAMACIÓN</button>
+    </div>
+    <button class="ba ba-save" id="btn-guardar" onclick="guardar()" style="display:none">💾 Guardar en historial</button>
+    <button class="btn-revertir" id="btn-revertir" onclick="revertirProg()" style="display:none">↩ Revertir a Proyectado</button>
+  </div>
+  <div id="excel-wrapper">
+    <div id="capture-area">
+      <table class="et"><tbody id="prog-tbody"></tbody></table>
+    </div>
+  </div>
+  <div class="tipbox">💡 <strong>Copiar imagen</strong> → Ctrl+V directo en WhatsApp Web. &nbsp;|&nbsp; <strong>Descargar PNG</strong> → para compartir desde el celular.</div>
+</div>
+</div>
+
+<div class="page" id="page3">
+<div class="wrap3">
+  <div class="ptitle"><h2>HISTORIAL</h2><p>Programaciones guardadas en la nube</p></div>
+  <div class="hfilt">
+    <input type="text" id="hsearch" placeholder="Buscar por fecha, tracto, conductor, ruta..." oninput="filterHist()">
+    <button class="ba ba-png" style="white-space:nowrap" onclick="loadHistory()">🔄 Actualizar</button>
+  </div>
+  <div id="hist-list"><div class="ldg"><span class="spin"></span>Cargando...</div></div>
+</div>
+</div>
+
+<!-- MODAL BASE DE DATOS -->
+<div class="modal-overlay hidden" id="db-modal">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <h3>⚙️ BASE DE DATOS LOCAL</h3>
+      <button class="modal-close" onclick="closeDB()">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="mtab active" onclick="switchDBTab('conductores',this)">👤 Conductores</button>
+      <button class="mtab" onclick="switchDBTab('tractos',this)">🚛 Tractos</button>
+      <button class="mtab" onclick="switchDBTab('tolvas',this)">🔩 Tolvas</button>
+      <button class="mtab" onclick="switchDBTab('rutas',this)">🗺️ Rutas</button>
+    </div>
+    <div class="modal-body" id="db-modal-body"></div>
+    <div class="db-footer">
+      <button onclick="resetDB()" style="padding:8px 16px;background:transparent;border:1px solid rgba(244,168,0,.5);border-radius:7px;color:#f4a800;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:12px;cursor:pointer;">↺ Restablecer originales</button>
+      <button class="btn-db-add" onclick="saveDB()">💾 Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+const CFG = {
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyGRDVuVxQkbYYtz87xXKpEeY9FpvdTKpLjrkrBL1YtFQOQ1atThOhjl2NYeWkfH2qxQg/exec",
+  FIREBASE: {
+    apiKey:            "AIzaSyCGcOMB1q_rPpcBcyLH12YiIV-vIFRMh64",
+    authDomain:        "misagi-programacion.firebaseapp.com",
+    databaseURL:       "https://misagi-programacion-default-rtdb.firebaseio.com",
+    projectId:         "misagi-programacion",
+    storageBucket:     "misagi-programacion.firebasestorage.app",
+    messagingSenderId: "417132449299",
+    appId:             "1:417132449299:web:c1d50973421a5ea67f39e6"
+  }
+};
+let DB={conductores:[],tractos:[],tolvas:[],rutas:[]};
+let fbDB=null;
+let PROG={fecha:'',ruta:null,unidades:[]};
+let SNAP=null;
+const MAX_U=5;
+
+document.addEventListener('DOMContentLoaded',()=>{
+  setHoy();
+  document.getElementById('hdr-d').textContent=new Date().toLocaleDateString('es-PE',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  initFirebase();
+  loadDB();
+  addUnidad();
+});
+
+function setHoy(){
+  const iso=new Date().toISOString().split('T')[0];
+  document.getElementById('inp-fecha').value=iso;
+  PROG.fecha=iso; markDone('sn1');
+}
+function chkFecha(){PROG.fecha=document.getElementById('inp-fecha').value;if(PROG.fecha)markDone('sn1');}
+
+function initFirebase(){
+  const load=(src,cb)=>{const s=document.createElement('script');s.src=src;s.onload=cb;document.head.appendChild(s);};
+  load('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js',()=>{
+    load('https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js',()=>{
+      try{firebase.initializeApp(CFG.FIREBASE);fbDB=firebase.database();}catch(e){console.warn('Firebase:',e.message);}
+    });
+  });
+}
+
+// ── DATOS REALES DE MISAGI (cargados desde el Sheets) ──
+const DATOS_MISAGI = {
+  conductores: [
+    {apellidos:'KANA HUALLPA',        nombres:'RENE ELMER',     licencia:'H46743191', dni:'46743191', empresa:'MISAGI'},
+    {apellidos:'ARAPA CHOQUEHUANCA',  nombres:'LUIS MIGUEL',    licencia:'H46557013', dni:'46557013', empresa:'MISAGI'},
+    {apellidos:'FARFAN AYAMAMANI',    nombres:'VICTOR VICENTE', licencia:'H43178559', dni:'43178559', empresa:'MISAGI'},
+    {apellidos:'MAMANI LÓPEZ',        nombres:'YURY FRANCHEST', licencia:'H44306843', dni:'44306843', empresa:'MISAGI'},
+    {apellidos:'CAMA GALARZA',        nombres:'JOSÉ VALENTÍN',  licencia:'H43170573', dni:'43170573', empresa:'MISAGI'},
+    {apellidos:'SUPO CUTIPA',         nombres:'JAVIER',         licencia:'',          dni:'42035112', empresa:'MISAGI'},
+  ],
+  tractos: [
+    {placa:'CDJ-712', marca:'FOTON',     anio:'2026', mtc:'15M25041326E', empresa:'MISAGI'},
+    {placa:'CDI-829', marca:'FOTON',     anio:'2026', mtc:'15M25041326E', empresa:'MISAGI'},
+    {placa:'CFF-841', marca:'DONGFENG',  anio:'2025', mtc:'15M25045928E', empresa:'MISAGI'},
+    {placa:'CFG-704', marca:'DONGFENG',  anio:'2025', mtc:'15M25046918E', empresa:'MISAGI'},
+    {placa:'BWU-917', marca:'FOTON',     anio:'2024', mtc:'15M23051962E', empresa:'MISAGI'},
+    {placa:'BWW-797', marca:'FOTON',     anio:'2024', mtc:'15M23051961E', empresa:'MISAGI'},
+    {placa:'CJS-724', marca:'FOTON',     anio:'2026', mtc:'15M26011976E', empresa:'MISAGI'},
+  ],
+  tolvas: [
+    {placa:'ANF-995', anio:'2019'},
+    {placa:'VGI-993', anio:'2022'},
+    {placa:'Z3P-982', anio:'2022'},
+    {placa:'BWO-980', anio:'2024'},
+    {placa:'BWN-981', anio:'2024'},
+    {placa:'BWM-974', anio:'2024'},
+    {placa:'BWS-971', anio:'2024'},
+    {placa:'BWO-982', anio:'2024'},
+    {placa:'BHX-988', anio:'2025'},
+  ],
+  rutas: [
+    {nombre:'HUDBAY',          icono:'⛏️', km:'930 KM'},
+    {nombre:'AQP → ILO',      icono:'⚓',  km:'230 km'},
+    {nombre:'AQP → MATARANI', icono:'🏭',  km:'140 km'},
+    {nombre:'AQP → CUSCO',    icono:'🗻',  km:'520 km'},
+    {nombre:'AQP → PUNO',     icono:'🌊',  km:'295 km'},
+    {nombre:'LOCAL / MINERA', icono:'🔧',  km:'Variable'},
+  ]
+};
+
+function loadDB(){
+  // Cargar desde localStorage primero (datos editados por el usuario)
+  const saved = localStorage.getItem('misagi_db');
+  if(saved){
+    try{
+      const parsed = JSON.parse(saved);
+      // Verificar que tenga datos válidos
+      if(parsed.conductores && parsed.conductores.length > 0){
+        DB = parsed;
+        populateAll();
+        setConn('on','✅ '+DB.conductores.length+' conductores · '+DB.tractos.length+' tractos · '+DB.tolvas.length+' tolvas');
+        return;
+      }
+    }catch(e){ console.warn('Error localStorage:', e); }
+  }
+  // Primera vez — usar datos reales del Sheets
+  DB = JSON.parse(JSON.stringify(DATOS_MISAGI)); // copia profunda
+  saveDBLocal();
+  populateAll();
+  setConn('on','✅ '+DB.conductores.length+' conductores · '+DB.tractos.length+' tractos · '+DB.tolvas.length+' tolvas');
+}
+
+function saveDBLocal(){
+  localStorage.setItem('misagi_db', JSON.stringify(DB));
+}
+
+function loadDemo(){
+  DB.conductores=[
+    {n:1,apellidos:'MAMANI CARRIZALES',nombres:'JUAN CARLOS',licencia:'Q00456789',dni:'44123456',empresa:'MISAGI'},
+    {n:2,apellidos:'QUISPE HUANCA',nombres:'PEDRO PABLO',licencia:'Q00234567',dni:'45678901',empresa:'MISAGI'},
+    {n:3,apellidos:'FLORES MAMANI',nombres:'ANGEL RODRIGO',licencia:'Q00345678',dni:'46789012',empresa:'MISAGI'},
+    {n:4,apellidos:'CANO VALENCIA',nombres:'LUIS ALBERTO',licencia:'Q00567890',dni:'47890123',empresa:'MISAGI'},
+    {n:5,apellidos:'HUANCA QUISPE',nombres:'MARIO EDGAR',licencia:'Q00678901',dni:'48901234',empresa:'MISAGI'},
+  ];
+  DB.tractos=[
+    {n:1,placa:'CFF-841',marca:'SHACMAN X5000',anio:'2023',mtc:'MTC-0012345',empresa:'MISAGI'},
+    {n:2,placa:'BWW-797',marca:'SHACMAN X5000',anio:'2022',mtc:'MTC-0023456',empresa:'MISAGI'},
+    {n:3,placa:'EGB-852',marca:'VOLVO FH',anio:'2021',mtc:'MTC-0034567',empresa:'MISAGI'},
+    {n:4,placa:'DGH-321',marca:'SCANIA R500',anio:'2023',mtc:'MTC-0045678',empresa:'MISAGI'},
+    {n:5,placa:'FHJ-009',marca:'KENWORTH T800',anio:'2020',mtc:'MTC-0056789',empresa:'MISAGI'},
+  ];
+  DB.tolvas=[
+    {n:1,placa:'ANF-995',anio:'2021'},
+    {n:2,placa:'ANF-996',anio:'2021'},
+    {n:3,placa:'BCD-111',anio:'2022'},
+    {n:4,placa:'BCD-222',anio:'2022'},
+    {n:5,placa:'CDE-333',anio:'2023'},
+  ];
+  DB.rutas=[
+    {nombre:'AQP → LIMA → AQP',icono:'🛣️',km:'1,030 km'},
+    {nombre:'AQP → ILO',icono:'⚓',km:'230 km'},
+    {nombre:'AQP → MATARANI',icono:'🏭',km:'140 km'},
+    {nombre:'AQP → CUSCO',icono:'🗻',km:'520 km'},
+    {nombre:'AQP → PUNO',icono:'🌊',km:'295 km'},
+    {nombre:'LOCAL / MINERA',icono:'⛏️',km:'Variable'},
+  ];
+  populateAll();
+  setConn('warn','⚠️ DEMO — configura APPS_SCRIPT_URL para datos reales');
+}
+
+function setConn(st,msg){
+  const d=document.getElementById('cdot');
+  d.className='sdot'+(st==='on'?' on':st==='warn'?' warn':'');
+  document.getElementById('ctxt').textContent=msg;
+}
+
+function populateAll(){
+  renderRutas();
+  PROG.unidades.forEach((_,i)=>refreshUSelects(i));
+}
+
+function renderRutas(){
+  const g=document.getElementById('rutas-grid');
+  if(!DB.rutas.length){g.innerHTML='<div class="ldg">Sin rutas</div>';return;}
+  g.innerHTML=DB.rutas.map((r,i)=>`
+    <div class="rc" id="rc-${i}" onclick="selRuta(${i})">
+      <div class="ri">${r.icono}</div>
+      <div><div class="rn">${r.nombre}</div><div class="rk">${r.km||''}</div></div>
+      <div class="rchk">✓</div>
+    </div>`).join('');
+}
+
+function selRuta(i){
+  PROG.ruta=DB.rutas[i];
+  document.querySelectorAll('.rc').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('rc-'+i).classList.add('sel');
+  markDone('sn2');
+}
+
+// ── MULTI-UNIDAD ──
+function addUnidad(){
+  if(PROG.unidades.length>=MAX_U)return;
+  const i=PROG.unidades.length;
+  PROG.unidades.push({empresa:null,conductor:null,tracto:null,tolva:null,tolvaMode:'lista',
+    _condIdx:null,_tracIdx:null,_tolvIdx:null,
+    _serv:{apellidos:'',nombres:'',licencia:'',dni:''}});
+  const div=document.createElement('div');
+  div.className='uid-item expanded';
+  div.id='uid-'+i;
+  div.innerHTML=buildU(i);
+  document.getElementById('ulista').appendChild(div);
+  refreshUSelects(i);
+  updateAddBtn();
+  checkSn3();
+  setTimeout(()=>div.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+}
+
+function buildU(i){
+  const n=i+1;
+  const delBtn=i>0?`<button class="btn-del" onclick="removeU(${i})">🗑 Quitar esta unidad</button>`:'';
+  return `
+  <div class="uid-hdr" onclick="toggleU(${i})">
+    <div class="uid-badge">UNIDAD ${n}</div>
+    <div class="uid-summary" id="usum-${i}"><span style="color:var(--gray)">Sin configurar</span></div>
+    <div class="uid-ok" id="uok-${i}">✓ Lista</div>
+    <div class="uid-tog" id="utog-${i}">▼</div>
+  </div>
+  <div class="uid-body" id="ubody-${i}">
+    <div class="fg">
+      <label class="fl">Empresa del conductor</label>
+      <div class="cg2">
+        <div class="scard" id="uc-m-${i}" onclick="uEmp(${i},'MISAGI')">
+          <div class="ck">✓</div><div class="ci">🚛</div>
+          <div class="cn m">MISAGI</div><div class="cs">Conductores propios</div>
+        </div>
+        <div class="scard" id="uc-s-${i}" onclick="uEmp(${i},'SERVOSA')">
+          <div class="ck">✓</div><div class="ci">🔴</div>
+          <div class="cn s">SERVOSA</div><div class="cs">Proveedor externo</div>
+        </div>
+      </div>
+    </div>
+    <div class="ef" id="ef-m-${i}">
+      <label class="fl">Conductor MISAGI</label>
+      <select id="usc-${i}" onchange="uCond(${i})"><option value="">— Selecciona conductor —</option></select>
+      <div class="pcard" id="upc-${i}">
+        <div><span class="lbl">DNI:</span><span id="u-dni-${i}">—</span></div>
+        <div><span class="lbl">Licencia:</span><span id="u-lic-${i}">—</span></div>
+        <div><span class="lbl">Teléfono:</span><span id="u-tel-${i}">—</span></div>
+        <div><span class="lbl">Empresa:</span><span id="u-emp-${i}">—</span></div>
+      </div>
+      <div class="fg" style="margin-top:10px">
+        <label class="fl">Teléfono del conductor</label>
+        <input type="text" id="u-fono-${i}" placeholder="Ej: 987654321"
+          style="background:rgba(13,27,42,.85);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--white);font-family:'Exo 2',sans-serif;font-size:13px;width:100%;outline:none;"
+          oninput="PROG.unidades[${i}].conductor&&(PROG.unidades[${i}].conductor.telefono=this.value);uChk(${i})">
+      </div>
+    </div>
+    <div class="ef" id="ef-s-${i}">
+      <div class="fr2">
+        <div class="fg"><label class="fl">Apellidos *</label><input type="text" id="us-ap-${i}" placeholder="APELLIDOS" oninput="uServ(${i})"></div>
+        <div class="fg"><label class="fl">Nombres *</label><input type="text" id="us-nm-${i}" placeholder="Nombres" oninput="uServ(${i})"></div>
+      </div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">N° Licencia *</label><input type="text" id="us-lc-${i}" placeholder="Ej: Q00123456" oninput="uServ(${i})"></div>
+        <div class="fg"><label class="fl">DNI (opcional)</label><input type="text" id="us-dn-${i}" placeholder="Ej: 44555666" oninput="uServ(${i})"></div>
+      </div>
+      <div class="fg">
+        <label class="fl">Teléfono del conductor</label>
+        <input type="text" id="us-tel-${i}" placeholder="Ej: 987654321" oninput="uServ(${i})">
+      </div>
+    </div>
+    <div style="height:1px;background:linear-gradient(to right,transparent,var(--border),transparent);margin:14px 0"></div>
+    <div class="fg">
+      <label class="fl">Tracto</label>
+      <select id="ust-${i}" onchange="uTrac(${i})"><option value="">— Selecciona tracto —</option></select>
+      <div class="pcard" id="upt-${i}">
+        <div><span class="lbl">Marca:</span><span id="u-tmarca-${i}">—</span></div>
+        <div><span class="lbl">Año:</span><span id="u-ta-${i}">—</span></div>
+        <div><span class="lbl">MTC:</span><span id="u-tc-${i}">—</span></div>
+        <div><span class="lbl">Empresa:</span><span id="u-te-${i}">—</span></div>
+      </div>
+    </div>
+    <div style="height:1px;background:linear-gradient(to right,transparent,var(--border),transparent);margin:14px 0"></div>
+    <div class="fg">
+      <label class="fl">Tolva / Semirremolque</label>
+      <div class="ttog">
+        <button class="tbtn act" id="tbtn-l-${i}" onclick="uTolvaMode(${i},'lista')">📋 De lista</button>
+        <button class="tbtn"     id="tbtn-m-${i}" onclick="uTolvaMode(${i},'manual')">✏️ Manual</button>
+      </div>
+      <div id="u-tl-${i}">
+        <select id="usv-${i}" onchange="uTolv(${i})"><option value="">— Selecciona tolva —</option></select>
+        <div class="pcard" id="upv-${i}"><div><span class="lbl">Año:</span><span id="u-va-${i}">—</span></div></div>
+      </div>
+      <div id="u-tman-${i}" style="display:none">
+        <input type="text" id="u-ti-${i}" placeholder="Ej: ANF-995"
+          style="text-transform:uppercase;background:rgba(13,27,42,.85);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--white);font-family:'Exo 2',sans-serif;font-size:13px;width:100%;outline:none;box-sizing:border-box;"
+          oninput="this.value=this.value.toUpperCase();uChk(${i})">
+      </div>
+    </div>
+    ${delBtn}
+  </div>`;
+}
+
+function refreshUSelects(i){
+  const sc=document.getElementById('usc-'+i);
+  if(sc){
+    const v=sc.value;
+    sc.innerHTML='<option value="">— Selecciona conductor —</option>'+
+      DB.conductores.map((c,j)=>`<option value="${j}">${c.apellidos} ${c.nombres}</option>`).join('');
+    if(v)sc.value=v;
+  }
+  const st=document.getElementById('ust-'+i);
+  if(st){
+    const v=st.value;
+    st.innerHTML='<option value="">— Selecciona tracto —</option>'+
+      DB.tractos.map((t,j)=>`<option value="${j}">${t.placa} · ${t.marca} ${t.anio}</option>`).join('');
+    if(v)st.value=v;
+  }
+  const sv=document.getElementById('usv-'+i);
+  if(sv){
+    const v=sv.value;
+    sv.innerHTML='<option value="">— Selecciona tolva —</option>'+
+      DB.tolvas.map((x,j)=>`<option value="${j}">${x.placa} · ${x.anio}</option>`).join('');
+    if(v)sv.value=v;
+  }
+}
+
+function toggleU(i){document.getElementById('uid-'+i).classList.toggle('expanded');}
+
+function removeU(i){
+  if(PROG.unidades.length<=1){showToast('Debe haber al menos 1 unidad',true);return;}
+  PROG.unidades.splice(i,1);
+  rebuildU();
+}
+
+function rebuildU(){
+  const saved=[...PROG.unidades];
+  PROG.unidades=[];
+  document.getElementById('ulista').innerHTML='';
+  saved.forEach((u,i)=>{
+    PROG.unidades.push(u);
+    const div=document.createElement('div');
+    div.className='uid-item expanded';
+    div.id='uid-'+i;
+    div.innerHTML=buildU(i);
+    document.getElementById('ulista').appendChild(div);
+    refreshUSelects(i);
+    // restore
+    if(u.empresa){
+      uEmp(i,u.empresa,true);
+      if(u.empresa==='MISAGI'&&u._condIdx!==null){
+        const s=document.getElementById('usc-'+i);
+        if(s){s.value=u._condIdx;uCond(i,true);}
+      }
+      if(u.empresa==='SERVOSA'){
+        ['ap','nm','lc','dn'].forEach(k=>{
+          const m={ap:'apellidos',nm:'nombres',lc:'licencia',dn:'dni'};
+          const el=document.getElementById('us-'+k+'-'+i);
+          if(el)el.value=u._serv[m[k]]||'';
+        });
+      }
+    }
+    if(u._tracIdx!==null){const s=document.getElementById('ust-'+i);if(s){s.value=u._tracIdx;uTrac(i,true);}}
+    uTolvaMode(i,u.tolvaMode,true);
+    if(u.tolvaMode==='lista'&&u._tolvIdx!==null){const s=document.getElementById('usv-'+i);if(s){s.value=u._tolvIdx;uTolv(i,true);}}
+    if(u.tolvaMode==='manual'&&u.tolva){const el=document.getElementById('u-ti-'+i);if(el)el.value=u.tolva.placa||'';}
+    uChk(i);
+  });
+  updateAddBtn();checkSn3();
+}
+
+function updateAddBtn(){
+  const n=PROG.unidades.length;
+  const btn=document.getElementById('btn-add');
+  document.getElementById('u-count-lbl').textContent='('+n+'/'+MAX_U+')';
+  btn.disabled=n>=MAX_U;
+  btn.textContent=n>=MAX_U?'✓ MÁXIMO '+MAX_U+' UNIDADES':'+ AGREGAR UNIDAD  ('+n+'/'+MAX_U+')';
+}
+
+function checkSn3(){
+  const ok=PROG.unidades.length>0&&PROG.unidades.every(uOk);
+  if(ok)markDone('sn3');
+}
+
+function uOk(u){
+  if(!u.empresa)return false;
+  if(u.empresa==='MISAGI'&&!u.conductor)return false;
+  if(u.empresa==='SERVOSA'&&(!u._serv.apellidos||!u._serv.licencia))return false;
+  if(!u.tracto)return false;
+  if(u.tolvaMode==='lista'&&!u.tolva)return false;
+  return true;
+}
+
+function uEmp(i,emp,silent=false){
+  PROG.unidades[i].empresa=emp;
+  document.getElementById('uc-m-'+i).className='scard'+(emp==='MISAGI'?' m':'');
+  document.getElementById('uc-s-'+i).className='scard'+(emp==='SERVOSA'?' s':'');
+  document.getElementById('ef-m-'+i).className='ef'+(emp==='MISAGI'?' vis':'');
+  document.getElementById('ef-s-'+i).className='ef'+(emp==='SERVOSA'?' vis':'');
+  if(!silent){PROG.unidades[i].conductor=null;uChk(i);}
+}
+
+function uCond(i,silent=false){
+  const s=document.getElementById('usc-'+i);if(!s)return;
+  const idx=s.value;
+  if(idx===''){PROG.unidades[i].conductor=null;PROG.unidades[i]._condIdx=null;uChk(i);return;}
+  const c=DB.conductores[idx];
+  PROG.unidades[i].conductor=c;PROG.unidades[i]._condIdx=idx;
+  const pc=document.getElementById('upc-'+i);
+  if(pc){pc.classList.add('vis');
+    document.getElementById('u-dni-'+i).textContent=c.dni||'—';
+    document.getElementById('u-lic-'+i).textContent=c.licencia||'—';
+    document.getElementById('u-tel-'+i).textContent=c.telefono||'—';
+    document.getElementById('u-emp-'+i).textContent=c.empresa||'—';
+  }
+  // Limpiar input telefono al cambiar de conductor
+  const telInput=document.getElementById('u-fono-'+i);
+  if(telInput) telInput.value='';
+  if(PROG.unidades[i].conductor) PROG.unidades[i].conductor.telefono='';
+  if(!silent)uChk(i);
+}
+
+function uServ(i){
+  const ap=document.getElementById('us-ap-'+i)?.value||'';
+  const nm=document.getElementById('us-nm-'+i)?.value||'';
+  const lc=document.getElementById('us-lc-'+i)?.value||'';
+  const dn=document.getElementById('us-dn-'+i)?.value||'';
+  const tel=document.getElementById('us-tel-'+i)?.value||'';
+  PROG.unidades[i]._serv={apellidos:ap,nombres:nm,licencia:lc,dni:dn,telefono:tel};
+  PROG.unidades[i].conductor={apellidos:ap.toUpperCase(),nombres:nm,licencia:lc,dni:dn,telefono:tel,empresa:'SERVOSA'};
+  uChk(i);
+}
+
+function uTrac(i,silent=false){
+  const s=document.getElementById('ust-'+i);if(!s)return;
+  const idx=s.value;
+  if(idx===''){PROG.unidades[i].tracto=null;PROG.unidades[i]._tracIdx=null;uChk(i);return;}
+  const t=DB.tractos[idx];
+  PROG.unidades[i].tracto=t;PROG.unidades[i]._tracIdx=idx;
+  const pt=document.getElementById('upt-'+i);
+  if(pt){pt.classList.add('vis');
+    document.getElementById('u-tmarca-'+i).textContent=t.marca||'—';
+    document.getElementById('u-ta-'+i).textContent=t.anio||'—';
+    document.getElementById('u-tc-'+i).textContent=t.mtc||'—';
+    document.getElementById('u-te-'+i).textContent=t.empresa||'—';
+  }
+  if(!silent)uChk(i);
+}
+
+function uTolvaMode(i,mode,silent=false){
+  PROG.unidades[i].tolvaMode=mode;
+  const btnL=document.getElementById('tbtn-l-'+i);
+  const btnM=document.getElementById('tbtn-m-'+i);
+  const divL=document.getElementById('u-tl-'+i);
+  const divM=document.getElementById('u-tman-'+i);
+  if(btnL) btnL.className='tbtn'+(mode==='lista'?' act':'');
+  if(btnM) btnM.className='tbtn'+(mode==='manual'?' act':'');
+  if(divL) divL.style.display=mode==='lista'?'':'none';
+  if(divM) divM.style.display=mode==='manual'?'':'none';
+  if(!silent){
+    if(mode==='lista'){PROG.unidades[i].tolva=null;}
+    uChk(i);
+  }
+}
+
+function uTolv(i,silent=false){
+  const s=document.getElementById('usv-'+i);if(!s)return;
+  const idx=s.value;
+  if(idx===''){PROG.unidades[i].tolva=null;PROG.unidades[i]._tolvIdx=null;uChk(i);return;}
+  const v=DB.tolvas[idx];
+  PROG.unidades[i].tolva=v;PROG.unidades[i]._tolvIdx=idx;
+  const pv=document.getElementById('upv-'+i);
+  if(pv){pv.classList.add('vis');document.getElementById('u-va-'+i).textContent=v.anio||'—';}
+  if(!silent)uChk(i);
+}
+
+function uChk(i){
+  const u=PROG.unidades[i];
+  const ok=uOk(u)||(u.tolvaMode==='manual');
+  document.getElementById('uok-'+i)?.classList.toggle('vis',uOk(u));
+  const sm=document.getElementById('usum-'+i);
+  if(sm){
+    if(u.conductor&&u.tracto){
+      const cn=(u.conductor.apellidos||'')+' '+(u.conductor.nombres||'');
+      const tp=u.tracto.placa||'—';
+      const vp=u.tolvaMode==='lista'?(u.tolva?.placa||'—'):((document.getElementById('u-ti-'+i)?.value||'').toUpperCase()||'—');
+      sm.innerHTML=`<b>${cn.trim()}</b> · Tracto:<b>${tp}</b> · Tolva:<b>${vp}</b>`;
+    }else{sm.innerHTML='<span style="color:var(--gray)">Sin configurar</span>';}
+  }
+  checkSn3();
+}
+
+// ── GENERAR ──
+function generar(){
+  if(!PROG.fecha){showToast('Selecciona una fecha',true);return;}
+  if(!PROG.ruta){showToast('Selecciona la ruta del día',true);return;}
+  if(!PROG.unidades.length){showToast('Agrega al menos 1 unidad',true);return;}
+
+  for(let i=0;i<PROG.unidades.length;i++){
+    const u=PROG.unidades[i];const n=i+1;
+    if(!u.empresa){showToast('Unidad '+n+': selecciona empresa del conductor',true);return;}
+    if(u.empresa==='MISAGI'&&!u.conductor){showToast('Unidad '+n+': selecciona conductor MISAGI',true);return;}
+    if(u.empresa==='SERVOSA'){
+      if(!u._serv?.apellidos){showToast('Unidad '+n+': ingresa apellidos SERVOSA',true);return;}
+      if(!u._serv?.licencia){showToast('Unidad '+n+': ingresa licencia SERVOSA',true);return;}
+    }
+    if(!u.tracto){showToast('Unidad '+n+': selecciona tracto',true);return;}
+    if(u.tolvaMode==='lista'&&!u.tolva){showToast('Unidad '+n+': selecciona tolva de la lista',true);return;}
+    if(u.tolvaMode==='manual'){
+      const inp=document.getElementById('u-ti-'+i);
+      const v=(inp?inp.value:'').trim();
+      if(!v){showToast('Unidad '+n+': ingresa la placa de la tolva',true);return;}
+      PROG.unidades[i].tolva={placa:v.toUpperCase(),anio:'—'};
+    }
+  }
+
+  const[y,m,d]=PROG.fecha.split('-');
+  const fechaFmt=d+'/'+m+'/'+y;
+
+  const rows=PROG.unidades.map((u,i)=>{
+    const c=u.conductor;const t=u.tracto;const v=u.tolva;
+    return{convoy:1,item:i+1,fecha:fechaFmt,
+      tractoPlaca:t.placa||'—',tolvaPlaca:v.placa||'—',
+      anioTracto:t.anio||'—',anioTolva:v.anio||'—',
+      mtc:t.mtc||'—',empresaTracto:t.empresa||'—',
+      dniLic:c.licencia||c.dni||'—',
+      apellidos:c.apellidos||'—',
+      nombres:c.nombres||'',
+      telefono:c.telefono||'',
+      telefono:c.telefono||'',empresaCond:c.empresa||u.empresa,ruta:PROG.ruta.nombre};
+  });
+
+  renderTable(rows,fechaFmt);
+  SNAP={fecha:fechaFmt,ruta:PROG.ruta.nombre,nUnidades:PROG.unidades.length,unidades:rows,estado:'proyectado',ts:Date.now()};
+  // Reset estado a proyectado al generar nueva
+  ESTADO_PROG='proyectado';
+  const bar=document.getElementById('estado-bar');
+  if(bar){bar.className='estado-bar proyectado';document.getElementById('estado-txt').textContent='⚠️ PROGRAMACIÓN PROYECTADA — Revisa y confirma antes de guardar';}
+  const bcw=document.getElementById('btn-confirmar-wrap');if(bcw)bcw.style.display='';
+  const bg=document.getElementById('btn-guardar');if(bg)bg.style.display='none';
+  const br=document.getElementById('btn-revertir');if(br)br.style.display='none';
+  goPage(2);
+}
+
+// ── TABLA ──
+// Estado de la programacion actual
+let ESTADO_PROG = 'proyectado'; // 'proyectado' | 'confirmado'
+
+function confirmarProg(){
+  ESTADO_PROG='confirmado';
+  // Actualizar banner
+  const bar=document.getElementById('estado-bar');
+  bar.className='estado-bar confirmado';
+  document.getElementById('estado-txt').textContent='✅ PROGRAMACIÓN CONFIRMADA — Lista para guardar y compartir';
+  // Mostrar/ocultar botones
+  document.getElementById('btn-confirmar-wrap').style.display='none';
+  document.getElementById('btn-guardar').style.display='';
+  document.getElementById('btn-revertir').style.display='';
+  // Actualizar tabla — cambiar color titulo a azul MISAGI
+  document.querySelectorAll('.tr-tit td').forEach(td=>{
+    td.style.background='#1e4d8c';
+  });
+  showToast('✅ Programación confirmada — ahora puedes guardar y compartir');
+}
+
+function revertirProg(){
+  ESTADO_PROG='proyectado';
+  const bar=document.getElementById('estado-bar');
+  bar.className='estado-bar proyectado';
+  document.getElementById('estado-txt').textContent='⚠️ PROGRAMACIÓN PROYECTADA — Revisa y confirma antes de guardar';
+  document.getElementById('btn-confirmar-wrap').style.display='';
+  document.getElementById('btn-guardar').style.display='none';
+  document.getElementById('btn-revertir').style.display='none';
+  document.querySelectorAll('.tr-tit td').forEach(td=>{
+    td.style.background='#b35a00';
+  });
+  showToast('Revertida a proyectado');
+}
+
+function renderTable(rows,fechaFmt,estado='proyectado'){
+  ESTADO_PROG=estado;
+  const tb=document.getElementById('prog-tbody');
+  tb.innerHTML='';
+  const titBg = estado==='confirmado' ? '#1e4d8c' : '#b35a00';
+  const titLabel = estado==='confirmado' ? '' : ' [PROYECTADO]';
+  tb.innerHTML+=`<tr class="tr-tit"><td colspan="15" style="background:${titBg}">PROGRAMACIÓN DE VEHÍCULOS · ${fechaFmt}${titLabel}</td></tr>`;
+  // Grupos: 7 cols Unidad + 7 cols Personal
+  tb.innerHTML+=`<tr>
+    <td colspan="7" class="tr-gu">DATOS DE LA UNIDAD</td>
+    <td colspan="8" class="tr-gp">DATOS DEL PERSONAL</td>
+  </tr>`;
+  // Encabezados
+  tb.innerHTML+=`<tr class="tr-ch">
+    <td>Convoy</td><td>ITEM</td><td>FECHA</td><td>TRACTO</td><td>TOLVA</td>
+    <td>AÑO FAB.<br>TRACTO</td><td>AÑO FAB.<br>TOLVA</td>
+    <td>MTC<br>TRACTO</td><td>EMPRESA</td><td>DNI/LIC</td>
+    <td>APELLIDOS</td><td>NOMBRES</td><td>TELÉFONO</td><td>EMPRESA</td><td>RUTA</td>
+  </tr>`;
+  // Datos
+  rows.forEach(r=>{
+    tb.innerHTML+=`<tr class="tr-d">
+      <td>${r.convoy}</td><td>${r.item}</td><td>${r.fecha}</td>
+      <td style="font-weight:700">${r.tractoPlaca}</td>
+      <td style="font-weight:700">${r.tolvaPlaca}</td>
+      <td>${r.anioTracto}</td><td>${r.anioTolva}</td>
+      <td>${r.mtc}</td><td>${r.empresaTracto}</td><td>${r.dniLic}</td>
+      <td style="font-weight:700">${r.apellidos}</td><td>${r.nombres}</td>
+      <td>${r.telefono||''}</td>
+      <td>${r.empresaCond}</td>
+      <td style="font-weight:700">${r.ruta}</td>
+    </tr>`;
+  });
+}
+
+// ── CAPTURA ──
+async function capturar(){
+  try{
+    showToast('Generando imagen...');
+    const c=await html2canvas(document.getElementById('capture-area'),{scale:2,backgroundColor:'#ffffff',useCORS:true});
+    const a=document.createElement('a');
+    a.download='prog_misagi_'+(SNAP?.fecha?.replace(/\//g,'-')||'hoy')+'.png';
+    a.href=c.toDataURL('image/png');a.click();
+    showToast('📸 PNG descargado — listo para compartir');
+  }catch(e){showToast('Error: '+e.message,true);}
+}
+
+async function copiarClip(){
+  try{
+    showToast('Copiando imagen...');
+    const c=await html2canvas(document.getElementById('capture-area'),{scale:2,backgroundColor:'#ffffff',useCORS:true});
+    c.toBlob(async blob=>{
+      try{
+        await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+        showToast('📋 ¡Imagen copiada! Pega con Ctrl+V en WhatsApp Web');
+      }catch(e){
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');a.href=url;a.download='prog_misagi.png';a.click();
+        showToast('Portapapeles no disponible — PNG descargado',true);
+      }
+    },'image/png');
+  }catch(e){showToast('Error: '+e.message,true);}
+}
+
+// ── FIREBASE ──
+async function guardar(){
+  if(!SNAP){showToast('Genera la programación primero',true);return;}
+  if(ESTADO_PROG!=='confirmado'){showToast('⚠️ Primero confirma la programación',true);return;}
+  if(!fbDB){showToast('Firebase no configurado — verifica la conexión',true);return;}
+  try{
+    await fbDB.ref('programaciones').push(SNAP);
+    showToast('✅ Guardado en historial');
+    setTimeout(()=>{goPage(3);loadHistory();},700);
+  }catch(e){showToast('Error: '+e.message,true);}
+}
+
+async function loadHistory(){
+  const list=document.getElementById('hist-list');
+  list.innerHTML='<div class="ldg"><span class="spin"></span>Cargando...</div>';
+  if(!fbDB){list.innerHTML='<div class="empty"><div class="bi">🔥</div><p>Firebase no configurado</p></div>';return;}
+  try{
+    const snap=await fbDB.ref('programaciones').orderByChild('ts').limitToLast(60).once('value');
+    const data=snap.val();
+    if(!data){list.innerHTML='<div class="empty"><div class="bi">📋</div><p>Sin programaciones guardadas</p></div>';return;}
+    window._hist=Object.entries(data).reverse();
+    renderHist(window._hist);
+  }catch(e){list.innerHTML='<div class="empty"><div class="bi">⚠️</div><p>'+e.message+'</p></div>';}
+}
+
+function renderHist(items){
+  document.getElementById('hist-list').innerHTML=items.map(([key,p])=>{
+    const conds=(p.unidades||[]).map(u=>u.apellidos).filter(Boolean).join(', ')||'—';
+    const tracs=(p.unidades||[]).map(u=>u.tractoPlaca).filter(Boolean).join(', ')||'—';
+    const n=p.nUnidades||1;
+    return`<div class="pc">
+      <div class="pc-date">${p.fecha||'—'}<small>${new Date(p.ts).toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'})}</small></div>
+      <div class="pc-div"></div>
+      <div class="pc-info">
+        <div class="pc-name">${conds}</div>
+        <div class="pc-tags">
+          <span class="ptag n">${n} unidad${n>1?'es':''}</span>
+          <span class="ptag">${tracs}</span>
+          <span class="ptag r">${p.ruta||'—'}</span>
+        </div>
+      </div>
+      <div class="pc-acts">
+        <button class="bsm bsm-v" onclick="viewProg('${key}')">Ver</button>
+        <button class="bsm bsm-d" onclick="delProg('${key}')">Eliminar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterHist(){
+  const q=document.getElementById('hsearch').value.toLowerCase();
+  if(!window._hist)return;
+  renderHist(window._hist.filter(([,p])=>JSON.stringify(p).toLowerCase().includes(q)));
+}
+
+function viewProg(key){
+  const item=window._hist?.find(([k])=>k===key);
+  if(!item)return;
+  const p=item[1];SNAP=p;
+  renderTable(p.unidades||[],p.fecha||'—','confirmado');
+  // Al ver historial ya está confirmado
+  confirmarProg();
+  goPage(2);
+}
+
+async function delProg(key){
+  if(!confirm('¿Eliminar esta programación?'))return;
+  try{await fbDB.ref('programaciones/'+key).remove();showToast('Eliminada');loadHistory();}
+  catch(e){showToast('Error: '+e.message,true);}
+}
+
+// ── NAV ──
+function goPage(n){
+  document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('active',i===n-1));
+  document.querySelectorAll('.ntab').forEach((t,i)=>t.classList.toggle('active',i===n-1));
+  if(n===3)loadHistory();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ═══════════════════════════════════════════════════════
+// MODAL BASE DE DATOS
+// ═══════════════════════════════════════════════════════
+let currentDBTab = 'conductores';
+
+function openDB(){
+  document.getElementById('db-modal').classList.remove('hidden');
+  renderDBTab(currentDBTab);
+}
+function closeDB(){
+  document.getElementById('db-modal').classList.add('hidden');
+}
+// Cerrar al hacer click fuera
+document.addEventListener('click', e => {
+  const modal = document.getElementById('db-modal');
+  if(e.target === modal) closeDB();
+});
+
+function switchDBTab(tab, btn){
+  currentDBTab = tab;
+  document.querySelectorAll('.mtab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderDBTab(tab);
+}
+
+function renderDBTab(tab){
+  const body = document.getElementById('db-modal-body');
+
+  if(tab === 'conductores'){
+    body.innerHTML = `
+      <table class="db-table" id="db-cond-tbl">
+        <thead><tr>
+          <th style="width:32px">#</th>
+          <th>APELLIDOS</th><th>NOMBRES</th>
+          <th>LICENCIA</th><th>DNI</th><th>EMPRESA</th><th style="width:32px"></th>
+        </tr></thead>
+        <tbody id="db-cond-body"></tbody>
+      </table>
+      <button class="btn-db-add" onclick="addDBRow('conductores')">+ Agregar conductor</button>`;
+    renderDBRows('conductores');
+  }
+  else if(tab === 'tractos'){
+    body.innerHTML = `
+      <table class="db-table">
+        <thead><tr>
+          <th style="width:32px">#</th>
+          <th>PLACA</th><th>MARCA</th><th>AÑO</th><th>MTC</th><th>EMPRESA</th><th style="width:32px"></th>
+        </tr></thead>
+        <tbody id="db-trac-body"></tbody>
+      </table>
+      <button class="btn-db-add" onclick="addDBRow('tractos')">+ Agregar tracto</button>`;
+    renderDBRows('tractos');
+  }
+  else if(tab === 'tolvas'){
+    body.innerHTML = `
+      <table class="db-table">
+        <thead><tr>
+          <th style="width:32px">#</th>
+          <th>PLACA</th><th>AÑO MODELO</th><th style="width:32px"></th>
+        </tr></thead>
+        <tbody id="db-tolv-body"></tbody>
+      </table>
+      <button class="btn-db-add" onclick="addDBRow('tolvas')">+ Agregar tolva</button>`;
+    renderDBRows('tolvas');
+  }
+  else if(tab === 'rutas'){
+    body.innerHTML = `
+      <table class="db-table">
+        <thead><tr>
+          <th style="width:32px">#</th>
+          <th>NOMBRE RUTA</th><th style="width:60px">ICONO</th><th>KM</th><th style="width:32px"></th>
+        </tr></thead>
+        <tbody id="db-ruta-body"></tbody>
+      </table>
+      <button class="btn-db-add" onclick="addDBRow('rutas')">+ Agregar ruta</button>`;
+    renderDBRows('rutas');
+  }
+}
+
+function renderDBRows(tab){
+  const items = DB[tab] || [];
+  const tbodyId = {conductores:'db-cond-body',tractos:'db-trac-body',tolvas:'db-tolv-body',rutas:'db-ruta-body'}[tab];
+  const tbody = document.getElementById(tbodyId);
+  if(!tbody) return;
+
+  tbody.innerHTML = items.map((item, i) => {
+    let cells = '';
+    if(tab === 'conductores'){
+      cells = `
+        <td><input class="db-inp" value="${item.apellidos||''}" onchange="DB.conductores[${i}].apellidos=this.value.toUpperCase()"></td>
+        <td><input class="db-inp" value="${item.nombres||''}" onchange="DB.conductores[${i}].nombres=this.value"></td>
+        <td><input class="db-inp" value="${item.licencia||''}" onchange="DB.conductores[${i}].licencia=this.value.toUpperCase()" style="width:110px"></td>
+        <td><input class="db-inp" value="${item.dni||''}" onchange="DB.conductores[${i}].dni=this.value" style="width:90px"></td>
+        <td><input class="db-inp" value="${item.empresa||'MISAGI'}" onchange="DB.conductores[${i}].empresa=this.value.toUpperCase()" style="width:90px"></td>`;
+    } else if(tab === 'tractos'){
+      cells = `
+        <td><input class="db-inp" value="${item.placa||''}" onchange="DB.tractos[${i}].placa=this.value.toUpperCase()" style="width:90px"></td>
+        <td><input class="db-inp" value="${item.marca||''}" onchange="DB.tractos[${i}].marca=this.value.toUpperCase()"></td>
+        <td><input class="db-inp" value="${item.anio||''}" onchange="DB.tractos[${i}].anio=this.value" style="width:60px"></td>
+        <td><input class="db-inp" value="${item.mtc||''}" onchange="DB.tractos[${i}].mtc=this.value.toUpperCase()"></td>
+        <td><input class="db-inp" value="${item.empresa||'MISAGI'}" onchange="DB.tractos[${i}].empresa=this.value.toUpperCase()" style="width:90px"></td>`;
+    } else if(tab === 'tolvas'){
+      cells = `
+        <td><input class="db-inp" value="${item.placa||''}" onchange="DB.tolvas[${i}].placa=this.value.toUpperCase()" style="width:110px"></td>
+        <td><input class="db-inp" value="${item.anio||''}" onchange="DB.tolvas[${i}].anio=this.value" style="width:90px"></td>`;
+    } else if(tab === 'rutas'){
+      cells = `
+        <td><input class="db-inp" value="${item.nombre||''}" onchange="DB.rutas[${i}].nombre=this.value"></td>
+        <td><input class="db-inp" value="${item.icono||'🛣️'}" onchange="DB.rutas[${i}].icono=this.value" style="width:55px;text-align:center"></td>
+        <td><input class="db-inp" value="${item.km||''}" onchange="DB.rutas[${i}].km=this.value" style="width:90px"></td>`;
+    }
+    return `<tr>
+      <td style="color:var(--gray);font-size:10px;text-align:center">${i+1}</td>
+      ${cells}
+      <td><button class="btn-db-del" onclick="delDBRow('${tab}',${i})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function addDBRow(tab){
+  if(tab === 'conductores') DB.conductores.push({apellidos:'',nombres:'',licencia:'',dni:'',empresa:'MISAGI'});
+  else if(tab === 'tractos') DB.tractos.push({placa:'',marca:'',anio:'',mtc:'',empresa:'MISAGI'});
+  else if(tab === 'tolvas') DB.tolvas.push({placa:'',anio:''});
+  else if(tab === 'rutas') DB.rutas.push({nombre:'',icono:'🛣️',km:''});
+  renderDBRows(tab);
+  // scroll al final
+  const body = document.getElementById('db-modal-body');
+  setTimeout(()=>body.scrollTop=body.scrollHeight, 50);
+}
+
+function delDBRow(tab, i){
+  DB[tab].splice(i, 1);
+  renderDBRows(tab);
+}
+
+function saveDB(){
+  saveDBLocal();
+  populateAll();
+  closeDB();
+  showToast('✅ Base de datos guardada — ' + DB.conductores.length + ' conductores · ' + DB.tractos.length + ' tractos · ' + DB.tolvas.length + ' tolvas');
+  setConn('on','Base de datos local · '+DB.conductores.length+' conductores · '+DB.tractos.length+' tractos · '+DB.tolvas.length+' tolvas');
+}
+
+function resetDB(){
+  if(!confirm('¿Restablecer los datos originales del Sheets? Se perderán los cambios locales.')) return;
+  DB = JSON.parse(JSON.stringify(DATOS_MISAGI));
+  saveDBLocal();
+  populateAll();
+  renderDBTab(currentDBTab);
+  showToast('✅ Datos restablecidos desde el Sheets original');
+  setConn('on','✅ '+DB.conductores.length+' conductores · '+DB.tractos.length+' tractos · '+DB.tolvas.length+' tolvas');
+}
+
+function markDone(id){const el=document.getElementById(id);if(el){el.classList.add('done');el.textContent='✓';}}
+function showToast(msg,isErr=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='show'+(isErr?' err':'');
+  setTimeout(()=>t.className='',3400);
+}
+</script>
+</body>
+</html>

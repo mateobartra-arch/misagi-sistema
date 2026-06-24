@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MISAGI S.A.C. — Iniciar Sesión</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Favicon inline SVG -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚛</text></svg>" />
+</head>
+<body>
+
+  <main class="login-page">
+    <article class="glass-card login-card" role="main">
+
+      <!-- Logo / Marca -->
+      <header class="login-logo">
+        <div class="login-logo__icon" aria-hidden="true">🚛</div>
+        <div>
+          <div class="login-logo__company">MISAGI S.A.C.</div>
+          <div class="login-logo__subtitle">Portal de Proveedores</div>
+        </div>
+      </header>
+
+      <!-- Formulario -->
+      <form class="login-form" id="loginForm" novalidate>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Correo electrónico</label>
+          <input
+            class="form-input"
+            type="email"
+            id="email"
+            name="email"
+            placeholder="usuario@empresa.com"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Contraseña</label>
+          <input
+            class="form-input"
+            type="password"
+            id="password"
+            name="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+
+        <!-- Mensaje de error -->
+        <div class="login-error" id="loginError" role="alert" aria-live="polite"></div>
+
+        <button class="btn btn-primary btn--full" type="submit" id="submitBtn">
+          <span id="btnText">Ingresar</span>
+          <span id="btnLoader" style="display:none" aria-hidden="true">⏳</span>
+        </button>
+
+      </form>
+
+    </article>
+  </main>
+
+  <script type="module">
+    import { auth }            from "./firebase-config.js";
+    import { getUserProfile }  from "./js/firestore.js";
+    import { signInWithEmailAndPassword, onAuthStateChanged }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    /**
+     * Si ya hay sesión activa, decide a dónde redirigir:
+     * - Sin perfil en Firestore (primer ingreso) → registro-empresa.html
+     * - Con id_empresa ya guardado              → dashboard.html
+     */
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return;
+      const perfil = await getUserProfile(user.uid);
+
+      // Admin → panel de administración
+      if (perfil?.rol === "admin") {
+        window.location.replace("admin.html");
+        return;
+      }
+
+      // Proveedor con empresa registrada → dashboard
+      if (perfil?.id_empresa) {
+        window.location.replace("dashboard.html");
+        return;
+      }
+
+      // Proveedor nuevo → registro de empresa
+      window.location.replace("registro-empresa.html");
+    });
+
+    // Referencias DOM
+    const form       = document.getElementById("loginForm");
+    const emailInput = document.getElementById("email");
+    const passInput  = document.getElementById("password");
+    const errorBox   = document.getElementById("loginError");
+    const submitBtn  = document.getElementById("submitBtn");
+    const btnText    = document.getElementById("btnText");
+    const btnLoader  = document.getElementById("btnLoader");
+
+
+    /** Muestra un mensaje de error legible al usuario */
+    function showError(msg) {
+      errorBox.textContent = msg;
+      errorBox.classList.add("visible");
+    }
+
+    function hideError() {
+      errorBox.classList.remove("visible");
+    }
+
+    /** Mapeo de códigos de error de Firebase a mensajes amigables */
+    function friendlyError(code) {
+      const map = {
+        "auth/invalid-email":         "El formato del correo no es válido.",
+        "auth/user-not-found":        "No existe una cuenta con ese correo.",
+        "auth/wrong-password":        "Contraseña incorrecta. Inténtalo de nuevo.",
+        "auth/invalid-credential":    "Credenciales inválidas. Verifica tu correo y contraseña.",
+        "auth/too-many-requests":     "Demasiados intentos fallidos. Espera unos minutos.",
+        "auth/user-disabled":         "Esta cuenta ha sido desactivada.",
+        "auth/network-request-failed":"Sin conexión. Verifica tu internet.",
+      };
+      return map[code] ?? "Ocurrió un error inesperado. Intenta más tarde.";
+    }
+
+    function setLoading(isLoading) {
+      submitBtn.disabled = isLoading;
+      btnText.textContent = isLoading ? "Ingresando..." : "Ingresar";
+      btnLoader.style.display = isLoading ? "inline" : "none";
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      hideError();
+
+      const email    = emailInput.value.trim();
+      const password = passInput.value;
+
+      if (!email || !password) {
+        showError("Por favor completa todos los campos.");
+        return;
+      }
+
+      setLoading(true);
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        // onAuthStateChanged se encargará de la redirección
+      } catch (err) {
+        showError(friendlyError(err.code));
+        setLoading(false);
+      }
+    });
+  </script>
+
+</body>
+</html>

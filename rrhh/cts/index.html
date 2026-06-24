@@ -1,32 +1,29 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MISAGI S.A.C.</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../assets/theme.css">
-</head>
-<body>
-  <div class="container"><p style="color:var(--text-muted)">Cargando…</p></div>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="../../assets/firebase-config.js"></script>
-  <script src="../../assets/auth.js"></script>
-  <script src="../../assets/crud.js"></script>
-  <script>
-  MISAGI.modulo({ area:"rrhh", coleccion:"rrhh", modulo:"cts", titulo:"CTS",
-  campos:[
-    {k:"trabajador",label:"Trabajador",tipo:"text",req:true},
-    {k:"periodo",label:"Periodo",tipo:"text"},
-    {k:"sueldo",label:"Sueldo (S/)",tipo:"number"},
-    {k:"monto",label:"Monto CTS (S/)",tipo:"number"},
-    {k:"fecha",label:"Fecha de depósito",tipo:"date"},
-    {k:"banco",label:"Banco",tipo:"text"},
-    {k:"estado",label:"Estado",tipo:"select",opciones:["Pendiente","Depositado"]}],
-  columnas:["trabajador","periodo","monto","fecha","estado"] });
-  </script>
-</body>
-</html>
+<html lang="es"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTS — MISAGI S.A.C.</title>
+<link rel="icon" type="image/png" href="../../assets/misagi-icon.png">
+<link rel="stylesheet" href="../../assets/theme.css">
+<style>body{margin:0;display:flex;flex-direction:column;height:100vh;overflow:hidden}.app-frame{flex:1;width:100%;border:none}.gate-msg{display:grid;place-items:center;height:100vh;color:var(--text-muted)}</style>
+</head><body>
+<header class="msg-header">
+<a class="brand" href="../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · CTS</a>
+<div class="spacer"></div>
+<a class="btn btn-ghost btn-sm" href="../../index.html">← Portal</a>
+<button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+</header>
+<div id="gate" class="gate-msg">Verificando acceso…</div>
+<iframe id="appFrame" class="app-frame hidden" title="CTS"></iframe>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="../../assets/firebase-config.js"></script>
+<script src="../../assets/auth.js"></script>
+<script>
+MISAGI.requireAccess("rrhh").then(function(){
+  document.getElementById("gate").classList.add("hidden");
+  var f=document.getElementById("appFrame"); f.src="app/index.html"; f.classList.remove("hidden");
+  document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+});
+</script>
+</body></html>

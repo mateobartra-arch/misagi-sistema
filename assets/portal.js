@@ -7,6 +7,12 @@
    ========================================================================== */
 const MISAGI_MODULOS = [
   {
+    area: "admin", grupo: "Administración", icono: "🔐",
+    apps: [
+      { nombre: "Accesos del personal", url: "admin/accesos/", estado: "activo", desc: "Crear y gestionar los logins del equipo" }
+    ]
+  },
+  {
     area: "operaciones", grupo: "Flota · Operaciones", icono: "🚚",
     apps: [
       { nombre: "Programación",        url: "flota/operaciones/programacion/", estado: "activo"      , desc: "Programación de vehículos" },
@@ -17,9 +23,7 @@ const MISAGI_MODULOS = [
   {
     area: "mantenimiento", grupo: "Flota · Mantenimiento", icono: "🔧",
     apps: [
-      { nombre: "Mantenimiento",       url: "flota/mantenimiento/mantenimiento/", estado: "activo"      , desc: "Órdenes de mantenimiento" },
-      { nombre: "Llantas",             url: "flota/mantenimiento/llantas/",       estado: "activo"      , desc: "Inspección de neumáticos" },
-      { nombre: "Estatus de flota",    url: "flota/mantenimiento/estatus/",       estado: "activo"      , desc: "Estado general de la flota" }
+      { nombre: "Estatus de flota",    url: "flota/mantenimiento/estatus/",       estado: "activo"      , desc: "Estado, llantas y mantenimiento de la flota" }
     ]
   },
   {

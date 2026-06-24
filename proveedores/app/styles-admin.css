@@ -1,0 +1,162 @@
+/* ==========================================================
+   styles-admin.css — Estilos exclusivos del Panel Admin
+   MISAGI S.A.C.
+   ========================================================== */
+
+/* ----------------------------------------------------------
+   TABS DE TIPO DE VEHÍCULO
+   ---------------------------------------------------------- */
+.type-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 1.2rem;
+}
+
+.type-tab {
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.type-tab:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.type-tab.active {
+  background: rgba(13, 110, 253, 0.2);
+  border-color: rgba(13, 110, 253, 0.5);
+  color: var(--primary-light);
+}
+
+/* ----------------------------------------------------------
+   LISTA DE DOCUMENTOS CONFIGURADOS
+   ---------------------------------------------------------- */
+.docs-config-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.doc-config-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.8rem 1rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  transition: background var(--transition);
+}
+
+.doc-config-item:hover {
+  background: rgba(255,255,255,0.07);
+}
+
+.doc-config-item__drag {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: grab;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.doc-config-item__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.doc-config-item__name {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.doc-config-item__id {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: monospace;
+  margin-top: 2px;
+}
+
+.doc-config-item__badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.doc-config-item__actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* ----------------------------------------------------------
+   REVIEW SECTIONS (reutilizadas del form)
+   ---------------------------------------------------------- */
+.review-section {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.review-section:last-child { margin-bottom: 0; }
+
+.review-section__title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary-light);
+  margin-bottom: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.6rem 1rem;
+}
+
+.review-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.review-item span   { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.review-item strong { font-size: 0.85rem; color: var(--text-primary); word-break: break-word; }
+
+/* ----------------------------------------------------------
+   REQUIRED ASTERISK
+   ---------------------------------------------------------- */
+.required { color: #f88; margin-left: 2px; }
+
+/* ----------------------------------------------------------
+   RESPONSIVE
+   ---------------------------------------------------------- */
+@media (max-width: 600px) {
+  .doc-config-item {
+    flex-wrap: wrap;
+  }
+  .doc-config-item__badges {
+    width: 100%;
+  }
+  .type-tab {
+    flex: 1;
+    text-align: center;
+    font-size: 0.78rem;
+    padding: 0.5rem 0.6rem;
+  }
+}

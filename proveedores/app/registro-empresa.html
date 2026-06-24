@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MISAGI S.A.C. — Registro de Empresa</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles-form.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚛</text></svg>" />
+</head>
+<body>
+
+<div class="reg-page">
+
+  <!-- Encabezado fijo -->
+  <header class="reg-header">
+    <div class="reg-header__brand">
+      <div class="sidebar__brand-icon" style="width:36px;height:36px;font-size:1rem;" aria-hidden="true">🚛</div>
+      <div>
+        <div class="sidebar__brand-name">MISAGI S.A.C.</div>
+        <div class="sidebar__brand-sub">Portal de Proveedores</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="reg-main">
+
+    <!-- Título -->
+    <div class="reg-title-block">
+      <h1 class="reg-title">Registro de Empresa Proveedora</h1>
+      <p class="reg-subtitle">Completa los datos de tu empresa para activar tu cuenta en el portal.</p>
+    </div>
+
+    <!-- Stepper indicador -->
+    <div class="stepper" id="stepper" aria-label="Pasos del formulario" role="list">
+      <div class="stepper__item active" data-step="1" role="listitem">
+        <div class="stepper__circle">1</div>
+        <span class="stepper__label">Datos<br>de Empresa</span>
+      </div>
+      <div class="stepper__line"></div>
+      <div class="stepper__item" data-step="2" role="listitem">
+        <div class="stepper__circle">2</div>
+        <span class="stepper__label">Datos<br>Bancarios</span>
+      </div>
+      <div class="stepper__line"></div>
+      <div class="stepper__item" data-step="3" role="listitem">
+        <div class="stepper__circle">3</div>
+        <span class="stepper__label">Representante<br>Legal</span>
+      </div>
+      <div class="stepper__line"></div>
+      <div class="stepper__item" data-step="4" role="listitem">
+        <div class="stepper__circle">✓</div>
+        <span class="stepper__label">Confirmar</span>
+      </div>
+    </div>
+
+    <!-- Formulario con pasos -->
+    <form class="glass-card reg-form" id="regForm" novalidate autocomplete="off">
+
+      <!-- ============================================================
+           PASO 1 — Datos de la Empresa
+           ============================================================ -->
+      <fieldset class="step-panel active" id="step-1" aria-labelledby="step1-title">
+        <legend class="step-panel__title" id="step1-title">
+          <span aria-hidden="true">🏢</span> Datos de la Empresa
+        </legend>
+        <p class="step-panel__subtitle">Información general y de contacto de tu empresa.</p>
+
+        <div class="form-grid">
+
+          <div class="form-group form-group--full">
+            <label class="form-label" for="ruc">
+              RUC <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input class="form-input" type="text" id="ruc" name="ruc"
+              placeholder="20123456789"
+              maxlength="11" inputmode="numeric" pattern="\d{11}"
+              autocomplete="off" required />
+            <span class="form-hint">11 dígitos, sin espacios ni guiones.</span>
+            <span class="form-error" id="err-ruc"></span>
+          </div>
+
+          <div class="form-group form-group--full">
+            <label class="form-label" for="razon_social">
+              Razón Social <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input class="form-input" type="text" id="razon_social" name="razon_social"
+              placeholder="TRANSPORTES EJEMPLO S.A.C."
+              maxlength="150" required />
+            <span class="form-error" id="err-razon_social"></span>
+          </div>
+
+          <div class="form-group form-group--full">
+            <label class="form-label" for="nombre_comercial">Nombre Comercial</label>
+            <input class="form-input" type="text" id="nombre_comercial" name="nombre_comercial"
+              placeholder="(Si es diferente a la Razón Social)"
+              maxlength="100" />
+          </div>
+
+          <div class="form-group form-group--full">
+            <label class="form-label" for="direccion">
+              Dirección Fiscal <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input class="form-input" type="text" id="direccion" name="direccion"
+              placeholder="Av. Ejemplo 123, Urbanización..."
+              maxlength="200" required />
+            <span class="form-error" id="err-direccion"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="departamento">
+              Departamento <span class="required" aria-hidden="true">*</span>
+            </label>
+            <select class="form-input" id="departamento" name="departamento" required>
+              <option value="">Selecciona...</option>
+              <option>Amazonas</option><option>Áncash</option><option>Apurímac</option>
+              <option>Arequipa</option><option>Ayacucho</option><option>Cajamarca</option>
+              <option>Callao</option><option>Cusco</option><option>Huancavelica</option>
+              <option>Huánuco</option><option>Ica</option><option>Junín</option>
+              <option>La Libertad</option><option>Lambayeque</option><option>Lima</option>
+              <option>Loreto</option><option>Madre de Dios</option><option>Moquegua</option>
+              <option>Pasco</option><option>Piura</option><option>Puno</option>
+              <option>San Martín</option><option>Tacna</option><option>Tumbes</option>
+              <option>Ucayali</option>
+            </select>
+            <span class="form-error" id="err-departamento"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="ciudad">Ciudad / Distrito</label>
+            <input class="form-input" type="text" id="ciudad" name="ciudad"
+              placeholder="Lima" maxlength="80" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="telefono">
+              Teléfono / Celular <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input class="form-input" type="tel" id="telefono" name="telefono"
+              placeholder="999 888 777"
+              maxlength="15" inputmode="tel" required />
+            <span class="form-error" id="err-telefono"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="email_empresa">
+              Email Empresarial <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input class="form-input" type="email" id="email_empresa" name="email_empresa"
+              placeholder="contacto@empresa.com"
+              maxlength="100" required />
+            <span class="form-error" id="err-email_empresa"></span>
+          </div>
+
+        </div><!-- /form-grid -->
+      </fieldset>
+
+      <!-- ============================================================
+           PASO 2 — Datos Bancarios
+           ============================================================ -->
+      <fieldset class="step-panel" id="step-2" aria-labelledby="step2-title" hidden>
+        <legend class="step-panel__title" id="step2-title">
+          <span aria-hidden="true">🏦</span> Datos Bancarios
+        </legend>
+        <p class="step-panel__subtitle">Información para el procesamiento de pagos.</p>
+
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label class="form-label" for="banco">
+              Banco <span class="required" aria-hidden="true">*</span>
+            </label>
+            <select class="form-input" id="banco" name="banco" required>
+              <option value="">Selecciona tu banco...</option>
+              <option>BCP — Banco de Crédito del Perú</option>
+              <option>BBVA Perú</option>
+              <option>Interbank</option>
+              <option>Scotiabank Perú</option>
+              <option>BanBif</option>
+              <option>Banco Pichincha</option>
+              <option>Banco de la Nación</option>
+              <option>Banco Continental</option>
+              <option>Mibanco</option>
+              <option>Otro</option>
+            </select>
+            <span class="form-error" id="err-banco"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="moneda_cuenta">Moneda de Cuenta</label>
+            <select class="form-input" id="moneda_cuenta" name="moneda_cuenta">
+              <option value="PEN">Soles (PEN)</option>
+              <option value="USD">Dólares (USD)</option>
+            </select>
+          </div>
+
+          <div class="form-group form-group--full">
+            <label class="form-label" for="numero_cuenta">
+              Número de Cuenta <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input class="form-input" type="text" id="numero_cuenta" name="numero_cuenta"
+              placeholder="000-0000000-0-00"
+              maxlength="30" inputmode="numeric" required />
+            <span class="form-error" id="err-numero_cuenta"></span>
+          </div>
+
+          <div class="form-group form-group--full">
+            <label class="form-label" for="cci">
+              CCI — Código de Cuenta Interbancario <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input class="form-input" type="text" id="cci" name="cci"
+              placeholder="00200000000000000000"
+              maxlength="20" inputmode="numeric" pattern="\d{20}"
+              required />
+            <span class="form-hint">20 dígitos sin espacios.</span>
+            <span class="form-error" id="err-cci"></span>
+          </div>
+
+          <div class="form-group form-group--full">
+            <label class="form-label" for="cuenta_detraccion">
+              Cuenta de Detracción (Banco de la Nación) <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input class="form-input" type="text" id="cuenta_detraccion" name="cuenta_detraccion"
+              placeholder="00-000-000000"
+              maxlength="20" inputmode="numeric" required />
+            <span class="form-hint">Número de cuenta en el BN para detracciones.</span>
+            <span class="form-error" id="err-cuenta_detraccion"></span>
+          </div>
+
+          <div class="form-group form-group--full">
+            <label class="form-label" for="titular_cuenta">
+              Titular de la Cuenta <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input class="form-input" type="text" id="titular_cuenta" name="titular_cuenta"
+              placeholder="Nombre exacto como figura en el banco"
+              maxlength="150" required />
+            <span class="form-error" id="err-titular_cuenta"></span>
+          </div>
+
+        </div>
+      </fieldset>
+
+      <!-- ============================================================
+           PASO 3 — Representante Legal
+           ============================================================ -->
+      <fieldset class="step-panel" id="step-3" aria-labelledby="step3-title" hidden>
+        <legend class="step-panel__title" id="step3-title">
+          <span aria-hidden="true">👤</span> Representante Legal / Contacto
+        </legend>
+        <p class="step-panel__subtitle">Persona responsable de la gestión en el portal.</p>
+
+        <div class="form-grid">
+
+          <div class="form-group form-group--full">
+            <label class="form-label" for="rep_nombres">
+              Nombres y Apellidos <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input class="form-input" type="text" id="rep_nombres" name="rep_nombres"
+              placeholder="Juan Carlos Pérez López"
+              maxlength="150" required />
+            <span class="form-error" id="err-rep_nombres"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="rep_dni">
+              DNI <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input class="form-input" type="text" id="rep_dni" name="rep_dni"
+              placeholder="12345678"
+              maxlength="8" inputmode="numeric" pattern="\d{8}"
+              required />
+            <span class="form-error" id="err-rep_dni"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="rep_cargo">
+              Cargo <span class="required" aria-hidden="true">*</span>
+            </label>
+            <select class="form-input" id="rep_cargo" name="rep_cargo" required>
+              <option value="">Selecciona...</option>
+              <option>Gerente General</option>
+              <option>Gerente de Operaciones</option>
+              <option>Administrador</option>
+              <option>Propietario</option>
+              <option>Contador</option>
+              <option>Otro</option>
+            </select>
+            <span class="form-error" id="err-rep_cargo"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="rep_telefono">
+              Teléfono / Celular <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input class="form-input" type="tel" id="rep_telefono" name="rep_telefono"
+              placeholder="999 888 777"
+              maxlength="15" inputmode="tel" required />
+            <span class="form-error" id="err-rep_telefono"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="rep_email">
+              Email Personal <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input class="form-input" type="email" id="rep_email" name="rep_email"
+              placeholder="juan.perez@email.com"
+              maxlength="100" required />
+            <span class="form-error" id="err-rep_email"></span>
+          </div>
+
+          <div class="form-group form-group--full">
+            <label class="form-label" for="observaciones">Observaciones adicionales</label>
+            <textarea class="form-input form-textarea" id="observaciones" name="observaciones"
+              placeholder="Información adicional relevante para MISAGI S.A.C. (opcional)"
+              maxlength="500" rows="3"></textarea>
+            <span class="form-hint">Máximo 500 caracteres.</span>
+          </div>
+
+        </div>
+      </fieldset>
+
+      <!-- ============================================================
+           PASO 4 — Confirmación / Resumen
+           ============================================================ -->
+      <fieldset class="step-panel" id="step-4" aria-labelledby="step4-title" hidden>
+        <legend class="step-panel__title" id="step4-title">
+          <span aria-hidden="true">✅</span> Confirmar Registro
+        </legend>
+        <p class="step-panel__subtitle">Revisa que todo esté correcto antes de enviar.</p>
+
+        <!-- Resumen generado dinámicamente -->
+        <div class="summary-review" id="summaryReview"></div>
+
+        <!-- Términos y condiciones -->
+        <div class="form-group" style="margin-top:1.5rem;">
+          <label class="form-check" for="acepta_terminos">
+            <input type="checkbox" id="acepta_terminos" name="acepta_terminos" required />
+            <span>Declaro que la información proporcionada es verdadera y autorizo a
+              <strong>MISAGI S.A.C.</strong> a verificarla para fines comerciales.</span>
+          </label>
+          <span class="form-error" id="err-acepta_terminos"></span>
+        </div>
+
+        <!-- Mensaje de error global -->
+        <div class="form-global-error" id="globalError" role="alert" aria-live="polite"></div>
+
+      </fieldset>
+
+      <!-- ============================================================
+           CONTROLES DE NAVEGACIÓN
+           ============================================================ -->
+      <div class="step-controls">
+        <button type="button" class="btn btn-ghost" id="btnPrev" style="display:none">
+          ← Anterior
+        </button>
+        <span></span><!-- spacer -->
+        <button type="button" class="btn btn-primary" id="btnNext">
+          Siguiente →
+        </button>
+        <button type="submit" class="btn btn-primary" id="btnSubmit" style="display:none">
+          <span id="submitText">Enviar Registro</span>
+          <span id="submitLoader" style="display:none" aria-hidden="true">⏳</span>
+        </button>
+      </div>
+
+    </form>
+
+    <!-- Pantalla de éxito (oculta hasta enviar) -->
+    <div class="glass-card success-screen" id="successScreen" hidden>
+      <div class="success-screen__icon" aria-hidden="true">🎉</div>
+      <h2 class="success-screen__title">¡Registro enviado!</h2>
+      <p class="success-screen__msg">
+        Tu empresa ha sido registrada exitosamente en el sistema de MISAGI S.A.C.<br>
+        El equipo revisará tu información y te contactará para activar tu cuenta.
+      </p>
+      <p class="success-screen__ref">
+        N° de referencia: <strong id="refId">—</strong>
+      </p>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem;">
+        Serás redirigido al portal en <strong id="countdown">3</strong> segundos...
+      </p>
+    </div>
+
+  </main>
+</div><!-- /reg-page -->
+
+<script type="module">
+  import { auth }                          from "./firebase-config.js";
+  import { createEmpresa, linkEmpresaToUser, getUserProfile } from "./js/firestore.js";
+  import { showToast }                     from "./js/ui.js";
+  import { onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  /* ----------------------------------------------------------------
+     GUARD: requiere sesión activa
+     Si el proveedor ya registró su empresa, va directo al dashboard
+     ---------------------------------------------------------------- */
+  let currentUser = null;
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.replace("index.html"); return; }
+    currentUser = user;
+
+    // Si ya tiene empresa registrada, no necesita llenar el formulario
+    const perfil = await getUserProfile(user.uid);
+    if (perfil?.id_empresa) {
+      window.location.replace("dashboard.html");
+    }
+  });
+
+  /* ----------------------------------------------------------------
+     CONFIG DEL STEPPER
+     ---------------------------------------------------------------- */
+  const TOTAL_STEPS = 4;
+  let currentStep   = 1;
+
+  const regForm      = document.getElementById("regForm");
+  const btnNext      = document.getElementById("btnNext");
+  const btnPrev      = document.getElementById("btnPrev");
+  const btnSubmit    = document.getElementById("btnSubmit");
+  const submitText   = document.getElementById("submitText");
+  const submitLoader = document.getElementById("submitLoader");
+  const globalError  = document.getElementById("globalError");
+  const successScreen = document.getElementById("successScreen");
+
+  /* ----------------------------------------------------------------
+     VALIDACIONES POR PASO
+     ---------------------------------------------------------------- */
+  const validators = {
+    1: [
+      { id: "ruc",          msg: "Ingresa un RUC válido de 11 dígitos.", test: v => /^\d{11}$/.test(v) },
+      { id: "razon_social", msg: "Ingresa la Razón Social.",             test: v => v.length >= 3 },
+      { id: "direccion",    msg: "Ingresa la dirección fiscal.",         test: v => v.length >= 5 },
+      { id: "departamento", msg: "Selecciona un departamento.",          test: v => v !== "" },
+      { id: "telefono",     msg: "Ingresa un teléfono válido.",          test: v => v.replace(/\s/g,"").length >= 7 },
+      { id: "email_empresa",msg: "Ingresa un email válido.",             test: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) },
+    ],
+    2: [
+      { id: "banco",            msg: "Selecciona el banco.",                        test: v => v !== "" },
+      { id: "numero_cuenta",    msg: "Ingresa el número de cuenta.",                test: v => v.length >= 5 },
+      { id: "cci",              msg: "El CCI debe tener 20 dígitos.",               test: v => /^\d{20}$/.test(v) },
+      { id: "cuenta_detraccion",msg: "Ingresa la cuenta de detracción del BN.",     test: v => v.length >= 5 },
+      { id: "titular_cuenta",   msg: "Ingresa el nombre del titular de la cuenta.", test: v => v.length >= 3 },
+    ],
+    3: [
+      { id: "rep_nombres", msg: "Ingresa los nombres del representante.", test: v => v.length >= 3 },
+      { id: "rep_dni",     msg: "El DNI debe tener 8 dígitos.",           test: v => /^\d{8}$/.test(v) },
+      { id: "rep_cargo",   msg: "Selecciona el cargo.",                   test: v => v !== "" },
+      { id: "rep_telefono",msg: "Ingresa un teléfono válido.",            test: v => v.replace(/\s/g,"").length >= 7 },
+      { id: "rep_email",   msg: "Ingresa un email válido.",               test: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) },
+    ],
+    4: [],
+  };
+
+  function validateStep(step) {
+    let ok = true;
+    (validators[step] ?? []).forEach(({ id, msg, test }) => {
+      const el  = document.getElementById(id);
+      const err = document.getElementById(`err-${id}`);
+      const val = el?.value?.trim() ?? "";
+      if (!test(val)) {
+        if (err) { err.textContent = msg; err.classList.add("visible"); }
+        el?.classList.add("input-error");
+        ok = false;
+      } else {
+        if (err) { err.textContent = ""; err.classList.remove("visible"); }
+        el?.classList.remove("input-error");
+      }
+    });
+    return ok;
+  }
+
+  /* Limpiar error al escribir */
+  regForm.addEventListener("input", (e) => {
+    const el  = e.target;
+    const err = document.getElementById(`err-${el.id}`);
+    if (err) { err.textContent = ""; err.classList.remove("visible"); }
+    el.classList.remove("input-error");
+    globalError.textContent = "";
+    globalError.classList.remove("visible");
+  });
+
+  /* ----------------------------------------------------------------
+     CAMBIO DE PASO
+     ---------------------------------------------------------------- */
+  function goToStep(n) {
+    // Ocultar panel actual
+    document.getElementById(`step-${currentStep}`).hidden = true;
+    document.getElementById(`step-${currentStep}`).classList.remove("active");
+
+    // Si vamos al paso 4, construir resumen
+    if (n === 4) buildSummary();
+
+    currentStep = n;
+
+    const panel = document.getElementById(`step-${currentStep}`);
+    panel.hidden = false;
+    panel.classList.add("active");
+
+    // Actualizar stepper visual
+    document.querySelectorAll(".stepper__item").forEach(item => {
+      const s = parseInt(item.dataset.step);
+      item.classList.toggle("active",    s === currentStep);
+      item.classList.toggle("completed", s < currentStep);
+    });
+
+    // Mostrar/ocultar botones
+    btnPrev.style.display   = currentStep > 1        ? "inline-flex" : "none";
+    btnNext.style.display   = currentStep < TOTAL_STEPS ? "inline-flex" : "none";
+    btnSubmit.style.display = currentStep === TOTAL_STEPS ? "inline-flex" : "none";
+
+    // Scroll al tope del formulario
+    regForm.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  btnNext.addEventListener("click", () => {
+    if (validateStep(currentStep)) goToStep(currentStep + 1);
+  });
+
+  btnPrev.addEventListener("click", () => goToStep(currentStep - 1));
+
+  /* ----------------------------------------------------------------
+     RESUMEN (Paso 4)
+     ---------------------------------------------------------------- */
+  function val(id) {
+    return document.getElementById(id)?.value?.trim() ?? "—";
+  }
+
+  function buildSummary() {
+    document.getElementById("summaryReview").innerHTML = `
+      <div class="review-section">
+        <h3 class="review-section__title">🏢 Datos de la Empresa</h3>
+        <div class="review-grid">
+          <div class="review-item"><span>RUC</span><strong>${val("ruc")}</strong></div>
+          <div class="review-item"><span>Razón Social</span><strong>${val("razon_social")}</strong></div>
+          <div class="review-item"><span>Nombre Comercial</span><strong>${val("nombre_comercial") || "—"}</strong></div>
+          <div class="review-item"><span>Dirección</span><strong>${val("direccion")}</strong></div>
+          <div class="review-item"><span>Departamento</span><strong>${val("departamento")}</strong></div>
+          <div class="review-item"><span>Ciudad</span><strong>${val("ciudad") || "—"}</strong></div>
+          <div class="review-item"><span>Teléfono</span><strong>${val("telefono")}</strong></div>
+          <div class="review-item"><span>Email</span><strong>${val("email_empresa")}</strong></div>
+        </div>
+      </div>
+
+      <div class="review-section">
+        <h3 class="review-section__title">🏦 Datos Bancarios</h3>
+        <div class="review-grid">
+          <div class="review-item"><span>Banco</span><strong>${val("banco")}</strong></div>
+          <div class="review-item"><span>Moneda</span><strong>${val("moneda_cuenta")}</strong></div>
+          <div class="review-item"><span>N° Cuenta</span><strong>${val("numero_cuenta")}</strong></div>
+          <div class="review-item"><span>CCI</span><strong>${val("cci")}</strong></div>
+          <div class="review-item"><span>Cta. Detracción</span><strong>${val("cuenta_detraccion")}</strong></div>
+          <div class="review-item"><span>Titular</span><strong>${val("titular_cuenta")}</strong></div>
+        </div>
+      </div>
+
+      <div class="review-section">
+        <h3 class="review-section__title">👤 Representante Legal</h3>
+        <div class="review-grid">
+          <div class="review-item"><span>Nombres</span><strong>${val("rep_nombres")}</strong></div>
+          <div class="review-item"><span>DNI</span><strong>${val("rep_dni")}</strong></div>
+          <div class="review-item"><span>Cargo</span><strong>${val("rep_cargo")}</strong></div>
+          <div class="review-item"><span>Teléfono</span><strong>${val("rep_telefono")}</strong></div>
+          <div class="review-item"><span>Email</span><strong>${val("rep_email")}</strong></div>
+        </div>
+      </div>
+    `;
+  }
+
+  /* ----------------------------------------------------------------
+     ENVÍO DEL FORMULARIO → FIRESTORE
+     ---------------------------------------------------------------- */
+  regForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    // Validar checkbox de términos
+    const acepta = document.getElementById("acepta_terminos");
+    const errAcepta = document.getElementById("err-acepta_terminos");
+    if (!acepta.checked) {
+      errAcepta.textContent = "Debes aceptar la declaración para continuar.";
+      errAcepta.classList.add("visible");
+      return;
+    }
+    errAcepta.textContent = "";
+    errAcepta.classList.remove("visible");
+
+    // Estado de carga
+    btnSubmit.disabled     = true;
+    submitText.textContent = "Enviando...";
+    submitLoader.style.display = "inline";
+
+    // Construir objeto de datos
+    const empresaData = {
+      ruc:             val("ruc"),
+      razon_social:    val("razon_social"),
+      nombre_comercial:val("nombre_comercial"),
+      direccion:       val("direccion"),
+      departamento:    val("departamento"),
+      ciudad:          val("ciudad"),
+      telefono:        val("telefono"),
+      email:           val("email_empresa"),
+      datos_bancarios: {
+        banco:             val("banco"),
+        moneda:            val("moneda_cuenta"),
+        numero_cuenta:     val("numero_cuenta"),
+        cci:               val("cci"),
+        cuenta_detraccion: val("cuenta_detraccion"),
+        titular:           val("titular_cuenta"),
+      },
+      representante: {
+        nombres:  val("rep_nombres"),
+        dni:      val("rep_dni"),
+        cargo:    val("rep_cargo"),
+        telefono: val("rep_telefono"),
+        email:    val("rep_email"),
+      },
+      observaciones: val("observaciones"),
+      estado: "pendiente_verificacion",
+    };
+
+    try {
+      // Guardar empresa en Firestore y vincularla al usuario logueado
+      const docRef = await createEmpresa(empresaData, currentUser.uid);
+      await linkEmpresaToUser(currentUser.uid, docRef.id, currentUser.email);
+
+      // Mostrar pantalla de éxito
+      regForm.hidden = true;
+      document.querySelector(".stepper").style.display = "none";
+      successScreen.hidden = false;
+      document.getElementById("refId").textContent = docRef.id;
+
+      // Cuenta regresiva y redirección al dashboard
+      let secs = 3;
+      const countEl = document.getElementById("countdown");
+      const timer = setInterval(() => {
+        secs--;
+        if (countEl) countEl.textContent = secs;
+        if (secs <= 0) {
+          clearInterval(timer);
+          window.location.replace("dashboard.html");
+        }
+      }, 1000);
+
+    } catch (err) {
+      console.error("Error al guardar empresa:", err);
+      globalError.textContent = "Ocurrió un error al enviar el registro. Por favor intenta de nuevo.";
+      globalError.classList.add("visible");
+      showToast("Error al guardar. Intenta de nuevo.", "error");
+      btnSubmit.disabled = false;
+      submitText.textContent = "Enviar Registro";
+      submitLoader.style.display = "none";
+    }
+  });
+</script>
+
+</body>
+</html>

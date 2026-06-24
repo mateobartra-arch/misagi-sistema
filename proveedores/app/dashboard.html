@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MISAGI S.A.C. — Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles-tables.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚛</text></svg>" />
+</head>
+<body>
+
+  <div class="dashboard-layout" id="dashboardLayout" style="visibility:hidden">
+
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <!-- ================================================================
+         SIDEBAR
+         ================================================================ -->
+    <aside class="sidebar" id="sidebar" aria-label="Menú de navegación">
+      <div class="sidebar__header">
+        <div class="sidebar__brand">
+          <div class="sidebar__brand-icon" aria-hidden="true">🚛</div>
+          <div>
+            <div class="sidebar__brand-name">MISAGI S.A.C.</div>
+            <div class="sidebar__brand-sub">Portal de Proveedores</div>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar__nav" role="menubar" aria-label="Menú principal">
+        <a class="nav-item active" data-section="dashboard"   href="#dashboard"   role="menuitem"><span class="nav-item__icon">📊</span><span>Dashboard</span></a>
+        <a class="nav-item"        data-section="conductores" href="#conductores" role="menuitem"><span class="nav-item__icon">🧑‍✈️</span><span>Detalle Conductores</span></a>
+        <a class="nav-item"        data-section="documentos"  href="#documentos"  role="menuitem"><span class="nav-item__icon">📂</span><span>Mis Documentos</span></a>
+        <a class="nav-item"        data-section="vehiculos"   href="#vehiculos"   role="menuitem"><span class="nav-item__icon">🚚</span><span>Detalle Vehículos</span></a>
+        <a class="nav-item"        data-section="facturacion" href="#facturacion" role="menuitem"><span class="nav-item__icon">🧾</span><span>Facturación</span></a>
+        <div class="divider" style="margin:0.5rem 0;"></div>
+        <button class="nav-item nav-item--danger" id="logoutBtn" type="button">
+          <span class="nav-item__icon">🔐</span><span>Cerrar Sesión</span>
+        </button>
+      </nav>
+
+      <div class="sidebar__footer">
+        <div class="sidebar__user">
+          <div class="sidebar__avatar" id="userAvatar" aria-hidden="true">U</div>
+          <div style="overflow:hidden;">
+            <div style="font-size:0.78rem;color:var(--text-secondary);font-weight:600;">Proveedor</div>
+            <div class="sidebar__user-email" id="userEmail">cargando...</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ================================================================
+         CONTENIDO PRINCIPAL
+         ================================================================ -->
+    <div class="main-content">
+
+      <!-- Topbar móvil -->
+      <header class="topbar" aria-label="Barra superior">
+        <button class="hamburger" id="hamburgerBtn" aria-label="Abrir menú" aria-expanded="false" aria-controls="sidebar">☰</button>
+        <span class="topbar__title">MISAGI S.A.C.</span>
+        <span style="width:32px"></span>
+      </header>
+
+      <!-- ---- SECCIÓN: Dashboard ---- -->
+      <section class="page-content" id="section-dashboard">
+        <div class="page-header">
+          <h1 class="page-header__title">Panel Principal</h1>
+          <p class="page-header__subtitle">Bienvenido al portal de gestión de transporte y proveedores de MISAGI S.A.C.</p>
+        </div>
+        <div class="cards-grid">
+          <article class="glass-card summary-card" data-section="conductores" role="button" tabindex="0">
+            <div class="summary-card__icon summary-card__icon--cyan">🧑‍✈️</div>
+            <div><div class="summary-card__label">Conductores</div><div class="summary-card__value" id="kpiConductores">—</div></div>
+            <div class="summary-card__desc">Registrados en el sistema</div>
+          </article>
+          <article class="glass-card summary-card" data-section="vehiculos" role="button" tabindex="0">
+            <div class="summary-card__icon summary-card__icon--green">🚚</div>
+            <div><div class="summary-card__label">Vehículos</div><div class="summary-card__value" id="kpiVehiculos">—</div></div>
+            <div class="summary-card__desc">Unidades en flota</div>
+          </article>
+          <article class="glass-card summary-card" data-section="facturacion" role="button" tabindex="0">
+            <div class="summary-card__icon summary-card__icon--yellow">🧾</div>
+            <div><div class="summary-card__label">Facturas</div><div class="summary-card__value" id="kpiFacturas">—</div></div>
+            <div class="summary-card__desc">Pendientes de pago</div>
+          </article>
+          <article class="glass-card summary-card" data-section="conductores" role="button" tabindex="0">
+            <div class="summary-card__icon summary-card__icon--red">⚠️</div>
+            <div><div class="summary-card__label">Alertas</div><div class="summary-card__value" id="kpiAlertas">—</div></div>
+            <div class="summary-card__desc">Docs próximos a vencer</div>
+          </article>
+          <article class="glass-card summary-card" data-section="documentos" role="button" tabindex="0">
+            <div class="summary-card__icon summary-card__icon--blue">📂</div>
+            <div><div class="summary-card__label">Mis Documentos</div><div class="summary-card__value" style="font-size:1rem;margin-top:4px;">Ver todo</div></div>
+            <div class="summary-card__desc">Gestión de archivos</div>
+          </article>
+          <article class="glass-card summary-card" data-section="dashboard" role="button" tabindex="0">
+            <div class="summary-card__icon summary-card__icon--blue">🚛</div>
+            <div><div class="summary-card__label">Transportista</div><div class="summary-card__value" style="font-size:1rem;margin-top:4px;">Mi perfil</div></div>
+            <div class="summary-card__desc">Datos de la empresa</div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           SECCIÓN: CONDUCTORES
+           ================================================================ -->
+      <section class="page-content" id="section-conductores" style="display:none">
+        <div class="page-header">
+          <h1 class="page-header__title">Detalle Conductores</h1>
+          <p class="page-header__subtitle">Gestión de conductores, licencias y exámenes médicos.</p>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="table-toolbar">
+          <div class="table-search">
+            <span class="table-search__icon">🔍</span>
+            <input class="table-search__input" type="search" id="buscarConductor"
+              placeholder="Buscar por nombre o DNI..." autocomplete="off" />
+          </div>
+          <button class="btn btn-primary" id="btnAgregarConductor" type="button">
+            + Nuevo Conductor
+          </button>
+        </div>
+
+        <!-- Loader -->
+        <div id="conductoresLoader" style="display:none;justify-content:center;padding:2rem;">
+          <span style="color:var(--text-muted);font-size:0.9rem;">⏳ Cargando conductores...</span>
+        </div>
+
+        <!-- Tabla -->
+        <div class="glass-card table-wrapper">
+          <table class="data-table" aria-label="Lista de conductores">
+            <thead>
+              <tr>
+                <th>Conductor</th>
+                <th>Teléfono</th>
+                <th>Licencia</th>
+                <th>Examen Médico</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="conductoresBody"></tbody>
+          </table>
+          <!-- Empty state -->
+          <div id="conductoresEmpty" class="empty-state" style="display:none;">
+            <div class="empty-state__icon">🧑‍✈️</div>
+            <div class="empty-state__title">Sin conductores registrados</div>
+            <div class="empty-state__desc">Agrega el primer conductor de tu empresa.</div>
+            <button class="btn btn-primary" onclick="document.getElementById('btnAgregarConductor').click()">
+              + Agregar Conductor
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---- SECCIÓN: Documentos (placeholder) ---- -->
+      <section class="page-content" id="section-documentos" style="display:none">
+        <div class="page-header">
+          <h1 class="page-header__title">Mis Documentos</h1>
+          <p class="page-header__subtitle">Archivos cargados y fechas de vencimiento</p>
+        </div>
+        <div class="glass-card" style="padding:3rem;text-align:center;color:var(--text-muted);">
+          <div style="font-size:3rem;margin-bottom:1rem;">📂</div>
+          <p style="font-size:1rem;">Próximamente — Fase 3</p>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           SECCIÓN: VEHÍCULOS
+           ================================================================ -->
+      <section class="page-content" id="section-vehiculos" style="display:none">
+        <div class="page-header">
+          <h1 class="page-header__title">Detalle Vehículos</h1>
+          <p class="page-header__subtitle">Gestión de flota, SOAT, tarjeta de propiedad y revisión técnica.</p>
+        </div>
+
+        <div class="table-toolbar">
+          <div class="table-search">
+            <span class="table-search__icon">🔍</span>
+            <input class="table-search__input" type="search" id="buscarVehiculo"
+              placeholder="Buscar por placa, marca o configuración..." autocomplete="off" />
+          </div>
+          <button class="btn btn-primary" id="btnAgregarVehiculo" type="button">
+            + Nuevo Vehículo
+          </button>
+        </div>
+
+        <div id="vehiculosLoader" style="display:none;justify-content:center;padding:2rem;">
+          <span style="color:var(--text-muted);font-size:0.9rem;">⏳ Cargando vehículos...</span>
+        </div>
+
+        <div class="glass-card table-wrapper">
+          <table class="data-table" aria-label="Lista de vehículos">
+            <thead>
+              <tr>
+                <th>Placa / Config.</th>
+                <th>Marca / Modelo</th>
+                <th>Año</th>
+                <th>SOAT</th>
+                <th>Tarjeta Prop.</th>
+                <th>Rev. Técnica</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="vehiculosBody"></tbody>
+          </table>
+          <div id="vehiculosEmpty" class="empty-state" style="display:none;">
+            <div class="empty-state__icon">🚚</div>
+            <div class="empty-state__title">Sin vehículos registrados</div>
+            <div class="empty-state__desc">Agrega el primer vehículo de tu flota.</div>
+            <button class="btn btn-primary" onclick="document.getElementById('btnAgregarVehiculo').click()">
+              + Agregar Vehículo
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           SECCIÓN: FACTURACIÓN
+           ================================================================ -->
+      <section class="page-content" id="section-facturacion" style="display:none">
+        <div class="page-header">
+          <h1 class="page-header__title">Facturación</h1>
+          <p class="page-header__subtitle">Sube tus facturas, revisa estados y descarga comprobantes de pago.</p>
+        </div>
+
+        <!-- Resumen rápido -->
+        <div class="factura-counters">
+          <div class="factura-counter-card glass-card">
+            <div class="factura-counter__num" id="cnt-todos">—</div>
+            <div class="factura-counter__label">Total</div>
+          </div>
+          <div class="factura-counter-card glass-card">
+            <div class="factura-counter__num text-warning" id="cnt-pendiente">—</div>
+            <div class="factura-counter__label">Pendientes</div>
+          </div>
+          <div class="factura-counter-card glass-card">
+            <div class="factura-counter__num text-success" id="cnt-pagado">—</div>
+            <div class="factura-counter__label">Pagadas</div>
+          </div>
+          <div class="factura-counter-card glass-card">
+            <div class="factura-counter__num text-danger" id="cnt-vencidas">—</div>
+            <div class="factura-counter__label">Vencidas</div>
+          </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="table-toolbar" style="margin-top:1.2rem;">
+          <!-- Filtros tipo tab -->
+          <div class="factura-tabs" role="tablist">
+            <button class="factura-tab active" data-filtro="todos"     role="tab">Todas</button>
+            <button class="factura-tab"        data-filtro="pendiente" role="tab">Pendientes</button>
+            <button class="factura-tab"        data-filtro="pagado"    role="tab">Pagadas</button>
+            <button class="factura-tab"        data-filtro="vencidas"  role="tab">Vencidas</button>
+          </div>
+          <div style="display:flex;gap:0.7rem;align-items:center;flex-wrap:wrap;">
+            <div class="table-search" style="max-width:220px;">
+              <span class="table-search__icon">🔍</span>
+              <input class="table-search__input" type="search" id="buscarFactura"
+                placeholder="N° de factura..." autocomplete="off" />
+            </div>
+            <button class="btn btn-primary" id="btnSubirFactura" type="button">
+              + Subir Factura
+            </button>
+          </div>
+        </div>
+
+        <div id="facturasLoader" style="display:none;justify-content:center;padding:2rem;">
+          <span style="color:var(--text-muted);font-size:0.9rem;">⏳ Cargando facturas...</span>
+        </div>
+
+        <div class="glass-card table-wrapper">
+          <table class="data-table" aria-label="Lista de facturas">
+            <thead>
+              <tr>
+                <th>N° Factura</th>
+                <th>Monto</th>
+                <th>Crédito</th>
+                <th>Vencimiento</th>
+                <th>Estado</th>
+                <th>Archivos</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="facturasBody"></tbody>
+          </table>
+          <div id="facturasEmpty" class="empty-state" style="display:none;">
+            <div class="empty-state__icon">🧾</div>
+            <div class="empty-state__title">Sin facturas registradas</div>
+            <div class="empty-state__desc">Sube tu primera factura para comenzar el proceso de pago.</div>
+            <button class="btn btn-primary" onclick="document.getElementById('btnSubirFactura').click()">
+              + Subir Factura
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /main-content -->
+  </div><!-- /dashboard-layout -->
+
+  <!-- ================================================================
+       MODAL — ALTA / EDICIÓN DE CONDUCTOR
+       ================================================================ -->
+  <div class="modal-backdrop" id="modalConductorBackdrop" role="dialog"
+    aria-modal="true" aria-labelledby="modalConductorTitulo">
+    <div class="modal">
+
+      <div class="modal__header">
+        <h2 class="modal__title" id="modalConductorTitulo">Nuevo Conductor</h2>
+        <button class="modal__close" id="btnCerrarModalConductor" aria-label="Cerrar">✕</button>
+      </div>
+
+      <form class="modal__body" id="formConductor" novalidate>
+
+        <!-- Datos personales -->
+        <div class="modal-section">
+          <div class="modal-section__title">Datos Personales</div>
+          <div class="form-grid">
+
+            <div class="form-group">
+              <label class="form-label" for="c_dni">DNI <span class="required">*</span></label>
+              <input class="form-input" type="text" id="c_dni" placeholder="12345678"
+                maxlength="8" inputmode="numeric" required />
+              <span class="form-error" id="err-c_dni"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="c_telefono">Teléfono</label>
+              <input class="form-input" type="tel" id="c_telefono" placeholder="999 888 777"
+                maxlength="15" inputmode="tel" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="c_nombres">Nombres <span class="required">*</span></label>
+              <input class="form-input" type="text" id="c_nombres" placeholder="Juan Carlos"
+                maxlength="80" required />
+              <span class="form-error" id="err-c_nombres"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="c_apellidos">Apellidos <span class="required">*</span></label>
+              <input class="form-input" type="text" id="c_apellidos" placeholder="Pérez López"
+                maxlength="80" required />
+              <span class="form-error" id="err-c_apellidos"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="c_estado">Estado</label>
+              <select class="form-input" id="c_estado">
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Licencia de conducir -->
+        <div class="modal-section">
+          <div class="modal-section__title">Licencia de Conducir</div>
+          <div class="form-grid">
+
+            <div class="form-group">
+              <label class="form-label" for="c_lic_numero">N° de Licencia</label>
+              <input class="form-input" type="text" id="c_lic_numero"
+                placeholder="Q12345678" maxlength="20" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="c_lic_categoria">Categoría</label>
+              <select class="form-input" id="c_lic_categoria">
+                <option value="">Selecciona...</option>
+                <option>A-I</option>
+                <option>A-IIa</option>
+                <option>A-IIb</option>
+                <option>A-IIIa</option>
+                <option>A-IIIb</option>
+                <option>A-IIIc</option>
+                <option>B-I</option>
+                <option>B-IIa</option>
+                <option>B-IIb</option>
+                <option>B-IIc</option>
+              </select>
+            </div>
+
+            <div class="form-group form-group--full">
+              <label class="form-label" for="c_lic_venc">Fecha de Vencimiento</label>
+              <input class="form-input" type="date" id="c_lic_venc" />
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Examen médico -->
+        <div class="modal-section">
+          <div class="modal-section__title">Examen Médico</div>
+          <div class="form-grid">
+            <div class="form-group form-group--full">
+              <label class="form-label" for="c_med_venc">Fecha de Vencimiento</label>
+              <input class="form-input" type="date" id="c_med_venc" />
+            </div>
+          </div>
+        </div>
+
+      </form>
+
+      <div class="modal__footer">
+        <button class="btn btn-ghost" id="btnCancelarConductor" type="button">Cancelar</button>
+        <button class="btn btn-primary" id="btnGuardarConductor" type="submit" form="formConductor">Guardar</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================================================================
+       DIÁLOGO DE CONFIRMACIÓN — ELIMINAR
+       ================================================================ -->
+  <div class="modal-backdrop confirm-dialog" id="confirmConductorBackdrop"
+    role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title" id="confirmTitle">Eliminar Conductor</h2>
+      </div>
+      <div class="modal__body">
+        <div class="confirm-dialog__icon">🗑️</div>
+        <p class="confirm-dialog__msg">
+          ¿Estás seguro de eliminar a
+          <span class="confirm-dialog__name" id="confirmNombreConductor"></span>?
+          <br>Esta acción no se puede deshacer.
+        </p>
+      </div>
+      <div class="modal__footer">
+        <button class="btn btn-ghost" id="btnCancelarEliminar" type="button">Cancelar</button>
+        <button class="btn btn-danger" id="btnConfirmarEliminar" type="button">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       MODAL — ALTA / EDICIÓN DE VEHÍCULO
+       ================================================================ -->
+  <div class="modal-backdrop" id="modalVehiculoBackdrop" role="dialog"
+    aria-modal="true" aria-labelledby="modalVehiculoTitulo">
+    <div class="modal">
+
+      <div class="modal__header">
+        <h2 class="modal__title" id="modalVehiculoTitulo">Nuevo Vehículo</h2>
+        <button class="modal__close" id="btnCerrarModalVehiculo" aria-label="Cerrar">✕</button>
+      </div>
+
+      <form class="modal__body" id="formVehiculo" novalidate>
+
+        <!-- Datos del vehículo -->
+        <div class="modal-section">
+          <div class="modal-section__title">Datos del Vehículo</div>
+          <div class="form-grid">
+
+            <div class="form-group">
+              <label class="form-label" for="v_placa">Placa <span class="required">*</span></label>
+              <input class="form-input" type="text" id="v_placa"
+                placeholder="ABC-123" maxlength="8"
+                style="text-transform:uppercase;" required />
+              <span class="form-error" id="err-v_placa"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="v_tipo_vehiculo">Tipo de Vehículo <span class="required">*</span></label>
+              <select class="form-input" id="v_tipo_vehiculo" required>
+                <option value="">Selecciona...</option>
+                <option value="tracto">Tracto</option>
+                <option value="encapsulado">Encapsulado</option>
+                <option value="plataforma">Plataforma</option>
+                <option value="otro">Otro</option>
+              </select>
+              <span class="form-error" id="err-v_tipo_vehiculo"></span>
+            </div>
+
+            <!-- Campo libre para "Otro" -->
+            <div class="form-group form-group--full" id="v_tipo_otro_group" style="display:none;">
+              <label class="form-label" for="v_tipo_otro">Especifica el tipo <span class="required">*</span></label>
+              <input class="form-input" type="text" id="v_tipo_otro"
+                placeholder="Ej: Volquete, Grúa, Cisterna..." maxlength="60" />
+              <span class="form-error" id="err-v_tipo_otro"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="v_configuracion_tecnica">Configuración Técnica</label>
+              <select class="form-input" id="v_configuracion_tecnica">
+                <option value="">Selecciona...</option>
+                <optgroup label="Camiones">
+                  <option>C2 — Camión simple</option>
+                  <option>C3 — Camión 3 ejes</option>
+                  <option>T2S2 — Tracto 4x2</option>
+                  <option>T3S2 — Tracto 6x4</option>
+                  <option>T3S3 — Tracto 6x6</option>
+                  <option>T3S2R4 — Tren largo</option>
+                </optgroup>
+                <optgroup label="Remolques">
+                  <option>Semirremolque plataforma</option>
+                  <option>Semirremolque tolva</option>
+                  <option>Semirremolque furgón</option>
+                  <option>Semirremolque cisterna</option>
+                  <option>Remolque</option>
+                </optgroup>
+                <optgroup label="Otros">
+                  <option>Furgoneta</option><option>Camioneta</option><option>Otro</option>
+                </optgroup>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="v_marca">Marca</label>
+              <select class="form-input" id="v_marca">
+                <option value="">Selecciona...</option>
+                <option>Volvo</option><option>Scania</option><option>Mercedes-Benz</option>
+                <option>Kenworth</option><option>Freightliner</option><option>Mack</option>
+                <option>International</option><option>Peterbilt</option><option>DAF</option>
+                <option>MAN</option><option>Iveco</option><option>Hino</option>
+                <option>Mitsubishi</option><option>Isuzu</option><option>Otro</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="v_modelo">Modelo</label>
+              <input class="form-input" type="text" id="v_modelo"
+                placeholder="FH 500, R 480..." maxlength="50" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="v_anio">Año</label>
+              <input class="form-input" type="number" id="v_anio"
+                placeholder="2020" min="1990" max="2030" inputmode="numeric" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="v_color">Color</label>
+              <input class="form-input" type="text" id="v_color"
+                placeholder="Blanco, Rojo..." maxlength="30" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="v_estado">Estado</label>
+              <select class="form-input" id="v_estado">
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Documentos dinámicos según tipo -->
+        <div class="modal-section">
+          <div class="modal-section__title" style="display:flex;align-items:center;justify-content:space-between;">
+            <span>📋 Documentos Requeridos</span>
+            <span style="font-size:0.72rem;color:var(--text-muted);font-weight:400;">Configurado por el administrador</span>
+          </div>
+          <div id="vehiculoDocsContainer">
+            <p style="color:var(--text-muted);font-size:0.85rem;padding:1rem 0;">
+              Selecciona el tipo de vehículo para ver los documentos requeridos.
+            </p>
+          </div>
+        </div>
+
+      </form>
+
+      <div class="modal__footer">
+        <button class="btn btn-ghost" id="btnCancelarVehiculo" type="button">Cancelar</button>
+        <button class="btn btn-primary" id="btnGuardarVehiculo" type="submit" form="formVehiculo">Guardar</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================================================================
+       DIÁLOGO CONFIRMACIÓN — ELIMINAR VEHÍCULO
+       ================================================================ -->
+  <div class="modal-backdrop confirm-dialog" id="confirmVehiculoBackdrop"
+    role="alertdialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title">Eliminar Vehículo</h2>
+      </div>
+      <div class="modal__body">
+        <div class="confirm-dialog__icon">🗑️</div>
+        <p class="confirm-dialog__msg">
+          ¿Estás seguro de eliminar el vehículo con placa
+          <span class="confirm-dialog__name" id="confirmPlacaVehiculo"></span>?
+          <br>Esta acción no se puede deshacer.
+        </p>
+      </div>
+      <div class="modal__footer">
+        <button class="btn btn-ghost"   id="btnCancelarEliminarVehiculo"  type="button">Cancelar</button>
+        <button class="btn btn-danger"  id="btnConfirmarEliminarVehiculo" type="button">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       MODAL — SUBIR FACTURA
+       ================================================================ -->
+  <div class="modal-backdrop" id="modalFacturaBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalFacturaTitulo">
+    <div class="modal" style="max-width:580px;">
+
+      <div class="modal__header">
+        <h2 class="modal__title" id="modalFacturaTitulo">Subir Factura</h2>
+        <button class="modal__close" id="btnCerrarModalFactura" aria-label="Cerrar">✕</button>
+      </div>
+
+      <form class="modal__body" id="formFactura" novalidate>
+
+        <div class="modal-section">
+          <div class="modal-section__title">Datos de la Factura</div>
+          <div class="form-grid">
+
+            <div class="form-group form-group--full">
+              <label class="form-label" for="f_numero">N° de Factura <span class="required">*</span></label>
+              <input class="form-input" type="text" id="f_numero"
+                placeholder="F001-00000001" maxlength="30" required />
+              <span class="form-error" id="err-f_numero"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="f_moneda">Moneda</label>
+              <select class="form-input" id="f_moneda">
+                <option value="PEN">Soles (PEN)</option>
+                <option value="USD">Dólares (USD)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="f_monto">Monto Total <span class="required">*</span></label>
+              <input class="form-input" type="number" id="f_monto"
+                placeholder="0.00" min="0" step="0.01" inputmode="decimal" required />
+              <span class="form-error" id="err-f_monto"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="f_fecha_emision">Fecha de Emisión <span class="required">*</span></label>
+              <input class="form-input" type="date" id="f_fecha_emision" required />
+              <span class="form-error" id="err-f_fecha_emision"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="f_dias_credito">Días de Crédito <span class="required">*</span></label>
+              <select class="form-input" id="f_dias_credito" required>
+                <option value="">Selecciona...</option>
+                <option value="15">15 días</option>
+                <option value="30">30 días</option>
+                <option value="45">45 días</option>
+                <option value="60">60 días</option>
+                <option value="90">90 días</option>
+              </select>
+              <span class="form-error" id="err-f_dias_credito"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="f_fecha_vencimiento">Fecha de Vencimiento</label>
+              <input class="form-input" type="date" id="f_fecha_vencimiento" />
+              <span class="form-hint">Se calcula automáticamente.</span>
+            </div>
+
+            <div class="form-group form-group--full">
+              <label class="form-label" for="f_descripcion">Descripción / Concepto</label>
+              <input class="form-input" type="text" id="f_descripcion"
+                placeholder="Servicio de transporte — ruta Lima-Arequipa" maxlength="200" />
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Archivos -->
+        <div class="modal-section">
+          <div class="modal-section__title">Archivos Adjuntos</div>
+
+          <div class="upload-area">
+            <label class="upload-field" for="f_pdf">
+              <div class="upload-field__icon">📄</div>
+              <div>
+                <div class="upload-field__label">PDF de Factura <span class="required">*</span></div>
+                <div class="upload-field__hint">Máx. 20 MB · Formato PDF</div>
+              </div>
+              <input type="file" id="f_pdf" accept=".pdf,application/pdf" style="display:none;" />
+              <span class="upload-field__name" id="f_pdf_name"></span>
+            </label>
+            <span class="form-error" id="err-f_pdf"></span>
+
+            <label class="upload-field" for="f_xml" style="margin-top:0.7rem;">
+              <div class="upload-field__icon">📋</div>
+              <div>
+                <div class="upload-field__label">XML de Factura <span style="color:var(--text-muted);font-size:0.75rem;">(opcional)</span></div>
+                <div class="upload-field__hint">Máx. 5 MB · Formato XML</div>
+              </div>
+              <input type="file" id="f_xml" accept=".xml,text/xml,application/xml" style="display:none;" />
+              <span class="upload-field__name" id="f_xml_name"></span>
+            </label>
+          </div>
+
+          <!-- Barra de progreso de carga -->
+          <div id="uploadProgressWrap" style="display:none;margin-top:1rem;">
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--text-muted);margin-bottom:5px;">
+              <span id="uploadProgressText">Subiendo...</span>
+            </div>
+            <div style="height:6px;background:var(--bg-input);border-radius:4px;overflow:hidden;">
+              <div id="uploadProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width 0.3s ease;border-radius:4px;"></div>
+            </div>
+          </div>
+        </div>
+
+      </form>
+
+      <div class="modal__footer">
+        <button class="btn btn-ghost"   id="btnCancelarFactura" type="button">Cancelar</button>
+        <button class="btn btn-primary" id="btnGuardarFactura"  type="submit" form="formFactura">Subir Factura</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================================================================
+       MODAL — DETALLE DE FACTURA
+       ================================================================ -->
+  <div class="modal-backdrop" id="modalDetalleBackdrop" role="dialog" aria-modal="true">
+    <div class="modal" style="max-width:600px;">
+      <div class="modal__header">
+        <h2 class="modal__title">Detalle de Factura</h2>
+        <button class="modal__close" id="btnCerrarDetalle" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal__body" id="detalleBody" style="font-size:0.88rem;"></div>
+      <div class="modal__footer">
+        <button class="btn btn-ghost" id="btnCerrarDetalle2" onclick="document.getElementById('modalDetalleBackdrop').classList.remove('open')">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       SCRIPTS
+       ================================================================ -->
+  <script type="module">
+    import { auth }                from "./firebase-config.js";
+    import { getUserProfile, getConductores, getVehiculos, countExpiringDocs }
+                                   from "./js/firestore.js";
+    import { initConductores }     from "./js/conductores.js";
+    import { initVehiculos }       from "./js/vehiculos.js";
+    import { initFacturas }        from "./js/facturas.js";
+    import { router }              from "./js/router.js";
+    import { initSidebar }         from "./js/ui.js";
+    import { signOut, onAuthStateChanged }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    let idEmpresa           = null;
+    let conductoresIniciado = false;
+    let vehiculosIniciado   = false;
+    let facturasIniciado    = false;
+
+    /* ---- Guard: sesión + empresa registrada ---- */
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.replace("index.html"); return; }
+
+      const perfil = await getUserProfile(user.uid);
+      if (!perfil?.id_empresa) {
+        window.location.replace("registro-empresa.html");
+        return;
+      }
+
+      idEmpresa = perfil.id_empresa;
+      document.getElementById("dashboardLayout").style.visibility = "visible";
+      document.getElementById("userEmail").textContent  = user.email ?? "";
+      document.getElementById("userAvatar").textContent = (user.email ?? "U").charAt(0).toUpperCase();
+
+      await cargarKPIs();
+    });
+
+    /* ---- KPIs reales desde Firestore ---- */
+    async function cargarKPIs() {
+      try {
+        const [conductores, vehiculos] = await Promise.all([
+          getConductores(idEmpresa),
+          getVehiculos(idEmpresa),
+        ]);
+
+        const alertasCond = countExpiringDocs(conductores, 30);
+        const alertasVeh  = countExpiringDocs(vehiculos,   30);
+
+        document.getElementById("kpiConductores").textContent = conductores.length;
+        document.getElementById("kpiVehiculos").textContent   = vehiculos.length;
+        document.getElementById("kpiAlertas").textContent     = alertasCond + alertasVeh;
+        document.getElementById("kpiFacturas").textContent    = "—"; // Fase siguiente
+      } catch {
+        // Silencioso, no bloquea el dashboard
+      }
+    }
+
+    /* ---- Cerrar sesión ---- */
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.replace("index.html");
+    });
+
+    /* ---- Router con inicialización lazy por sección ---- */
+    const SECTIONS = ["dashboard","conductores","documentos","vehiculos","facturacion"];
+    router(SECTIONS, async (seccion) => {
+      if (seccion === "conductores" && !conductoresIniciado && idEmpresa) {
+        conductoresIniciado = true;
+        await initConductores(idEmpresa);
+      }
+      if (seccion === "vehiculos" && !vehiculosIniciado && idEmpresa) {
+        vehiculosIniciado = true;
+        await initVehiculos(idEmpresa);
+      }
+      if (seccion === "facturacion" && !facturasIniciado && idEmpresa) {
+        facturasIniciado = true;
+        await initFacturas(idEmpresa);
+      }
+    });
+
+    initSidebar();
+  </script>
+
+</body>
+</html>

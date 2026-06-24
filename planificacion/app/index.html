@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan de Trabajo MISAGI S.A.C.</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:   #1C3A6E;
+    --green:  #1B6B3A;
+    --teal:   #1A7A5E;
+    --accent: #2CA05A;
+    --light-green: #E8F5EE;
+    --light-blue:  #EAF0FA;
+    --bg:     #F4F5F7;
+    --white:  #FFFFFF;
+    --border: #D2D8E0;
+    --text:   #1A2533;
+    --muted:  #6B7A8D;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ─── HEADER ─── */
+  header {
+    background: linear-gradient(135deg, var(--navy) 0%, #162d56 100%);
+    padding: 0;
+    box-shadow: 0 3px 16px rgba(28,58,110,0.25);
+    position: relative;
+    overflow: hidden;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.06;
+    pointer-events: none;
+  }
+  .header-inner {
+    max-width: 1020px;
+    margin: 0 auto;
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Logo container — crops white padding */
+  .logo-wrap {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 6px 14px;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .logo-wrap img {
+    height: 42px;
+    width: auto;
+    display: block;
+    object-fit: contain;
+  }
+
+  .divider-v {
+    width: 1px; height: 46px;
+    background: rgba(255,255,255,0.2);
+    flex-shrink: 0;
+  }
+
+  .header-titles { flex: 1; }
+  .header-tag {
+    font-size: 10px;
+    letter-spacing: 3.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 3px;
+  }
+  .header-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(20px, 3vw, 30px);
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: 0.5px;
+    line-height: 1.1;
+  }
+  .header-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    margin-top: 3px;
+    font-weight: 300;
+  }
+
+  /* ─── SELECTOR ─── */
+  .selector-panel {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+  .sel-group { display: flex; flex-direction: column; gap: 4px; }
+  .sel-group label { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .sel-group select {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--white);
+    padding: 7px 28px 7px 10px;
+    border-radius: 6px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    min-width: 110px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%232CA05A' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+  }
+  .sel-group select option { background: var(--navy); color: var(--white); }
+  .btn-apply {
+    background: var(--accent);
+    color: var(--white);
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .btn-apply:hover { background: #228a4a; transform: translateY(-1px); }
+
+  /* ─── MAIN ─── */
+  main { max-width: 1020px; margin: 0 auto; padding: 28px 28px 60px; }
+
+  .period-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--navy);
+    color: var(--white);
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+  }
+  .period-badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+
+  /* ─── CARDS ─── */
+  .form-grid { display: grid; gap: 18px; }
+  .card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 26px;
+    border: 1px solid var(--border);
+    transition: box-shadow 0.2s;
+  }
+  .card:hover { box-shadow: 0 4px 20px rgba(28,58,110,0.09); }
+  .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .card-num {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .card-title { font-size: 14px; font-weight: 700; color: var(--navy); }
+  .card-desc { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+  /* Fields */
+  .field-group { margin-bottom: 14px; }
+  .field-group:last-child { margin-bottom: 0; }
+  .field-group label {
+    display: block; font-size: 11px; font-weight: 600; color: var(--muted);
+    letter-spacing: 0.5px; margin-bottom: 5px; text-transform: uppercase;
+  }
+  input[type="text"], input[type="date"], textarea, select.field-select {
+    width: 100%; border: 1.5px solid var(--border); border-radius: 7px;
+    padding: 9px 12px; font-family: 'Barlow', sans-serif; font-size: 13px;
+    color: var(--text); background: var(--white); transition: border-color 0.2s; outline: none;
+  }
+  input:focus, textarea:focus, select.field-select:focus { border-color: var(--navy); }
+  textarea { resize: vertical; min-height: 76px; line-height: 1.6; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+  /* Activities table */
+  .activities-table { width: 100%; border-collapse: collapse; }
+  .activities-table thead tr { background: var(--navy); color: var(--white); }
+  .activities-table th { padding: 9px 12px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; text-align: left; }
+  .activities-table td { padding: 7px 9px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .activities-table tbody tr:hover { background: var(--light-blue); }
+  .activities-table td input, .activities-table td select {
+    width: 100%; border: 1px solid transparent; border-radius: 5px;
+    padding: 5px 7px; font-family: 'Barlow', sans-serif; font-size: 12px;
+    background: transparent; outline: none; transition: border-color 0.15s, background 0.15s;
+  }
+  .activities-table td input:focus, .activities-table td select:focus { border-color: var(--navy); background: var(--white); }
+  .btn-add-row {
+    margin-top: 10px; background: none; border: 1.5px dashed var(--border);
+    color: var(--muted); padding: 7px 16px; border-radius: 6px; cursor: pointer;
+    font-family: 'Barlow', sans-serif; font-size: 12px; transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-add-row:hover { border-color: var(--navy); color: var(--navy); }
+  .btn-del-row { background: none; border: none; color: #ccc; cursor: pointer; font-size: 15px; padding: 3px; transition: color 0.15s; line-height: 1; }
+  .btn-del-row:hover { color: #c0392b; }
+
+  /* Semanas */
+  #semanas-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap: 12px; }
+  .semana-box { border: 1.5px solid var(--border); border-radius: 9px; overflow: hidden; }
+  .semana-header { background: var(--navy); color: var(--white); padding: 7px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; }
+  .semana-body { padding: 9px; }
+  .semana-body textarea { min-height: 60px; font-size: 12px; border-radius: 5px; }
+
+  /* Prioridad */
+  .priority-buttons { display: flex; gap: 9px; flex-wrap: wrap; }
+  .pri-btn { padding: 7px 18px; border-radius: 100px; border: 2px solid var(--border); background: none; font-family: 'Barlow', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .pri-btn[data-val="alta"] { color: #c0392b; border-color: #f5c5c0; }
+  .pri-btn[data-val="alta"].active { background: #c0392b; color: white; border-color: #c0392b; }
+  .pri-btn[data-val="media"] { color: #b8860b; border-color: #f0dfa0; }
+  .pri-btn[data-val="media"].active { background: #b8860b; color: white; border-color: #b8860b; }
+  .pri-btn[data-val="baja"] { color: var(--green); border-color: #b8e0cb; }
+  .pri-btn[data-val="baja"].active { background: var(--green); color: white; border-color: var(--green); }
+
+  /* ─── ACTIONS BAR ─── */
+  .actions-bar {
+    background: var(--white); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px 26px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 22px;
+  }
+  .btn-main { background: var(--navy); color: var(--white); border: none; padding: 11px 24px; border-radius: 8px; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 7px; }
+  .btn-main:hover { background: #162d56; transform: translateY(-1px); }
+  .btn-sec { background: none; border: 2px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 8px; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 7px; }
+  .btn-sec:hover { border-color: var(--navy); color: var(--navy); }
+  .btn-gantt { background: var(--green); color: var(--white); border: none; padding: 11px 24px; border-radius: 8px; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 7px; }
+  .btn-gantt:hover { background: #155a30; transform: translateY(-1px); }
+  .spacer { flex: 1; }
+  .save-status { font-size: 12px; color: var(--accent); font-weight: 600; display: none; }
+  .save-status.visible { display: block; }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55); z-index: 1000;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--white); border-radius: 14px; max-width: 720px; width: 95%;
+    max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+  .modal-header {
+    background: var(--green); color: var(--white);
+    padding: 18px 24px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-header h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
+  .modal-header p { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+  .modal-close { background: none; border: none; color: white; font-size: 22px; cursor: pointer; line-height: 1; padding: 4px; }
+  .modal-body { padding: 22px; overflow-y: auto; flex: 1; }
+  .modal-body pre {
+    background: #1a2533; color: #a8d8a8; border-radius: 8px;
+    padding: 16px; font-size: 11.5px; line-height: 1.6;
+    overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+    font-family: 'Courier New', monospace;
+  }
+  .modal-footer { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+  .btn-copy { background: var(--navy); color: var(--white); border: none; padding: 10px 22px; border-radius: 7px; font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+  .btn-copy:hover { background: #162d56; }
+  .copy-ok { font-size: 12px; color: var(--accent); font-weight: 600; display: none; align-self: center; }
+  .copy-ok.visible { display: block; }
+
+  /* ─── PRINT ─── */
+  #print-view { display: none; }
+  @media print {
+    body > *:not(#print-view) { display: none !important; }
+    #print-view { display: block !important; }
+    #print-view * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  .print-page { max-width: 800px; margin: 0 auto; font-family: 'Barlow', sans-serif; }
+  .print-header { background: var(--navy); color: var(--white); padding: 22px 32px; display: flex; justify-content: space-between; align-items: center; }
+  .print-logo { background: white; border-radius: 8px; padding: 5px 12px; height: 46px; display: flex; align-items: center; }
+  .print-logo img { height: 36px; width: auto; }
+  .print-title-block { flex: 1; padding-left: 20px; }
+  .print-tag { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .print-title { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: 0.5px; line-height: 1.1; }
+  .print-period { font-size: 13px; color: rgba(255,255,255,0.65); margin-top: 3px; }
+  .print-h-right { text-align: right; }
+  .print-h-right .lbl { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); }
+  .print-h-right .val { font-size: 14px; font-weight: 500; margin-top: 1px; }
+  .print-body { padding: 24px 32px; }
+  .print-section { margin-bottom: 20px; }
+  .print-sec-title { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 4px; margin-bottom: 10px; }
+  .print-field { margin-bottom: 8px; }
+  .print-field .lbl { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .print-field .val { font-size: 12px; margin-top: 2px; line-height: 1.5; }
+  .print-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .print-table th { background: var(--navy); color: white; padding: 6px 9px; text-align: left; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
+  .print-table td { padding: 6px 9px; border-bottom: 1px solid #eee; }
+  .print-table tbody tr:nth-child(even) { background: #f6f7fa; }
+  .print-two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .print-semanas { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 9px; }
+  .print-sem-box { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .print-sem-hd { background: var(--navy); color: white; padding: 5px 9px; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; }
+  .print-sem-bd { padding: 7px 9px; font-size: 11px; line-height: 1.5; min-height: 44px; }
+  .badge-alta { display: inline-block; padding: 2px 9px; border-radius: 100px; font-size: 10px; font-weight: 700; background: #fde8e5; color: #c0392b; }
+  .badge-media { display: inline-block; padding: 2px 9px; border-radius: 100px; font-size: 10px; font-weight: 700; background: #fdf5dc; color: #8a6a10; }
+  .badge-baja { display: inline-block; padding: 2px 9px; border-radius: 100px; font-size: 10px; font-weight: 700; background: var(--light-green); color: var(--green); }
+  .print-footer { background: #edf1f7; padding: 12px 32px; display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: var(--muted); margin-top: 8px; }
+
+  @media (max-width: 640px) {
+    .header-inner { flex-direction: column; align-items: flex-start; }
+    .two-col, .three-col { grid-template-columns: 1fr; }
+    #semanas-container { grid-template-columns: 1fr 1fr; }
+    .actions-bar { flex-direction: column; align-items: stretch; }
+    .divider-v { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo-wrap">
+      <img src="data:image/png;base64,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" alt="MISAGI S.A.C.">
+    </div>
+    <div class="divider-v"></div>
+    <div class="header-titles">
+      <div class="header-tag">Gestión de Proyectos</div>
+      <div class="header-title">Plan de Trabajo Mensual</div>
+      <div class="header-sub">Formulario para colaboradores — MISAGI S.A.C.</div>
+    </div>
+    <div class="selector-panel">
+      <div class="sel-group">
+        <label>Mes</label>
+        <select id="sel-mes">
+          <option value="1">Enero</option><option value="2">Febrero</option>
+          <option value="3" selected>Marzo</option><option value="4">Abril</option>
+          <option value="5">Mayo</option><option value="6">Junio</option>
+          <option value="7">Julio</option><option value="8">Agosto</option>
+          <option value="9">Septiembre</option><option value="10">Octubre</option>
+          <option value="11">Noviembre</option><option value="12">Diciembre</option>
+        </select>
+      </div>
+      <div class="sel-group">
+        <label>Año</label>
+        <select id="sel-año">
+          <option value="2025">2025</option>
+          <option value="2026" selected>2026</option>
+          <option value="2027">2027</option>
+        </select>
+      </div>
+      <button class="btn-apply" onclick="aplicarPeriodo()">⟳ Aplicar</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="period-badge" id="period-badge">Marzo 2026</div>
+  <div class="form-grid">
+
+    <!-- 01 Datos del colaborador -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num">01</div>
+        <div><div class="card-title">Datos del Colaborador</div><div class="card-desc">Información básica del responsable del plan</div></div>
+      </div>
+      <div class="two-col">
+        <div class="field-group"><label>Nombre completo</label><input type="text" id="nombre" placeholder="Ej. Ana García Ríos"></div>
+        <div class="field-group"><label>Cargo / Área</label><input type="text" id="cargo" placeholder="Ej. Coordinadora de Proyectos"></div>
+      </div>
+      <div class="two-col">
+        <div class="field-group"><label>Proyecto o área de trabajo</label><input type="text" id="proyecto" placeholder="Ej. Implementación ERP Módulo Ventas"></div>
+        <div class="field-group"><label>Jefe / Supervisor directo</label><input type="text" id="supervisor" placeholder="Ej. Ing. Luis Paredes"></div>
+      </div>
+    </div>
+
+    <!-- 02 Objetivo -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num">02</div>
+        <div><div class="card-title">Objetivo del Mes</div><div class="card-desc">¿Qué se espera lograr durante <span class="current-period-text">este mes</span>?</div></div>
+      </div>
+      <div class="field-group"><label>Objetivo principal</label><textarea id="objetivo-principal" placeholder="Describe el objetivo central..."></textarea></div>
+      <div class="field-group"><label>Resultados esperados</label><textarea id="resultados-esperados" placeholder="Entregables o resultados concretos..."></textarea></div>
+      <div style="margin-top:16px;">
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.5px;margin-bottom:9px;text-transform:uppercase;">Prioridad del mes</label>
+        <div class="priority-buttons">
+          <button class="pri-btn" data-val="alta" onclick="setPri(this)">🔴 Alta</button>
+          <button class="pri-btn" data-val="media" onclick="setPri(this)">🟡 Media</button>
+          <button class="pri-btn active" data-val="baja" onclick="setPri(this)">🟢 Baja</button>
+        </div>
+        <input type="hidden" id="prioridad-val" value="baja">
+      </div>
+    </div>
+
+    <!-- 03 Actividades -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num">03</div>
+        <div><div class="card-title">Actividades Programadas</div><div class="card-desc">Tareas con responsable, fechas y estado — usadas también en el Diagrama Gantt</div></div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="activities-table">
+          <thead>
+            <tr>
+              <th style="width:34%">Actividad</th>
+              <th style="width:17%">Responsable</th>
+              <th style="width:13%">Inicio</th>
+              <th style="width:13%">Fin</th>
+              <th style="width:12%">Estado</th>
+              <th style="width:11%">% Avance</th>
+              <th style="width:5%"></th>
+            </tr>
+          </thead>
+          <tbody id="actividades-body"></tbody>
+        </table>
+      </div>
+      <button class="btn-add-row" onclick="addActividad()">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Agregar actividad
+      </button>
+    </div>
+
+    <!-- 04 Distribución semanal -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num">04</div>
+        <div><div class="card-title">Distribución Semanal</div><div class="card-desc">Planifica qué se trabajará cada semana del mes</div></div>
+      </div>
+      <div id="semanas-container"></div>
+    </div>
+
+    <!-- 05 Recursos -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num">05</div>
+        <div><div class="card-title">Recursos y Requerimientos</div><div class="card-desc">¿Qué necesitas para cumplir el plan?</div></div>
+      </div>
+      <div class="two-col">
+        <div class="field-group"><label>Recursos humanos requeridos</label><textarea id="rec-humanos" placeholder="Ej. Apoyo de equipo TI..."></textarea></div>
+        <div class="field-group"><label>Recursos materiales / tecnológicos</label><textarea id="rec-materiales" placeholder="Ej. Licencias, equipos..."></textarea></div>
+      </div>
+      <div class="field-group"><label>Presupuesto estimado</label><input type="text" id="presupuesto" placeholder="Ej. S/. 2,500"></div>
+    </div>
+
+    <!-- 06 KPIs -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num">06</div>
+        <div><div class="card-title">Indicadores de Éxito (KPIs)</div><div class="card-desc">¿Cómo medirás que el plan fue exitoso?</div></div>
+      </div>
+      <div class="three-col">
+        <div class="field-group"><label>Indicador 1</label><input type="text" id="kpi1" placeholder="Ej. % actividades completadas"></div>
+        <div class="field-group"><label>Meta</label><input type="text" id="kpi1-meta" placeholder="≥ 90%"></div>
+        <div class="field-group"><label>Forma de medición</label><input type="text" id="kpi1-med" placeholder="Reporte semanal"></div>
+      </div>
+      <div class="three-col">
+        <div class="field-group"><label>Indicador 2</label><input type="text" id="kpi2"></div>
+        <div class="field-group"><label>Meta</label><input type="text" id="kpi2-meta"></div>
+        <div class="field-group"><label>Forma de medición</label><input type="text" id="kpi2-med"></div>
+      </div>
+      <div class="three-col">
+        <div class="field-group"><label>Indicador 3 (opcional)</label><input type="text" id="kpi3"></div>
+        <div class="field-group"><label>Meta</label><input type="text" id="kpi3-meta"></div>
+        <div class="field-group"><label>Forma de medición</label><input type="text" id="kpi3-med"></div>
+      </div>
+    </div>
+
+    <!-- 07 Riesgos -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num">07</div>
+        <div><div class="card-title">Riesgos y Contingencias</div><div class="card-desc">Anticipa problemas y define acciones preventivas</div></div>
+      </div>
+      <div class="two-col">
+        <div class="field-group"><label>Posibles riesgos identificados</label><textarea id="riesgos"></textarea></div>
+        <div class="field-group"><label>Plan de contingencia</label><textarea id="contingencia"></textarea></div>
+      </div>
+    </div>
+
+    <!-- 08 Compromisos -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num">08</div>
+        <div><div class="card-title">Compromisos y Aprobación</div><div class="card-desc">Declaración final del colaborador</div></div>
+      </div>
+      <div class="field-group"><label>Compromisos adicionales o notas al supervisor</label><textarea id="compromisos"></textarea></div>
+      <div class="two-col" style="margin-top:8px">
+        <div class="field-group"><label>Fecha de presentación</label><input type="date" id="fecha-presentacion"></div>
+        <div class="field-group"><label>Modalidad de trabajo</label>
+          <select class="field-select" id="modalidad">
+            <option value="">Seleccionar...</option>
+            <option>Presencial</option><option>Remoto</option><option>Híbrido</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /form-grid -->
+
+  <!-- ACTIONS -->
+  <div class="actions-bar">
+    <button class="btn-main" onclick="exportarPDF()">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M4 1h6l4 4v9a1 1 0 01-1 1H3a1 1 0 01-1-1V2a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5"/><path d="M10 1v4h4M5 8h6M5 11h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Imprimir / PDF
+    </button>
+    <button class="btn-gantt" onclick="generarGanttScript()">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="6" height="3" rx="1" fill="currentColor"/><rect x="5" y="7" width="8" height="3" rx="1" fill="currentColor"/><rect x="2" y="11" width="5" height="3" rx="1" fill="currentColor"/></svg>
+      Generar Script Gantt (Google Sheets)
+    </button>
+    <button class="btn-sec" onclick="guardarLocal()">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M14 10v3a1 1 0 01-1 1H3a1 1 0 01-1-1v-3M8 1v9M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Guardar borrador
+    </button>
+    <button class="btn-sec" onclick="cargarLocal()">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M14 10v3a1 1 0 01-1 1H3a1 1 0 01-1-1v-3M8 12V3M5 6l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Recuperar borrador
+    </button>
+    <button class="btn-sec" onclick="limpiarFormulario()">✕ Limpiar</button>
+    <div class="spacer"></div>
+    <span class="save-status" id="save-status">✓ Guardado</span>
+  </div>
+</main>
+
+<!-- GANTT MODAL -->
+<div class="modal-overlay" id="gantt-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3>Script Gantt — Google Sheets</h3>
+        <p>Copia este Apps Script y pégalo en tu Google Sheets → Extensiones → Apps Script</p>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('gantt-modal').classList.remove('open')">×</button>
+    </div>
+    <div class="modal-body">
+      <pre id="gantt-script-code"></pre>
+    </div>
+    <div class="modal-footer">
+      <span class="copy-ok" id="copy-ok">✓ Copiado al portapapeles</span>
+      <button class="btn-copy" onclick="copiarScript()">📋 Copiar Script</button>
+      <button class="btn-sec" onclick="document.getElementById('gantt-modal').classList.remove('open')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRINT VIEW -->
+<div id="print-view">
+  <div class="print-page" id="print-content"></div>
+</div>
+
+<script>
+const MESES = ['',...'Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre'.split(',')];
+let currentMes = 3, currentAño = 2026, actCnt = 0;
+
+window.onload = function() {
+  aplicarPeriodo();
+  addActividad(); addActividad(); addActividad();
+  document.getElementById('fecha-presentacion').valueAsDate = new Date();
+};
+
+function aplicarPeriodo() {
+  currentMes = +document.getElementById('sel-mes').value;
+  currentAño = +document.getElementById('sel-año').value;
+  const lbl = MESES[currentMes] + ' ' + currentAño;
+  document.getElementById('period-badge').textContent = lbl;
+  document.querySelectorAll('.current-period-text').forEach(e => e.textContent = lbl);
+  generarSemanas();
+}
+
+function generarSemanas() {
+  const c = document.getElementById('semanas-container');
+  c.innerHTML = '';
+  getSemanas(currentAño, currentMes).forEach((s, i) => {
+    const box = document.createElement('div');
+    box.className = 'semana-box';
+    box.innerHTML = `<div class="semana-header">Semana ${i+1} &nbsp;·&nbsp; ${s.label}</div>
+      <div class="semana-body"><textarea id="semana-${i+1}" placeholder="Actividades de esta semana..."></textarea></div>`;
+    c.appendChild(box);
+  });
+}
+
+function getSemanas(año, mes) {
+  const semanas = [], dias = new Date(año, mes, 0).getDate();
+  let d = 1;
+  while (d <= dias) {
+    let fin = d;
+    while (fin <= dias && new Date(año, mes-1, fin).getDay() !== 0) fin++;
+    if (fin > dias) fin = dias;
+    semanas.push({ inicio: d, fin, label: `${d} – ${fin} ${MESES[mes].slice(0,3)}` });
+    d = fin + 1;
+  }
+  return semanas;
+}
+
+function addActividad() {
+  actCnt++;
+  const id = actCnt;
+  // Default dates to first/last day of current month
+  const primerDia = `${currentAño}-${String(currentMes).padStart(2,'0')}-01`;
+  const ultimoDia = new Date(currentAño, currentMes, 0);
+  const ultimoDiaStr = `${currentAño}-${String(currentMes).padStart(2,'0')}-${String(ultimoDia.getDate()).padStart(2,'0')}`;
+  const tr = document.createElement('tr');
+  tr.id = `act-row-${id}`;
+  tr.innerHTML = `
+    <td><input type="text" id="act-n-${id}" placeholder="Describe la actividad..."></td>
+    <td><input type="text" id="act-r-${id}" placeholder="Nombre"></td>
+    <td><input type="date" id="act-i-${id}" value="${primerDia}"></td>
+    <td><input type="date" id="act-f-${id}" value="${ultimoDiaStr}"></td>
+    <td><select id="act-e-${id}">
+      <option value="Pendiente">⏳ Pendiente</option>
+      <option value="En proceso">🔄 En proceso</option>
+      <option value="Completado">✅ Completado</option>
+      <option value="Bloqueado">🚫 Bloqueado</option>
+    </select></td>
+    <td><input type="text" id="act-p-${id}" placeholder="0%" style="text-align:center"></td>
+    <td><button class="btn-del-row" onclick="delAct(${id})">×</button></td>`;
+  document.getElementById('actividades-body').appendChild(tr);
+}
+
+function delAct(id) { const r = document.getElementById(`act-row-${id}`); if(r) r.remove(); }
+
+function setPri(btn) {
+  document.querySelectorAll('.pri-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('prioridad-val').value = btn.dataset.val;
+}
+
+function v(id) { const e = document.getElementById(id); return e ? e.value : ''; }
+function set(id, val) { const e = document.getElementById(id); if(e && val != null) e.value = val; }
+
+function recopilarDatos() {
+  const acts = [];
+  document.querySelectorAll('#actividades-body tr').forEach(tr => {
+    const id = tr.id.replace('act-row-','');
+    acts.push({ nombre: v(`act-n-${id}`), resp: v(`act-r-${id}`), inicio: v(`act-i-${id}`), fin: v(`act-f-${id}`), estado: v(`act-e-${id}`), pct: v(`act-p-${id}`) });
+  });
+  const sems = {};
+  document.querySelectorAll('#semanas-container .semana-box').forEach((_, i) => { sems[i+1] = v(`semana-${i+1}`); });
+  return {
+    mes: currentMes, año: currentAño,
+    nombre: v('nombre'), cargo: v('cargo'), proyecto: v('proyecto'), supervisor: v('supervisor'),
+    objetivoPrincipal: v('objetivo-principal'), resultados: v('resultados-esperados'),
+    prioridad: v('prioridad-val'), actividades: acts, semanas: sems,
+    recHumanos: v('rec-humanos'), recMateriales: v('rec-materiales'), presupuesto: v('presupuesto'),
+    kpi1: v('kpi1'), kpi1meta: v('kpi1-meta'), kpi1med: v('kpi1-med'),
+    kpi2: v('kpi2'), kpi2meta: v('kpi2-meta'), kpi2med: v('kpi2-med'),
+    kpi3: v('kpi3'), kpi3meta: v('kpi3-meta'), kpi3med: v('kpi3-med'),
+    riesgos: v('riesgos'), contingencia: v('contingencia'),
+    compromisos: v('compromisos'), fechaPresentacion: v('fecha-presentacion'), modalidad: v('modalidad')
+  };
+}
+
+// ─── GANTT SCRIPT GENERATOR ───
+function generarGanttScript() {
+  const d = recopilarDatos();
+  const periodo = MESES[d.mes] + ' ' + d.año;
+  const acts = d.actividades.filter(a => a.nombre);
+  if (acts.length === 0) { alert('Agrega al menos una actividad en la sección 03 antes de generar el Gantt.'); return; }
+
+  // Build activities array for the script
+  const actsJS = acts.map(a => {
+    const inicio = a.inicio || `${d.año}-${String(d.mes).padStart(2,'0')}-01`;
+    const fin = a.fin || inicio;
+    const pct = parseInt(a.pct) || 0;
+    return `    ["${a.nombre.replace(/"/g,'\\"')}", "${a.resp.replace(/"/g,'\\"')}", new Date("${inicio}"), new Date("${fin}"), "${a.estado}", ${pct}]`;
+  }).join(',\n');
+
+  const script = `// ============================================================
+// DIAGRAMA GANTT — MISAGI S.A.C.
+// Plan de Trabajo: ${periodo}
+// Colaborador: ${d.nombre || 'Sin nombre'} — ${d.cargo || ''}
+// Proyecto: ${d.proyecto || ''}
+// Supervisor: ${d.supervisor || ''}
+// Generado: ${new Date().toLocaleDateString('es-PE')}
+// ============================================================
+// INSTRUCCIONES:
+// 1. Abre Google Sheets (sheets.new)
+// 2. Menú → Extensiones → Apps Script
+// 3. Borra todo el código existente y pega este script
+// 4. Haz clic en ▶ Ejecutar (función: crearGantt)
+// 5. Autoriza los permisos cuando se solicite
+// ============================================================
+
+function crearGantt() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // Eliminar hoja Gantt si ya existe
+  const existente = ss.getSheetByName("Gantt");
+  if (existente) ss.deleteSheet(existente);
+
+  const sheet = ss.insertSheet("Gantt");
+  ss.setActiveSheet(sheet);
+
+  // ── PALETA DE COLORES MISAGI ──
+  const COLOR_NAVY  = "#1C3A6E";
+  const COLOR_GREEN = "#1B6B3A";
+  const COLOR_TEAL  = "#1A7A5E";
+  const COLOR_LIGHT = "#EAF0FA";
+  const COLOR_LGREE = "#E8F5EE";
+  const COLOR_WHITE = "#FFFFFF";
+  const COLOR_BAR   = "#2CA05A";
+  const COLOR_BAR2  = "#1C3A6E";
+  const COLOR_PEND  = "#F0C040";
+  const COLOR_BLOK  = "#E05050";
+  const COLOR_DONE  = "#2CA05A";
+  const COLOR_PROC  = "#3A80D2";
+
+  // ── DATOS DEL PLAN ──
+  const COLABORADOR = "${d.nombre || '—'}";
+  const CARGO       = "${d.cargo || '—'}";
+  const PROYECTO    = "${d.proyecto || '—'}";
+  const SUPERVISOR  = "${d.supervisor || '—'}";
+  const PERIODO     = "${periodo}";
+  const MODALIDAD   = "${d.modalidad || '—'}";
+
+  // ── ACTIVIDADES: [Nombre, Responsable, FechaInicio, FechaFin, Estado, %Avance] ──
+  const actividades = [
+${actsJS}
+  ];
+
+  // ── CALCULAR RANGO DE FECHAS DEL MES ──
+  const mesNum = ${d.mes};
+  const añoNum = ${d.año};
+  const fechaIni = new Date(añoNum, mesNum - 1, 1);
+  const fechaFin = new Date(añoNum, mesNum, 0);
+  const totalDias = (fechaFin - fechaIni) / 86400000 + 1;
+
+  // ── LAYOUT ──
+  const COL_ACTIVIDAD  = 1;  // A
+  const COL_RESP       = 2;  // B
+  const COL_INICIO     = 3;  // C
+  const COL_FIN        = 4;  // D
+  const COL_ESTADO     = 5;  // E
+  const COL_PCT        = 6;  // F
+  const COL_GANTT_INI  = 7;  // G — empieza el Gantt
+  const NUM_COLS       = COL_GANTT_INI + totalDias - 1;
+
+  // Anchos de columnas
+  sheet.setColumnWidth(COL_ACTIVIDAD, 210);
+  sheet.setColumnWidth(COL_RESP, 110);
+  sheet.setColumnWidth(COL_INICIO, 85);
+  sheet.setColumnWidth(COL_FIN, 85);
+  sheet.setColumnWidth(COL_ESTADO, 100);
+  sheet.setColumnWidth(COL_PCT, 60);
+  for (let c = COL_GANTT_INI; c <= NUM_COLS; c++) sheet.setColumnWidth(c, 22);
+
+  // ── FILA 1: Encabezado principal ──
+  sheet.setRowHeight(1, 54);
+  const titleCell = sheet.getRange(1, 1, 1, NUM_COLS);
+  titleCell.merge().setValue("DIAGRAMA GANTT — MISAGI S.A.C. · " + PERIODO)
+    .setBackground(COLOR_NAVY).setFontColor(COLOR_WHITE)
+    .setFontSize(14).setFontWeight("bold")
+    .setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+  // ── FILA 2: Info del colaborador ──
+  sheet.setRowHeight(2, 36);
+  const infoText = "Colaborador: " + COLABORADOR + "   |   Cargo: " + CARGO + "   |   Proyecto: " + PROYECTO + "   |   Supervisor: " + SUPERVISOR + "   |   Modalidad: " + MODALIDAD;
+  sheet.getRange(2, 1, 1, NUM_COLS).merge().setValue(infoText)
+    .setBackground("#2A4F8A").setFontColor("#C8DDF8")
+    .setFontSize(9).setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+  // ── FILA 3: Encabezados de columnas ──
+  sheet.setRowHeight(3, 32);
+  const headers = [["Actividad", "Responsable", "Inicio", "Fin", "Estado", "%"]];
+  sheet.getRange(3, COL_ACTIVIDAD, 1, 6).setValues(headers)
+    .setBackground(COLOR_GREEN).setFontColor(COLOR_WHITE)
+    .setFontSize(9).setFontWeight("bold")
+    .setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+  // ── FILA 3: Encabezados de días ──
+  const diasSemana = ["D","L","M","X","J","V","S"];
+  for (let d2 = 0; d2 < totalDias; d2++) {
+    const fecha = new Date(fechaIni);
+    fecha.setDate(fecha.getDate() + d2);
+    const dow = fecha.getDay();
+    const col = COL_GANTT_INI + d2;
+    const cell = sheet.getRange(3, col);
+    cell.setValue(fecha.getDate())
+      .setFontSize(7).setFontWeight("bold")
+      .setHorizontalAlignment("center").setVerticalAlignment("middle");
+    // Fines de semana
+    if (dow === 0 || dow === 6) {
+      cell.setBackground("#B8CCE4").setFontColor("#5A6E88");
+    } else {
+      cell.setBackground(COLOR_TEAL).setFontColor(COLOR_WHITE);
+    }
+  }
+
+  // ── FILA 3.5: Sub-encabezado de día de semana ──
+  sheet.setRowHeight(4, 16);
+  sheet.getRange(4, COL_ACTIVIDAD, 1, 6).setBackground("#F0F4F8");
+  for (let d2 = 0; d2 < totalDias; d2++) {
+    const fecha = new Date(fechaIni);
+    fecha.setDate(fecha.getDate() + d2);
+    const dow = fecha.getDay();
+    const col = COL_GANTT_INI + d2;
+    const cell = sheet.getRange(4, col);
+    cell.setValue(diasSemana[dow]).setFontSize(6)
+      .setHorizontalAlignment("center").setVerticalAlignment("middle");
+    if (dow === 0 || dow === 6) cell.setBackground("#D9E5F0").setFontColor("#888");
+    else cell.setBackground("#DDE8F0").setFontColor("#666");
+  }
+
+  // ── FILAS DE ACTIVIDADES ──
+  actividades.forEach(function(act, idx) {
+    const rowNum = idx + 5;
+    sheet.setRowHeight(rowNum, 26);
+    const [nombre, resp, fIni, fFin, estado, pct] = act;
+
+    // Alternar fondo
+    const bg = idx % 2 === 0 ? COLOR_WHITE : COLOR_LGREE;
+
+    // Datos de la actividad
+    sheet.getRange(rowNum, COL_ACTIVIDAD).setValue(nombre)
+      .setBackground(bg).setFontSize(9).setVerticalAlignment("middle");
+    sheet.getRange(rowNum, COL_RESP).setValue(resp)
+      .setBackground(bg).setFontSize(8).setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+    const fIniStr = Utilities.formatDate(fIni, "America/Lima", "dd/MM/yyyy");
+    const fFinStr = Utilities.formatDate(fFin, "America/Lima", "dd/MM/yyyy");
+    sheet.getRange(rowNum, COL_INICIO).setValue(fIniStr)
+      .setBackground(bg).setFontSize(8).setHorizontalAlignment("center").setVerticalAlignment("middle");
+    sheet.getRange(rowNum, COL_FIN).setValue(fFinStr)
+      .setBackground(bg).setFontSize(8).setHorizontalAlignment("center").setVerticalAlignment("middle");
+
+    // Estado con color
+    const estadoCell = sheet.getRange(rowNum, COL_ESTADO);
+    estadoCell.setValue(estado).setFontSize(8).setHorizontalAlignment("center").setVerticalAlignment("middle");
+    let estadoBg = bg;
+    if (estado === "Completado") estadoBg = "#D6F0E0";
+    else if (estado === "En proceso") estadoBg = "#D6E8FA";
+    else if (estado === "Bloqueado") estadoBg = "#FAD6D6";
+    else estadoBg = "#FDF5D6";
+    estadoCell.setBackground(estadoBg);
+
+    // % Avance
+    sheet.getRange(rowNum, COL_PCT).setValue(pct + "%")
+      .setBackground(bg).setFontSize(8).setHorizontalAlignment("center").setVerticalAlignment("middle").setFontWeight("bold");
+
+    // ── BARRA GANTT ──
+    for (let d2 = 0; d2 < totalDias; d2++) {
+      const fecha = new Date(fechaIni);
+      fecha.setDate(fecha.getDate() + d2);
+      const dow = fecha.getDay();
+      const col = COL_GANTT_INI + d2;
+      const cell = sheet.getRange(rowNum, col);
+
+      const esDentro = fecha >= fIni && fecha <= fFin;
+      const esFin = (dow === 0 || dow === 6);
+
+      if (esDentro) {
+        let barColor = COLOR_GREEN;
+        if (estado === "En proceso") barColor = "#3A80D2";
+        else if (estado === "Bloqueado") barColor = "#D94040";
+        else if (estado === "Completado") barColor = COLOR_DONE;
+        cell.setBackground(barColor).setValue("█").setFontColor(barColor).setFontSize(8);
+      } else if (esFin) {
+        cell.setBackground("#E8EEF5");
+      } else {
+        cell.setBackground(bg);
+      }
+    }
+  });
+
+  // ── BORDE GENERAL ──
+  const ultimaFila = actividades.length + 4;
+  sheet.getRange(1, 1, ultimaFila, NUM_COLS)
+    .setBorder(true, true, true, true, true, true, "#C8D4E0", SpreadsheetApp.BorderStyle.SOLID);
+
+  // ── FILAS FINALES: Leyenda ──
+  const filaLeyenda = ultimaFila + 2;
+  sheet.getRange(filaLeyenda, 1, 1, 6).merge()
+    .setValue("LEYENDA DE ESTADOS")
+    .setBackground(COLOR_NAVY).setFontColor(COLOR_WHITE)
+    .setFontSize(9).setFontWeight("bold")
+    .setHorizontalAlignment("center").setVerticalAlignment("middle");
+  sheet.setRowHeight(filaLeyenda, 22);
+
+  const leyenda = [
+    ["⏳ Pendiente", "#FDF5D6", "#8a6a10"],
+    ["🔄 En proceso", "#D6E8FA", "#1a4a8a"],
+    ["✅ Completado", "#D6F0E0", "#1B6B3A"],
+    ["🚫 Bloqueado",  "#FAD6D6", "#c0392b"]
+  ];
+  leyenda.forEach(function([texto, bg2, fg], i) {
+    const cell = sheet.getRange(filaLeyenda + 1, i + 1);
+    cell.setValue(texto).setBackground(bg2).setFontColor(fg)
+      .setFontSize(9).setFontWeight("bold")
+      .setHorizontalAlignment("center").setVerticalAlignment("middle");
+    sheet.setRowHeight(filaLeyenda + 1, 22);
+  });
+
+  // ── FREEZE HEADERS ──
+  sheet.setFrozenRows(4);
+  sheet.setFrozenColumns(COL_GANTT_INI - 1);
+
+  SpreadsheetApp.getUi().alert("✅ Diagrama Gantt creado exitosamente en la hoja \'Gantt\'.");
+}`;
+
+  document.getElementById('gantt-script-code').textContent = script;
+  document.getElementById('gantt-modal').classList.add('open');
+}
+
+function copiarScript() {
+  const code = document.getElementById('gantt-script-code').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const ok = document.getElementById('copy-ok');
+    ok.classList.add('visible');
+    setTimeout(() => ok.classList.remove('visible'), 2500);
+  });
+}
+
+// ─── GUARDAR / CARGAR ───
+function guardarLocal() {
+  const data = recopilarDatos();
+  try {
+    localStorage.setItem(`misagi-${data.año}-${data.mes}`, JSON.stringify(data));
+    const st = document.getElementById('save-status');
+    st.classList.add('visible');
+    setTimeout(() => st.classList.remove('visible'), 2500);
+  } catch(e) { alert('No se pudo guardar. Intenta exportar a PDF.'); }
+}
+
+function cargarLocal() {
+  try {
+    const raw = localStorage.getItem(`misagi-${currentAño}-${currentMes}`);
+    if (!raw) { alert('No hay borrador para ' + MESES[currentMes] + ' ' + currentAño); return; }
+    aplicarDatos(JSON.parse(raw));
+  } catch(e) { alert('Sin borrador guardado.'); }
+}
+
+function aplicarDatos(d) {
+  set('nombre', d.nombre); set('cargo', d.cargo); set('proyecto', d.proyecto); set('supervisor', d.supervisor);
+  set('objetivo-principal', d.objetivoPrincipal); set('resultados-esperados', d.resultados);
+  document.getElementById('prioridad-val').value = d.prioridad || 'baja';
+  document.querySelectorAll('.pri-btn').forEach(b => b.classList.toggle('active', b.dataset.val === d.prioridad));
+  document.getElementById('actividades-body').innerHTML = ''; actCnt = 0;
+  (d.actividades || []).forEach(a => { addActividad(); const id = actCnt; set(`act-n-${id}`, a.nombre); set(`act-r-${id}`, a.resp); set(`act-i-${id}`, a.inicio); set(`act-f-${id}`, a.fin); set(`act-e-${id}`, a.estado); set(`act-p-${id}`, a.pct); });
+  setTimeout(() => { if (d.semanas) Object.entries(d.semanas).forEach(([k,val]) => set(`semana-${k}`, val)); }, 100);
+  set('rec-humanos', d.recHumanos); set('rec-materiales', d.recMateriales); set('presupuesto', d.presupuesto);
+  set('kpi1', d.kpi1); set('kpi1-meta', d.kpi1meta); set('kpi1-med', d.kpi1med);
+  set('kpi2', d.kpi2); set('kpi2-meta', d.kpi2meta); set('kpi2-med', d.kpi2med);
+  set('kpi3', d.kpi3); set('kpi3-meta', d.kpi3meta); set('kpi3-med', d.kpi3med);
+  set('riesgos', d.riesgos); set('contingencia', d.contingencia);
+  set('compromisos', d.compromisos); set('fecha-presentacion', d.fechaPresentacion); set('modalidad', d.modalidad);
+}
+
+function limpiarFormulario() {
+  if (!confirm('¿Limpiar todo el formulario?')) return;
+  document.querySelectorAll('input[type="text"],input[type="date"],textarea,select.field-select').forEach(e => e.value = '');
+  document.getElementById('actividades-body').innerHTML = ''; actCnt = 0;
+  addActividad(); addActividad(); addActividad();
+  document.querySelectorAll('.pri-btn').forEach(b => b.classList.toggle('active', b.dataset.val==='baja'));
+  document.getElementById('prioridad-val').value = 'baja';
+  document.querySelectorAll('#semanas-container textarea').forEach(e => e.value = '');
+}
+
+// ─── PRINT/PDF ───
+function exportarPDF() {
+  const d = recopilarDatos();
+  const periodo = MESES[d.mes] + ' ' + d.año;
+  const semanas = getSemanas(d.año, d.mes);
+  const actsHTML = d.actividades.filter(a => a.nombre).map(a =>
+    `<tr><td>${a.nombre}</td><td>${a.resp}</td><td>${a.inicio}</td><td>${a.fin}</td><td>${a.estado}</td><td>${a.pct||'0%'}</td></tr>`
+  ).join('');
+  const semsHTML = semanas.map((s,i) =>
+    `<div class="print-sem-box"><div class="print-sem-hd">Sem ${i+1} · ${s.label}</div><div class="print-sem-bd">${d.semanas[i+1]||'<span style="color:#ccc">—</span>'}</div></div>`
+  ).join('');
+  const priMap = { alta: 'badge-alta', media: 'badge-media', baja: 'badge-baja' };
+  const priLbl = { alta: '🔴 Alta', media: '🟡 Media', baja: '🟢 Baja' };
+  const logoImgSrc = document.querySelector('.logo-wrap img').src;
+
+  const html = `
+    <div class="print-header">
+      <div class="print-logo"><img src="${logoImgSrc}" alt="MISAGI"></div>
+      <div class="print-title-block">
+        <div class="print-tag">Plan de Trabajo Mensual</div>
+        <div class="print-title">MISAGI S.A.C.</div>
+        <div class="print-period">${periodo}</div>
+      </div>
+      <div class="print-h-right">
+        <div class="lbl">Colaborador</div><div class="val">${d.nombre||'—'}</div>
+        <div class="lbl" style="margin-top:6px">Cargo</div><div class="val">${d.cargo||'—'}</div>
+      </div>
+    </div>
+    <div class="print-body">
+      <div class="print-section">
+        <div class="print-sec-title">Información General</div>
+        <div class="print-two">
+          <div><div class="print-field"><div class="lbl">Proyecto</div><div class="val">${d.proyecto||'—'}</div></div><div class="print-field"><div class="lbl">Supervisor</div><div class="val">${d.supervisor||'—'}</div></div></div>
+          <div><div class="print-field"><div class="lbl">Modalidad</div><div class="val">${d.modalidad||'—'}</div></div><div class="print-field"><div class="lbl">Fecha presentación</div><div class="val">${d.fechaPresentacion||'—'}</div></div></div>
+        </div>
+      </div>
+      <div class="print-section">
+        <div class="print-sec-title">Objetivo del Mes &nbsp;<span class="${priMap[d.prioridad]}">${priLbl[d.prioridad]||''}</span></div>
+        <div class="print-field"><div class="lbl">Objetivo principal</div><div class="val">${d.objetivoPrincipal||'—'}</div></div>
+        <div class="print-field"><div class="lbl">Resultados esperados</div><div class="val">${d.resultados||'—'}</div></div>
+      </div>
+      <div class="print-section">
+        <div class="print-sec-title">Actividades Programadas</div>
+        ${d.actividades.filter(a=>a.nombre).length ? `<table class="print-table"><thead><tr><th>Actividad</th><th>Responsable</th><th>Inicio</th><th>Fin</th><th>Estado</th><th>%</th></tr></thead><tbody>${actsHTML}</tbody></table>` : '<p style="color:#999;font-size:12px">Sin actividades registradas.</p>'}
+      </div>
+      <div class="print-section">
+        <div class="print-sec-title">Distribución Semanal</div>
+        <div class="print-semanas">${semsHTML}</div>
+      </div>
+      <div class="print-section">
+        <div class="print-sec-title">Recursos y Requerimientos</div>
+        <div class="print-two">
+          <div class="print-field"><div class="lbl">Recursos humanos</div><div class="val">${d.recHumanos||'—'}</div></div>
+          <div class="print-field"><div class="lbl">Recursos materiales</div><div class="val">${d.recMateriales||'—'}</div></div>
+        </div>
+        <div class="print-field"><div class="lbl">Presupuesto</div><div class="val">${d.presupuesto||'—'}</div></div>
+      </div>
+      <div class="print-section">
+        <div class="print-sec-title">KPIs</div>
+        <table class="print-table"><thead><tr><th>Indicador</th><th>Meta</th><th>Medición</th></tr></thead><tbody>
+          ${d.kpi1?`<tr><td>${d.kpi1}</td><td>${d.kpi1meta}</td><td>${d.kpi1med}</td></tr>`:''}
+          ${d.kpi2?`<tr><td>${d.kpi2}</td><td>${d.kpi2meta}</td><td>${d.kpi2med}</td></tr>`:''}
+          ${d.kpi3?`<tr><td>${d.kpi3}</td><td>${d.kpi3meta}</td><td>${d.kpi3med}</td></tr>`:''}
+        </tbody></table>
+      </div>
+      <div class="print-section">
+        <div class="print-sec-title">Riesgos y Contingencias</div>
+        <div class="print-two">
+          <div class="print-field"><div class="lbl">Riesgos</div><div class="val">${d.riesgos||'—'}</div></div>
+          <div class="print-field"><div class="lbl">Contingencia</div><div class="val">${d.contingencia||'—'}</div></div>
+        </div>
+      </div>
+      ${d.compromisos?`<div class="print-section"><div class="print-sec-title">Compromisos</div><div class="print-field"><div class="val">${d.compromisos}</div></div></div>`:''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:32px;padding-top:16px;border-top:1px solid #ddd;">
+        <div><div style="border-bottom:1.5px solid #333;height:38px"></div><div style="font-size:10px;color:#666;margin-top:5px">Firma del Colaborador · ${d.nombre||'_____'}</div></div>
+        <div><div style="border-bottom:1.5px solid #333;height:38px"></div><div style="font-size:10px;color:#666;margin-top:5px">Firma del Supervisor · ${d.supervisor||'_____'}</div></div>
+      </div>
+    </div>
+    <div class="print-footer">
+      <strong>MISAGI S.A.C.</strong> · Plan de Trabajo ${periodo}
+      <span>Generado: ${new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'long',year:'numeric'})}</span>
+    </div>`;
+
+  document.getElementById('print-content').innerHTML = html;
+  window.print();
+}
+</script>
+
+</body>
+</html>

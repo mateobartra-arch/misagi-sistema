@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MISAGI — Registro de Compras</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --verde:      #1a7a4a;
+    --verde-dark: #145c38;
+    --verde-light:#e8f5ee;
+    --azul:       #1e3a6e;
+    --azul-dark:  #162d55;
+    --azul-light: #e8edf7;
+    --blanco:     #ffffff;
+    --gris-bg:    #f0f2f7;
+    --gris-card:  #f8f9fc;
+    --gris-borde: #dde1ec;
+    --gris-text:  #6b7280;
+    --rojo:       #dc2626;
+    --amarillo:   #f59e0b;
+    --sombra:     0 2px 16px rgba(30,58,110,0.10);
+    --sombra-hover: 0 6px 28px rgba(30,58,110,0.18);
+    --radius:     14px;
+    --radius-sm:  8px;
+    --font:       'Sora', sans-serif;
+    --mono:       'DM Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--gris-bg);
+    color: var(--azul);
+    min-height: 100vh;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: var(--azul);
+    padding: 0 16px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    gap: 8px;
+  }
+  .topbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .logo-circle {
+    width: 32px; height: 32px;
+    background: var(--verde);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .topbar h1 {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+  .topbar h1 span { display: none; }
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .topbar-tabs {
+    display: flex;
+    gap: 4px;
+  }
+  .tab-btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: none;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    white-space: nowrap;
+  }
+  .tab-btn.active {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+  }
+  .tab-btn:hover:not(.active) {
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.85);
+  }
+  /* Config toggle button en topbar */
+  .btn-config-toggle {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.7);
+    font-size: 15px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .btn-config-toggle:hover { background: rgba(255,255,255,0.18); }
+
+  /* config banner eliminado — URL hardcodeada internamente */
+
+  /* ── FOTO STEP CARD ── */
+  .foto-step-card {
+    margin-bottom: 20px;
+  }
+  .upload-zone-big {
+    border: 2.5px dashed var(--gris-borde);
+    border-radius: var(--radius);
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--blanco);
+    position: relative;
+    box-shadow: var(--sombra);
+  }
+  .upload-zone-big:hover, .upload-zone-big.dragover {
+    border-color: var(--verde);
+    background: var(--verde-light);
+  }
+  .upload-zone-big input[type="file"] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer;
+    width: 100%; height: 100%;
+  }
+  .upload-icon-big { font-size: 48px; margin-bottom: 10px; }
+  .upload-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--azul);
+    margin-bottom: 6px;
+  }
+  .upload-hint-big {
+    font-size: 12px;
+    color: var(--gris-text);
+  }
+
+  /* Separador manual */
+  .manual-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .manual-toggle-line {
+    flex: 1;
+    height: 1px;
+    background: var(--gris-borde);
+  }
+  .btn-manual-toggle {
+    background: none;
+    border: 1.5px solid var(--gris-borde);
+    border-radius: 20px;
+    padding: 7px 16px;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gris-text);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-manual-toggle:hover {
+    border-color: var(--azul);
+    color: var(--azul);
+  }
+
+  /* ── IA ANALYSIS BOX ── */
+  .ia-box {
+    display: flex;
+    gap: 16px;
+    background: var(--blanco);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--sombra);
+    border: 1.5px solid var(--gris-borde);
+    margin-bottom: 16px;
+  }
+  .ia-preview-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .preview-img-side {
+    width: 100px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--gris-borde);
+    cursor: pointer;
+  }
+  .ia-result-col {
+    flex: 1;
+    min-width: 0;
+  }
+  .ia-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px 0;
+    color: var(--gris-text);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .ia-spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--gris-borde);
+    border-top-color: var(--verde);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  .ia-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: linear-gradient(135deg, var(--verde-light), #d1fae5);
+    border: 1px solid #6ee7b7;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--verde-dark);
+    margin-bottom: 12px;
+  }
+  .ia-field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .ia-field {
+    background: var(--gris-card);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    border: 1px solid var(--gris-borde);
+  }
+  .ia-field-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gris-text);
+    margin-bottom: 2px;
+  }
+  .ia-field-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--azul);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ia-field.span2 { grid-column: 1 / -1; }
+  .ia-field-value.monto-val {
+    color: var(--verde-dark);
+    font-family: var(--mono);
+    font-size: 15px;
+  }
+
+  /* Modo badge */
+  .modo-badge-ia {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--verde-light);
+    border: 1px solid #6ee7b7;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--verde-dark);
+  }
+  .modo-badge-manual {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--azul-light);
+    border: 1px solid #93c5fd;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--azul);
+  }
+
+  @media (max-width: 480px) {
+    .ia-box { flex-direction: column; }
+    .ia-preview-col { flex-direction: row; align-items: flex-start; }
+    .preview-img-side { width: 80px; height: 90px; }
+    .ia-field-grid { grid-template-columns: 1fr; }
+    .ia-field.span2 { grid-column: 1; }
+  }
+  .api-status {
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(0,0,0,0.2);
+    color: rgba(255,255,255,0.7);
+    white-space: nowrap;
+  }
+  .api-status.ok  { background: rgba(26,122,74,0.5); color: #a7f3c8; }
+  .api-status.err { background: rgba(220,38,38,0.4); color: #fca5a5; }
+
+  /* Status chip visible en topbar */
+  .status-chip {
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.45);
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.3s;
+  }
+  .status-chip.ok  { background: rgba(26,122,74,0.45); color: #a7f3c8; }
+  .status-chip.err { background: rgba(220,38,38,0.35); color: #fca5a5; }
+
+  /* ── MAIN ── */
+  .main { padding: 16px; max-width: 1200px; margin: 0 auto; }
+
+  /* ── VIEWS ── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── REGISTRO VIEW ── */
+  .registro-header {
+    margin-bottom: 24px;
+  }
+  .registro-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--azul);
+    margin-bottom: 4px;
+  }
+  .registro-header p {
+    font-size: 13px;
+    color: var(--gris-text);
+  }
+
+  /* Area selector grid */
+  .area-selector-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--azul);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .area-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .area-card {
+    padding: 12px 8px;
+    background: var(--blanco);
+    border: 2px solid var(--gris-borde);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .area-card:active { transform: scale(0.96); }
+  .area-card:hover {
+    border-color: var(--verde);
+    box-shadow: var(--sombra-hover);
+  }
+  .area-card.selected {
+    border-color: var(--verde);
+    background: var(--verde-light);
+    box-shadow: 0 0 0 3px rgba(26,122,74,0.15);
+  }
+  .area-card .area-icon { font-size: 22px; margin-bottom: 5px; }
+  .area-card .area-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--azul);
+    line-height: 1.3;
+  }
+
+  /* Form card */
+  .form-card {
+    background: var(--blanco);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--sombra);
+    border: 1px solid var(--gris-borde);
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .form-grid .full { grid-column: 1 / -1; }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .form-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--azul);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .form-group label span.req { color: var(--rojo); }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 10px 14px;
+    border: 1.5px solid var(--gris-borde);
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 13px;
+    color: var(--azul);
+    background: var(--gris-card);
+    transition: all 0.2s;
+    outline: none;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    border-color: var(--verde);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(26,122,74,0.1);
+  }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+
+  /* Upload zone */
+  .upload-zone {
+    border: 2px dashed var(--gris-borde);
+    border-radius: var(--radius);
+    padding: 28px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--gris-card);
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--verde);
+    background: var(--verde-light);
+  }
+  .upload-zone input[type="file"] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer;
+    width: 100%; height: 100%;
+  }
+  .upload-zone .upload-icon { font-size: 36px; margin-bottom: 8px; }
+  .upload-zone .upload-text {
+    font-size: 13px;
+    color: var(--gris-text);
+    font-weight: 500;
+  }
+  .upload-zone .upload-hint {
+    font-size: 11px;
+    color: #9ca3af;
+    margin-top: 4px;
+  }
+  .preview-img {
+    max-height: 200px;
+    border-radius: var(--radius-sm);
+    object-fit: contain;
+    margin-top: 12px;
+    border: 2px solid var(--gris-borde);
+  }
+  .remove-img {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--rojo);
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: underline;
+  }
+
+  /* Submit */
+  .btn-submit {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--verde) 0%, var(--verde-dark) 100%);
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
+    font-family: var(--font);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+    letter-spacing: 0.02em;
+    box-shadow: 0 4px 16px rgba(26,122,74,0.3);
+  }
+  .btn-submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(26,122,74,0.4);
+  }
+  .btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    padding: 14px 20px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    box-shadow: var(--sombra-hover);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 320px;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { background: var(--verde); }
+  #toast.error   { background: var(--rojo); }
+  #toast.info    { background: var(--azul); }
+
+  /* ── RESUMEN VIEW ── */
+  .resumen-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .resumen-toolbar h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--azul);
+  }
+  .btn-refresh {
+    padding: 9px 18px;
+    background: var(--azul);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: #fff;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-refresh:hover { background: var(--azul-dark); }
+
+  /* KPI cards */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--blanco);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: var(--sombra);
+    border-left: 4px solid transparent;
+  }
+  .kpi-card.verde { border-left-color: var(--verde); }
+  .kpi-card.azul  { border-left-color: var(--azul); }
+  .kpi-card.gold  { border-left-color: var(--amarillo); }
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--gris-text);
+    margin-bottom: 6px;
+  }
+  .kpi-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--azul);
+    font-family: var(--mono);
+  }
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--gris-text);
+    margin-top: 2px;
+  }
+
+  /* Filter row */
+  .filter-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .filter-row select,
+  .filter-row input {
+    padding: 8px 12px;
+    border: 1.5px solid var(--gris-borde);
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 12px;
+    color: var(--azul);
+    background: var(--blanco);
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .filter-row select:focus,
+  .filter-row input:focus { border-color: var(--verde); }
+
+  /* Table */
+  .table-card {
+    background: var(--blanco);
+    border-radius: var(--radius);
+    box-shadow: var(--sombra);
+    overflow: hidden;
+    border: 1px solid var(--gris-borde);
+    margin-bottom: 24px;
+  }
+  .table-card h3 {
+    padding: 16px 20px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--azul);
+    background: var(--gris-card);
+    border-bottom: 1px solid var(--gris-borde);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead tr { background: var(--azul); }
+  thead th {
+    padding: 11px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--gris-borde);
+    transition: background 0.15s;
+  }
+  tbody tr:hover { background: var(--gris-card); }
+  tbody td {
+    padding: 11px 14px;
+    color: var(--azul);
+    vertical-align: middle;
+  }
+  td.monto {
+    font-family: var(--mono);
+    font-weight: 600;
+    color: var(--verde-dark);
+  }
+  td.total-row {
+    font-family: var(--mono);
+    font-weight: 700;
+    color: var(--azul);
+  }
+
+  /* Area badge */
+  .area-badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--azul-light);
+    color: var(--azul);
+    white-space: nowrap;
+  }
+
+  /* Thumb */
+  .thumb-link img {
+    width: 36px; height: 36px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--gris-borde);
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .thumb-link img:hover { transform: scale(1.1); }
+
+  /* Resumen by area */
+  .area-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .area-bar-label {
+    min-width: 160px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--azul);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .area-bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--gris-borde);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .area-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--verde), var(--verde-dark));
+    border-radius: 4px;
+    transition: width 0.8s ease;
+  }
+  .area-bar-amount {
+    min-width: 90px;
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--verde-dark);
+  }
+
+  /* Loading spinner */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--gris-text);
+  }
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; font-weight: 500; }
+
+  /* Lightbox */
+  .lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox img {
+    max-width: 90vw;
+    max-height: 85vh;
+    border-radius: var(--radius);
+    box-shadow: 0 20px 80px rgba(0,0,0,0.5);
+  }
+
+  /* ── Responsive desktop ── */
+  @media (min-width: 700px) {
+    .topbar { padding: 0 32px; height: 64px; }
+    .logo-circle { width: 36px; height: 36px; font-size: 18px; }
+    .topbar h1 { font-size: 15px; }
+    .topbar h1 span { display: inline; color: #7db8e8; font-weight: 300; }
+    .tab-btn { padding: 8px 20px; font-size: 13px; }
+    .btn-config-toggle { display: none; }
+    .config-banner { max-height: 80px !important; padding: 12px 32px !important; flex-wrap: nowrap; }
+    .config-banner-label { display: none; }
+    .config-banner input { max-width: 500px; }
+    .main { padding: 28px 32px; }
+    .area-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+    .area-card { padding: 14px; }
+    .area-card .area-icon { font-size: 28px; }
+    .area-card .area-name { font-size: 12px; }
+    .registro-header h2 { font-size: 22px; }
+  }
+
+  /* ── Mobile: pantallas muy pequeñas ── */
+  @media (max-width: 380px) {
+    .area-grid { grid-template-columns: repeat(2, 1fr); }
+    .tab-btn { padding: 7px 10px; font-size: 11px; }
+  }
+
+  /* Form siempre 1 col en mobile */
+  @media (max-width: 699px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .registro-header { margin-bottom: 14px; }
+    .registro-header h2 { font-size: 18px; }
+    .form-card { padding: 16px; }
+    .kpi-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .kpi-value { font-size: 18px; }
+    .resumen-toolbar h2 { font-size: 18px; }
+    .filter-row { gap: 8px; }
+    .filter-row select, .filter-row input { font-size: 12px; padding: 7px 10px; }
+    .btn-submit { font-size: 14px; padding: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="logo-circle">🌿</div>
+    <h1>MISAGI <span>/ Registro de Compras</span></h1>
+  </div>
+  <div class="topbar-right">
+    <span id="statusChip" class="status-chip">⬤ API</span>
+    <div class="topbar-tabs">
+      <button class="tab-btn active" onclick="showView('registro')">➕ Compra</button>
+      <button class="tab-btn" onclick="showView('resumen'); loadResumen()">📊 Resumen</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIG: URL interna, no visible en UI -->
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- VIEW: REGISTRO                              -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="view active" id="view-registro">
+    <div class="registro-header">
+      <h2>📋 Registrar Compra</h2>
+      <p>Selecciona el área y completa los datos de la compra. Puedes adjuntar foto del Yape o la factura.</p>
+    </div>
+
+    <!-- Selector de área -->
+    <p class="area-selector-label">1. Selecciona el área <span style="color:var(--rojo)">*</span></p>
+    <div class="area-grid" id="areaGrid"></div>
+
+    <!-- PASO 2: Foto primero -->
+    <p class="area-selector-label" style="margin-top:4px;">2. Sube la foto del comprobante</p>
+
+    <!-- Upload zona grande (paso principal) -->
+    <div class="foto-step-card" id="fotoStepCard">
+      <div class="upload-zone-big" id="uploadZone"
+           ondragover="event.preventDefault(); this.classList.add('dragover')"
+           ondragleave="this.classList.remove('dragover')"
+           ondrop="handleDrop(event)">
+        <input type="file" id="f_imagen" accept="image/*" capture="environment" onchange="handleFileSelect(this)"/>
+        <div class="upload-icon-big">📷</div>
+        <div class="upload-title">Toca para fotografiar o subir</div>
+        <div class="upload-hint-big">Factura · Boleta · Ticket · Yape · Transferencia</div>
+        <div class="upload-hint-big" style="margin-top:4px; color:var(--verde); font-weight:600;">✨ La IA extrae los datos automáticamente</div>
+      </div>
+
+      <!-- Separador manual -->
+      <div class="manual-toggle-row">
+        <span class="manual-toggle-line"></span>
+        <button class="btn-manual-toggle" onclick="activateManualMode()" id="btnManualToggle">
+          Sin comprobante — ingresar manualmente
+        </button>
+        <span class="manual-toggle-line"></span>
+      </div>
+    </div>
+
+    <!-- Estado de análisis IA -->
+    <div id="iaAnalysisBox" style="display:none;">
+      <div class="ia-box">
+        <div class="ia-preview-col">
+          <img id="previewImg" class="preview-img-side" src="" alt="Comprobante"/>
+          <span class="remove-img" onclick="removeImage()">✕ Cambiar foto</span>
+        </div>
+        <div class="ia-result-col" id="iaResultCol">
+          <div class="ia-loading" id="iaLoading">
+            <div class="ia-spinner"></div>
+            <p>Analizando comprobante con IA...</p>
+          </div>
+          <div id="iaFields" style="display:none;">
+            <div class="ia-badge">✨ Datos extraídos automáticamente</div>
+            <div class="ia-field-grid" id="iaFieldGrid"><!-- campos extraídos --></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulario (aparece tras análisis IA o modo manual) -->
+    <div class="form-card" id="formCard" style="display:none;">
+      <!-- Modo badge -->
+      <div id="modoBadge" style="margin-bottom:16px;"></div>
+
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label>Fecha <span class="req">*</span></label>
+          <input type="date" id="f_fecha"/>
+        </div>
+
+        <div class="form-group">
+          <label>Registrado por</label>
+          <input type="text" id="f_registrador" placeholder="Tu nombre (opcional)"/>
+        </div>
+
+        <div class="form-group">
+          <label>Proveedor / Tienda <span class="req">*</span></label>
+          <input type="text" id="f_proveedor" placeholder="Ej: Sodimac, Wong..."/>
+        </div>
+
+        <div class="form-group">
+          <label>RUC del proveedor</label>
+          <input type="text" id="f_ruc" placeholder="Ej: 20100041598" maxlength="11"/>
+        </div>
+
+        <div class="form-group">
+          <label>Monto <span class="req">*</span></label>
+          <div style="display:flex; gap:6px;">
+            <select id="f_moneda" style="width:80px; flex-shrink:0; padding:10px 8px; border:1.5px solid var(--gris-borde); border-radius:var(--radius-sm); font-family:var(--font); font-size:13px; color:var(--azul); background:var(--gris-card); outline:none; cursor:pointer; font-weight:700;">
+              <option value="PEN">S/</option>
+              <option value="USD">USD</option>
+            </select>
+            <input type="number" id="f_monto" placeholder="0.00" step="0.01" min="0" style="flex:1;"/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Categoría</label>
+          <select id="f_categoria">
+            <option value="">— Seleccionar —</option>
+            <option>Repuestos y mantenimiento</option>
+            <option>Combustible y lubricantes</option>
+            <option>Útiles de oficina</option>
+            <option>Herramientas y equipos</option>
+            <option>Alimentación y viáticos</option>
+            <option>Servicios externos</option>
+            <option>Seguridad y EPP</option>
+            <option>Llantas y accesorios</option>
+            <option>Limpieza y mantenimiento</option>
+            <option>Software y licencias</option>
+            <option>Otros</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Tipo de comprobante</label>
+          <select id="f_tipoComp">
+            <option value="">— Seleccionar —</option>
+            <option>Factura</option>
+            <option>Boleta</option>
+            <option>Ticket</option>
+            <option>Recibo por honorarios</option>
+            <option>Yape / Plin</option>
+            <option>Transferencia</option>
+            <option>Efectivo sin comprobante</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>N° de comprobante</label>
+          <input type="text" id="f_nroComp" placeholder="Ej: F001-00123456"/>
+        </div>
+
+        <div class="form-group full">
+          <label>Descripción / ¿Para qué es esta compra? <span class="req">*</span></label>
+          <textarea id="f_descripcion" placeholder="Ej: Aceite 15W40 para unidad S-001, 4 galones para mantenimiento preventivo..."></textarea>
+        </div>
+
+        <div class="form-group full">
+          <label>Observaciones <span style="font-weight:400; color:var(--gris-text)">(opcional)</span></label>
+          <textarea id="f_observacion" placeholder="Alguna aclaración adicional..." style="min-height:60px;"></textarea>
+        </div>
+
+        <div class="full">
+          <button class="btn-submit" id="btnSubmit" onclick="submitCompra()">
+            <span>💾 Guardar Compra</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- VIEW: RESUMEN                               -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="view" id="view-resumen">
+    <div class="resumen-toolbar">
+      <div>
+        <h2>📊 Resumen de Compras</h2>
+        <p style="font-size:13px; color:var(--gris-text); margin-top:2px;">Consolidado automático desde Google Sheets</p>
+      </div>
+      <button class="btn-refresh" onclick="loadResumen()">
+        <span id="refreshIcon">🔄</span> Actualizar
+      </button>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-row" id="kpiRow">
+      <div class="kpi-card verde">
+        <div class="kpi-label">Total general</div>
+        <div class="kpi-value" id="kpiTotal">S/ —</div>
+        <div class="kpi-sub">todas las áreas</div>
+      </div>
+      <div class="kpi-card azul">
+        <div class="kpi-label">Registros</div>
+        <div class="kpi-value" id="kpiCount">—</div>
+        <div class="kpi-sub">compras registradas</div>
+      </div>
+      <div class="kpi-card gold">
+        <div class="kpi-label">Mes actual</div>
+        <div class="kpi-value" id="kpiMes">S/ —</div>
+        <div class="kpi-sub" id="kpiMesLabel">—</div>
+      </div>
+      <div class="kpi-card verde">
+        <div class="kpi-label">Área top</div>
+        <div class="kpi-value" id="kpiAreaTop" style="font-size:15px;">—</div>
+        <div class="kpi-sub">mayor gasto acumulado</div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-row">
+      <select id="filterArea" onchange="renderTablaDetalle()">
+        <option value="">Todas las áreas</option>
+      </select>
+      <select id="filterMes" onchange="renderTablaDetalle()">
+        <option value="">Todos los meses</option>
+      </select>
+      <input type="text" id="filterBuscar" placeholder="🔍 Buscar proveedor..." oninput="renderTablaDetalle()"/>
+    </div>
+
+    <!-- Barras por área -->
+    <div class="table-card">
+      <h3>💰 Gasto total por área</h3>
+      <div style="padding: 18px 20px;" id="barsArea">
+        <div class="empty-state"><div class="empty-icon">📊</div><p>Cargando datos...</p></div>
+      </div>
+    </div>
+
+    <!-- Tabla por mes -->
+    <div class="table-card">
+      <h3>📅 Gasto mensual por área</h3>
+      <div style="overflow-x:auto;">
+        <table id="tablaMes">
+          <thead><tr><th>Área</th><th>Mes</th><th>Total (S/)</th></tr></thead>
+          <tbody id="tablaMesBody">
+            <tr><td colspan="3" style="text-align:center; padding:24px; color:var(--gris-text);">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tabla detalle -->
+    <div class="table-card">
+      <h3>📋 Detalle de compras</h3>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Fecha</th>
+              <th>Área</th>
+              <th>Proveedor</th>
+              <th>Descripción</th>
+              <th>Categoría</th>
+              <th>Monto (S/)</th>
+              <th>Comprobante</th>
+              <th>Foto</th>
+            </tr>
+          </thead>
+          <tbody id="tablaDetalleBody">
+            <tr><td colspan="9" style="text-align:center; padding:24px; color:var(--gris-text);">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('open')">
+  <img id="lightboxImg" src="" alt="Comprobante"/>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIG & STATE
+// ═══════════════════════════════════════════════════
+const AREAS = [
+  { key: "Operaciones",                   icon: "⚙️",  color: "#e8edf7" },
+  { key: "Logística",                     icon: "🚛",  color: "#e8f5ee" },
+  { key: "Contabilidad",                  icon: "💰",  color: "#fef3c7" },
+  { key: "Comercial",                     icon: "📈",  color: "#e8edf7" },
+  { key: "Planeamiento y Control Presupuestal", icon: "📊", color: "#e8f5ee" },
+  { key: "Recursos Humanos",              icon: "👥",  color: "#f0e8ff" },
+  { key: "Mantenimiento",                 icon: "🔧",  color: "#fff1e8" },
+  { key: "Seguridad y Salud Ocupacional", icon: "🛡️",  color: "#e8f5ee" },
+  { key: "Imagen Institucional",          icon: "🎨",  color: "#ffe8f0" },
+];
+
+let state = {
+  areaSelected: "",
+  imageBase64: "",
+  moneda: "PEN",
+  resumenData: null,
+};
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+document.addEventListener("DOMContentLoaded", () => {
+  // Fecha de hoy
+  document.getElementById("f_fecha").value = new Date().toISOString().split("T")[0];
+  // Ping silencioso a la API
+  pingApi(API_URL);
+  // Render area grid
+  renderAreaGrid();
+});
+
+// ── URL interna (no expuesta en UI) ──────────────────────
+const API_URL = "https://script.google.com/macros/s/AKfycbzR-tCxckY57O93tgfMyFTbcfEHztK-7bMlXpHhMMrmd9xD5CwgJa5ZV5kb3KPnR4Qr-g/exec";
+
+function getApiUrl() { return API_URL; }
+
+function saveApiUrl() {} // no-op, URL es interna
+
+function toggleConfig() {} // no-op
+
+async function pingApi(url) {
+  const chip = document.getElementById("statusChip");
+  chip.textContent = "⬤ API"; chip.className = "status-chip";
+  try {
+    const r = await fetch(url + "?action=ping");
+    const d = await r.json();
+    if (d.status === "ok") {
+      chip.textContent = "✓ API"; chip.className = "status-chip ok";
+    } else throw new Error();
+  } catch {
+    chip.textContent = "✗ API"; chip.className = "status-chip err";
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// VIEWS
+// ═══════════════════════════════════════════════════
+function showView(name) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById("view-" + name).classList.add("active");
+  document.querySelectorAll(".tab-btn").forEach((b, i) => {
+    b.classList.toggle("active", (i === 0 && name === "registro") || (i === 1 && name === "resumen"));
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// AREA GRID
+// ═══════════════════════════════════════════════════
+function renderAreaGrid() {
+  const grid = document.getElementById("areaGrid");
+  grid.innerHTML = AREAS.map(a => `
+    <div class="area-card ${state.areaSelected === a.key ? 'selected' : ''}"
+         onclick="selectArea('${a.key.replace(/'/g,"\\'")}')">
+      <div class="area-icon">${a.icon}</div>
+      <div class="area-name">${a.key}</div>
+    </div>
+  `).join("");
+}
+
+function selectArea(key) {
+  state.areaSelected = key;
+  renderAreaGrid();
+}
+
+// ═══════════════════════════════════════════════════
+// MODO: IA vs MANUAL
+// ═══════════════════════════════════════════════════
+let modoActual = ""; // "ia" | "manual"
+
+function activateManualMode() {
+  modoActual = "manual";
+  state.imageBase64 = "";
+  document.getElementById("fotoStepCard").style.display = "none";
+  document.getElementById("iaAnalysisBox").style.display = "none";
+  document.getElementById("formCard").style.display = "block";
+  document.getElementById("modoBadge").innerHTML =
+    `<span class="modo-badge-manual">✏️ Modo manual — sin comprobante</span>`;
+  document.getElementById("f_fecha").value = new Date().toISOString().split("T")[0];
+}
+
+function activateIaMode() {
+  modoActual = "ia";
+  document.getElementById("fotoStepCard").style.display = "none";
+  document.getElementById("iaAnalysisBox").style.display = "block";
+  document.getElementById("formCard").style.display = "block";
+  document.getElementById("modoBadge").innerHTML =
+    `<span class="modo-badge-ia">✨ Datos extraídos con IA — revisa y completa</span>`;
+}
+
+// ═══════════════════════════════════════════════════
+// IMAGE HANDLING
+// ═══════════════════════════════════════════════════
+function handleFileSelect(input) {
+  const file = input.files[0];
+  if (file) processFile(file);
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById("uploadZone").classList.remove("dragover");
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith("image/")) processFile(file);
+}
+
+function processFile(file) {
+  if (file.size > 5 * 1024 * 1024) {
+    showToast("Imagen muy grande (máx 5MB)", "error"); return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    state.imageBase64 = e.target.result;
+    document.getElementById("previewImg").src = e.target.result;
+    activateIaMode();
+    extractDataWithIA(e.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeImage() {
+  state.imageBase64 = "";
+  document.getElementById("f_imagen").value = "";
+  document.getElementById("iaAnalysisBox").style.display = "none";
+  document.getElementById("formCard").style.display = "none";
+  document.getElementById("fotoStepCard").style.display = "block";
+  modoActual = "";
+  resetFormFields();
+}
+
+// ═══════════════════════════════════════════════════
+// EXTRACCIÓN IA (Claude Vision vía Anthropic API)
+// ═══════════════════════════════════════════════════
+// ── Proxy Claude (mismo que Salvador IA) ─────────────────
+const CLAUDE_PROXY = "https://salvador-proxy.mateobartra.workers.dev";
+
+async function extractDataWithIA(base64Data) {
+  document.getElementById("iaLoading").style.display = "flex";
+  document.getElementById("iaFields").style.display = "none";
+
+  const base64Clean = base64Data.split(",")[1];
+  const mediaType   = base64Data.match(/data:(image\/[a-z]+);/)?.[1] || "image/jpeg";
+
+  try {
+    const response = await fetch(CLAUDE_PROXY, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: { type: "base64", media_type: mediaType, data: base64Clean }
+            },
+            {
+              type: "text",
+              text: `Analiza este comprobante de pago peruano y extrae los datos. Presta especial atención a la moneda: puede ser SOLES (S/, PEN) o DÓLARES (USD, $, US$, dólares). Responde SOLO con un JSON válido sin ningún texto adicional, sin markdown, sin explicaciones. Formato exacto:
+{
+  "proveedor": "nombre del emisor/tienda/empresa",
+  "ruc": "RUC del emisor si aparece, sino cadena vacía",
+  "monto": numero_decimal_sin_simbolo,
+  "moneda": "PEN|USD",
+  "tipoComprobante": "Factura|Boleta|Ticket|Yape / Plin|Transferencia|Recibo por honorarios|Efectivo sin comprobante",
+  "nroComprobante": "número de serie del comprobante si aparece, sino cadena vacía",
+  "fecha": "YYYY-MM-DD si aparece en el comprobante, sino cadena vacía",
+  "categoria": "la categoría más probable entre: Repuestos y mantenimiento|Combustible y lubricantes|Útiles de oficina|Herramientas y equipos|Alimentación y viáticos|Servicios externos|Seguridad y EPP|Llantas y accesorios|Limpieza y mantenimiento|Software y licencias|Otros",
+  "confianza": "alta|media|baja"
+}
+
+Reglas para la moneda:
+- Si ves S/, PEN, "soles", "nuevos soles" → moneda: "PEN"
+- Si ves $, USD, US$, "dólares", "dollars", "dolares" → moneda: "USD"
+- Si no puedes determinar la moneda con certeza → moneda: "PEN" (asumir soles por defecto en Perú)`
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content?.find(b => b.type === "text")?.text || "{}";
+
+    let parsed;
+    try {
+      const clean = text.replace(/```json|```/g, "").trim();
+      parsed = JSON.parse(clean);
+    } catch {
+      throw new Error("No se pudo interpretar la respuesta de IA");
+    }
+
+    // Llenar campos del formulario
+    fillFormFromIA(parsed);
+    renderIAFields(parsed);
+
+    document.getElementById("iaLoading").style.display = "none";
+    document.getElementById("iaFields").style.display = "block";
+
+    showToast("✨ Datos extraídos — revisa y completa", "success");
+
+  } catch (err) {
+    document.getElementById("iaLoading").style.display = "none";
+    document.getElementById("iaFields").style.display = "block";
+    document.getElementById("iaFieldGrid").innerHTML = `
+      <div class="ia-field span2" style="background:#fff5f5; border-color:#fca5a5;">
+        <div class="ia-field-label">⚠️ No se pudo extraer</div>
+        <div class="ia-field-value" style="color:var(--rojo); font-size:12px; white-space:normal;">
+          ${err.message}. Completa los datos manualmente abajo.
+        </div>
+      </div>`;
+    document.getElementById("modoBadge").innerHTML =
+      `<span class="modo-badge-manual">✏️ Completa los datos manualmente</span>`;
+    showToast("Completa los datos manualmente", "info");
+  }
+}
+
+function fillFormFromIA(data) {
+  if (data.proveedor)  document.getElementById("f_proveedor").value = data.proveedor;
+  if (data.ruc)        document.getElementById("f_ruc").value = data.ruc;
+  if (data.monto)      document.getElementById("f_monto").value = data.monto;
+  if (data.nroComprobante) document.getElementById("f_nroComp").value = data.nroComprobante;
+  if (data.fecha)      document.getElementById("f_fecha").value = data.fecha;
+  else document.getElementById("f_fecha").value = new Date().toISOString().split("T")[0];
+
+  // Moneda
+  const moneda = data.moneda || "PEN";
+  state.moneda = moneda;
+  const selMoneda = document.getElementById("f_moneda");
+  if (selMoneda) selMoneda.value = moneda;
+
+  // Tipo comprobante
+  const tipoSelect = document.getElementById("f_tipoComp");
+  if (data.tipoComprobante) {
+    for (let opt of tipoSelect.options) {
+      if (opt.value === data.tipoComprobante) { tipoSelect.value = data.tipoComprobante; break; }
+    }
+  }
+  // Categoría
+  const catSelect = document.getElementById("f_categoria");
+  if (data.categoria) {
+    for (let opt of catSelect.options) {
+      if (opt.value === data.categoria) { catSelect.value = data.categoria; break; }
+    }
+  }
+}
+
+function renderIAFields(data) {
+  const confianzaColor = { alta: "#059669", media: "#d97706", baja: "#dc2626" };
+  const c = confianzaColor[data.confianza] || "#6b7280";
+  const moneda = data.moneda || "PEN";
+  const simbolo = moneda === "USD" ? "$ " : "S/ ";
+  const monedaTag = moneda === "USD"
+    ? `<span style="background:#fef3c7;color:#92400e;border:1px solid #fcd34d;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:800;margin-left:6px;">USD $</span>`
+    : `<span style="background:#e8f5ee;color:#145c38;border:1px solid #6ee7b7;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:800;margin-left:6px;">PEN S/</span>`;
+
+  document.getElementById("iaFieldGrid").innerHTML = `
+    <div class="ia-field">
+      <div class="ia-field-label">Proveedor</div>
+      <div class="ia-field-value">${data.proveedor || "—"}</div>
+    </div>
+    <div class="ia-field">
+      <div class="ia-field-label">RUC</div>
+      <div class="ia-field-value">${data.ruc || "—"}</div>
+    </div>
+    <div class="ia-field">
+      <div class="ia-field-label">Monto ${monedaTag}</div>
+      <div class="ia-field-value monto-val">${simbolo}${data.monto ? Number(data.monto).toFixed(2) : "—"}</div>
+    </div>
+    <div class="ia-field">
+      <div class="ia-field-label">Tipo</div>
+      <div class="ia-field-value">${data.tipoComprobante || "—"}</div>
+    </div>
+    <div class="ia-field">
+      <div class="ia-field-label">N° Comprobante</div>
+      <div class="ia-field-value">${data.nroComprobante || "—"}</div>
+    </div>
+    <div class="ia-field">
+      <div class="ia-field-label">Fecha detectada</div>
+      <div class="ia-field-value">${data.fecha || "hoy"}</div>
+    </div>
+    <div class="ia-field span2">
+      <div class="ia-field-label">Categoría sugerida</div>
+      <div class="ia-field-value">${data.categoria || "—"}
+        <span style="float:right; font-size:10px; color:${c}; font-weight:700;">● Confianza ${data.confianza || "?"}</span>
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════
+// SUBMIT
+// ═══════════════════════════════════════════════════
+async function submitCompra() {
+  const url = getApiUrl();
+  if (!url) { showToast("Error de configuración interna", "error"); return; }
+  if (!state.areaSelected) { showToast("Selecciona un área", "error"); return; }
+
+  const proveedor   = document.getElementById("f_proveedor").value.trim();
+  const descripcion = document.getElementById("f_descripcion").value.trim();
+  const monto       = document.getElementById("f_monto").value.trim();
+
+  if (!proveedor)   { showToast("Ingresa el proveedor", "error"); return; }
+  if (!descripcion) { showToast("Ingresa una descripción de la compra", "error"); return; }
+  if (!monto || isNaN(monto) || parseFloat(monto) <= 0) {
+    showToast("Ingresa un monto válido", "error"); return;
+  }
+
+  const observacion = document.getElementById("f_observacion")?.value.trim() || "";
+
+  const payload = {
+    area:            state.areaSelected,
+    fecha:           document.getElementById("f_fecha").value,
+    proveedor,
+    ruc:             document.getElementById("f_ruc").value.trim(),
+    descripcion:     descripcion + (observacion ? ` | Obs: ${observacion}` : ""),
+    categoria:       document.getElementById("f_categoria").value,
+    monto:           parseFloat(monto),
+    moneda:          document.getElementById("f_moneda")?.value || "PEN",
+    tipoComprobante: document.getElementById("f_tipoComp").value,
+    nroComprobante:  document.getElementById("f_nroComp").value.trim(),
+    registradoPor:   document.getElementById("f_registrador").value.trim(),
+    imagenBase64:    state.imageBase64,
+  };
+
+  const btn = document.getElementById("btnSubmit");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span><span>Guardando...</span>';
+
+  try {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+
+    if (data.status === "success") {
+      showToast(`✅ Compra registrada (ID #${data.id})`, "success");
+      resetForm();
+    } else {
+      showToast("Error: " + data.message, "error");
+    }
+  } catch (err) {
+    showToast("Error de conexión: " + err.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>💾 Guardar Compra</span>';
+  }
+}
+
+function resetFormFields() {
+  ["f_proveedor","f_ruc","f_nroComp","f_registrador","f_descripcion","f_observacion"].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = "";
+  });
+  document.getElementById("f_monto").value = "";
+  document.getElementById("f_categoria").value = "";
+  document.getElementById("f_tipoComp").value = "";
+  document.getElementById("f_fecha").value = new Date().toISOString().split("T")[0];
+}
+
+function resetForm() {
+  resetFormFields();
+  state.imageBase64 = "";
+  state.areaSelected = "";
+  modoActual = "";
+  document.getElementById("f_imagen").value = "";
+  document.getElementById("iaAnalysisBox").style.display = "none";
+  document.getElementById("formCard").style.display = "none";
+  document.getElementById("fotoStepCard").style.display = "block";
+  renderAreaGrid();
+}
+
+// ═══════════════════════════════════════════════════
+// RESUMEN
+// ═══════════════════════════════════════════════════
+async function loadResumen() {
+  const url = getApiUrl();
+  if (!url) { showToast("Configura la URL del Web App primero", "error"); return; }
+
+  document.getElementById("refreshIcon").textContent = "⏳";
+
+  try {
+    const r = await fetch(url + "?action=resumen");
+    const data = await r.json();
+    if (data.status !== "success") throw new Error(data.message);
+
+    state.resumenData = data;
+    updateKPIs(data);
+    renderBarsArea(data.porArea);
+    renderTablaMes(data.resumen);
+    populateFilters(data);
+    renderTablaDetalle();
+
+    showToast("Datos actualizados ✓", "success");
+  } catch (err) {
+    showToast("Error al cargar resumen: " + err.message, "error");
+  } finally {
+    document.getElementById("refreshIcon").textContent = "🔄";
+  }
+}
+
+function updateKPIs(data) {
+  const total = (data.porArea || []).reduce((s, a) => s + a.total, 0);
+  document.getElementById("kpiTotal").textContent = "S/ " + fmt(total);
+  document.getElementById("kpiCount").textContent = (data.detalle || []).length;
+
+  const mesActual = new Date().toISOString().slice(0, 7);
+  const mesDato   = (data.porMes || []).find(m => m.mes === mesActual);
+  document.getElementById("kpiMes").textContent = mesDato ? "S/ " + fmt(mesDato.total) : "S/ 0.00";
+  document.getElementById("kpiMesLabel").textContent = formatMes(mesActual);
+
+  const top = (data.porArea || []).sort((a, b) => b.total - a.total)[0];
+  document.getElementById("kpiAreaTop").textContent = top ? top.area : "—";
+}
+
+function renderBarsArea(porArea) {
+  const c = document.getElementById("barsArea");
+  if (!porArea || porArea.length === 0) {
+    c.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><p>Sin datos aún</p></div>';
+    return;
+  }
+  const sorted = [...porArea].sort((a, b) => b.total - a.total);
+  const maxVal = sorted[0].total;
+  c.innerHTML = sorted.map(a => `
+    <div class="area-bar-row">
+      <div class="area-bar-label" title="${a.area}">${getAreaIcon(a.area)} ${a.area}</div>
+      <div class="area-bar-track">
+        <div class="area-bar-fill" style="width:${(a.total/maxVal*100).toFixed(1)}%"></div>
+      </div>
+      <div class="area-bar-amount">S/ ${fmt(a.total)}</div>
+    </div>
+  `).join("");
+}
+
+function renderTablaMes(resumen) {
+  const body = document.getElementById("tablaMesBody");
+  if (!resumen || resumen.length === 0) {
+    body.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--gris-text)">Sin datos</td></tr>';
+    return;
+  }
+  const sorted = [...resumen].sort((a, b) => b.mes.localeCompare(a.mes));
+  // Totales por mes
+  const mesTotals = {};
+  sorted.forEach(r => mesTotals[r.mes] = (mesTotals[r.mes] || 0) + r.total);
+
+  let rows = "";
+  let lastMes = "";
+  sorted.forEach(r => {
+    if (r.mes !== lastMes) {
+      lastMes = r.mes;
+      rows += `<tr style="background:var(--gris-card)">
+        <td colspan="2" style="font-weight:700; color:var(--azul)">📅 ${formatMes(r.mes)}</td>
+        <td class="total-row">S/ ${fmt(mesTotals[r.mes])}</td>
+      </tr>`;
+    }
+    rows += `<tr>
+      <td style="padding-left:28px;"><span class="area-badge">${r.area}</span></td>
+      <td style="color:var(--gris-text); font-size:12px">${formatMes(r.mes)}</td>
+      <td class="monto">S/ ${fmt(r.total)}</td>
+    </tr>`;
+  });
+  body.innerHTML = rows;
+}
+
+function populateFilters(data) {
+  const areaSelect = document.getElementById("filterArea");
+  const mesSelect  = document.getElementById("filterMes");
+  const areas = [...new Set((data.detalle || []).map(d => d.area))].sort();
+  const meses = [...new Set((data.detalle || []).map(d => {
+    const f = new Date(d.fecha);
+    return isNaN(f) ? d.fecha?.slice(0,7) : f.toISOString().slice(0,7);
+  }))].sort().reverse();
+
+  areaSelect.innerHTML = '<option value="">Todas las áreas</option>' +
+    areas.map(a => `<option value="${a}">${a}</option>`).join("");
+  mesSelect.innerHTML  = '<option value="">Todos los meses</option>' +
+    meses.map(m => `<option value="${m}">${formatMes(m)}</option>`).join("");
+}
+
+function renderTablaDetalle() {
+  const body = document.getElementById("tablaDetalleBody");
+  if (!state.resumenData) {
+    body.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--gris-text)">Cargando...</td></tr>';
+    return;
+  }
+  let detalle = [...(state.resumenData.detalle || [])];
+  const fArea    = document.getElementById("filterArea").value;
+  const fMes     = document.getElementById("filterMes").value;
+  const fBuscar  = document.getElementById("filterBuscar").value.toLowerCase();
+
+  if (fArea)   detalle = detalle.filter(d => d.area === fArea);
+  if (fMes)    detalle = detalle.filter(d => {
+    const f = new Date(d.fecha);
+    const m = isNaN(f) ? String(d.fecha).slice(0,7) : f.toISOString().slice(0,7);
+    return m === fMes;
+  });
+  if (fBuscar) detalle = detalle.filter(d =>
+    (d.proveedor || "").toLowerCase().includes(fBuscar) ||
+    (d.descripcion || "").toLowerCase().includes(fBuscar)
+  );
+
+  if (detalle.length === 0) {
+    body.innerHTML = `<tr><td colspan="9">
+      <div class="empty-state"><div class="empty-icon">🔍</div><p>Sin resultados</p></div>
+    </td></tr>`;
+    return;
+  }
+
+  body.innerHTML = detalle.map((d, i) => {
+    const thumb = d.imageUrl
+      ? `<a class="thumb-link" href="#" onclick="openLightbox('${d.imageUrl}');return false;">
+          <img src="${d.imageUrl.includes('drive.google.com') ? d.imageUrl.replace('open?id=','thumbnail?sz=80&id=') : d.imageUrl}" alt="foto"/>
+         </a>`
+      : `<span style="color:#ccc; font-size:12px">—</span>`;
+    const fecha = d.fecha ? String(d.fecha).slice(0,10) : "—";
+    return `<tr>
+      <td style="color:var(--gris-text); font-size:11px; font-family:var(--mono)">${d.id || i+1}</td>
+      <td style="font-size:12px; font-family:var(--mono)">${fecha}</td>
+      <td><span class="area-badge">${getAreaIcon(d.area)} ${d.area}</span></td>
+      <td style="font-weight:600">${d.proveedor || "—"}</td>
+      <td style="font-size:12px; color:var(--gris-text); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title="${d.descripcion || ""}">${d.descripcion || "—"}</td>
+      <td style="font-size:11px; color:var(--gris-text)">${d.cat || "—"}</td>
+      <td class="monto">S/ ${fmt(d.monto)}</td>
+      <td style="font-size:11px">${d.tipoComprobante || "—"}<br><span style="color:var(--gris-text)">${d.nroComprobante || ""}</span></td>
+      <td>${thumb}</td>
+    </tr>`;
+  }).join("");
+}
+
+// ═══════════════════════════════════════════════════
+// LIGHTBOX
+// ═══════════════════════════════════════════════════
+function openLightbox(url) {
+  document.getElementById("lightboxImg").src = url;
+  document.getElementById("lightbox").classList.add("open");
+}
+
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
+function fmt(n) {
+  return parseFloat(n || 0).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatMes(str) {
+  if (!str || str.length < 7) return str || "—";
+  const [y, m] = str.split("-");
+  const meses = ["","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  return `${meses[parseInt(m)]} ${y}`;
+}
+
+function getAreaIcon(area) {
+  const found = AREAS.find(a => a.key === area);
+  return found ? found.icon : "📁";
+}
+
+// ═══════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg, type = "info") {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 3500);
+}
+</script>
+</body>
+</html>
