@@ -32,7 +32,7 @@
 
   /* ===================== LOGIN ===================== */
   .stage{position:relative;min-height:100dvh;display:flex;align-items:center;justify-content:flex-end;padding:28px 0}
-  .stage .bg{position:fixed;inset:0;z-index:0;background:#0a1a33 url('assets/login-bg.jpg') center/cover no-repeat, #0a1a33 url('assets/hero-fleet.jpg') center/cover no-repeat}
+  .stage .bg{position:fixed;inset:0;z-index:0;background-color:#0a1a33;background-image:url('assets/login-bg.jpg');background-position:center;background-size:cover;background-repeat:no-repeat}
   .stage .scrim{position:fixed;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(6,16,30,0) 30%,rgba(6,16,30,.42) 58%,rgba(6,16,30,.74) 80%,rgba(5,13,26,.9) 100%),linear-gradient(0deg,rgba(5,13,26,.5) 0%,rgba(5,13,26,0) 40%)}
   .access{position:relative;z-index:3;width:min(390px,92vw);margin-right:clamp(20px,6vw,92px);padding:40px 38px 34px;border-radius:24px;background:var(--glass);border:1px solid var(--glass-line);box-shadow:0 30px 80px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(22px) saturate(120%);backdrop-filter:blur(22px) saturate(120%);color:#fff;animation:rise .7s cubic-bezier(.2,.7,.3,1) both}
   @keyframes rise{from{transform:translateY(18px)}to{transform:none}}
