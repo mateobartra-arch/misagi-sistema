@@ -40,7 +40,8 @@
       <div><h1>Accesos del Personal</h1><div class="page-sub" id="sub">Cargando…</div></div>
       <button class="btn btn-primary" id="btnNuevo">+ Nuevo acceso</button>
     </div>
-    <div class="toolbar"><input type="search" id="buscar" placeholder="Buscar por nombre o correo…"></div>
+    <div class="toolbar"><input type="search" id="buscar" placeholder="Buscar por nombre o correo…"><div class="spacer"></div><button class="btn btn-ghost" id="btnPrecargar">Precargados del Excel</button></div>
+    <div id="precargados"></div>
     <div class="table-wrap">
       <table id="tabla"><thead><tr>
         <th>Nombre</th><th>DNI</th><th>Correo</th><th>Tipo</th><th>Qué ve</th><th>Estado</th><th></th>
@@ -87,6 +88,7 @@
   <script src="../../assets/firebase-config.js"></script>
   <script src="../../assets/auth.js"></script>
   <script src="../../assets/portal.js"></script>
+  <script src="../../assets/seed-personal.js"></script>
   <script>
     var db=function(){return firebase.firestore();};
     var sesion=null, datos=[];
@@ -166,6 +168,7 @@
       db().collection("usuarios").get().then(function(snap){
         datos=snap.docs.map(function(doc){var o=doc.data();o._id=doc.id;return o;}).sort(function(a,b){return (a.nombre||"").localeCompare(b.nombre||"");});
         pintar();
+        pintarPrecargados();
       });
     }
 
@@ -250,6 +253,35 @@
     document.getElementById("buscar").oninput=pintar;
     document.getElementById("modalX").onclick=cerrar;
     document.getElementById("cancelar").onclick=cerrar;
+
+    /* ---- Precargados del Excel (crear los 19 logins) ---- */
+    function pintarPrecargados(){
+      var box=document.getElementById("precargados"); if(!box) return;
+      var seed=window.MISAGI_SEED_PERSONAL||[];
+      var existentes={}; datos.forEach(function(d){ if(d.email) existentes[String(d.email).toLowerCase()]=1; });
+      var pend=seed.filter(function(r){ return !existentes[String(r.email||"").toLowerCase()]; });
+      var btn=document.getElementById("btnPrecargar"); if(btn) btn.textContent="Precargados del Excel ("+pend.length+")";
+      if(!box.dataset.open){ box.innerHTML=""; return; }
+      if(!pend.length){ box.innerHTML='<p class="side-note" style="margin:10px 0">Todos los del Excel ya tienen su acceso creado.</p>'; return; }
+      box.innerHTML='<div class="table-wrap" style="margin:10px 0"><table><thead><tr><th>Nombre</th><th>DNI</th><th>Correo @misagi.com</th><th>Departamento</th><th></th></tr></thead><tbody>'+
+        pend.map(function(r,i){ return '<tr><td><strong>'+esc(r.nombre)+'</strong></td><td>'+esc(r.dni)+'</td><td>'+esc(r.email)+'</td><td>'+esc(r.departamento||"")+'</td><td style="text-align:right"><button class="btn btn-primary btn-sm" data-seed="'+i+'">Crear acceso</button></td></tr>'; }).join("")+
+        '</tbody></table></div><p class="side-note">Al crear, eliges sus módulos. La contraseña queda como su DNI.</p>';
+      box.querySelectorAll("[data-seed]").forEach(function(b){ b.onclick=function(){ abrirDesdeSeed(pend[+b.dataset.seed]); }; });
+    }
+    function abrirDesdeSeed(r){
+      abrir(null);
+      var f=document.getElementById("form");
+      f.nombre.value=r.nombre||""; f.dni.value=String(r.dni||""); f.email.value=r.email||"";
+      f.password.value=String(r.dni||""); f.password.dataset.touched="";
+      var cond=/CONDUCTOR/i.test(String(r.cargo||"")+" "+String(r.departamento||""));
+      f.tipo.value=cond?"conductor":"administrativo";
+      document.getElementById("modalTit").textContent="Nuevo acceso — "+(r.nombre||"");
+    }
+    document.getElementById("btnPrecargar").onclick=function(){
+      var box=document.getElementById("precargados");
+      if(box.dataset.open){ box.removeAttribute("data-open"); } else { box.dataset.open="1"; }
+      pintarPrecargados();
+    };
 
     MISAGI.requireAccess("admin").then(function(s){
       sesion=s;
