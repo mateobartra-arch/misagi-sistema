@@ -1,152 +1,236 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MISAGI S.A.C. — Portal de Gestión</title>
-  <link rel="icon" type="image/png" href="assets/misagi-icon.png">
-  <!-- Tema REAL compartido (define marca, botones, tablas, etc.) -->
-  <link rel="stylesheet" href="assets/theme.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MISAGI S.A.C. — Portal de Gestión</title>
+<link rel="icon" type="image/png" href="assets/misagi-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --brand:#1f9e57; --brand-d:#178048; --brand-soft:#e7f5ed;
+    --navy:#0d3b66; --navy-soft:#eaf0f6;
+    --ink:#0a1626; --ink2:#0c2034;
+    --bg:#f3f5f4; --card:#fff;
+    --text:#10201a; --muted:#697269; --faint:#9aa39c;
+    --border:#e6eae6; --border-2:#dde2dd;
+    --glass:rgba(10,22,40,.46); --glass-line:rgba(255,255,255,.16); --field-line:rgba(255,255,255,.18);
+    --shadow-sm:0 1px 2px rgba(16,32,24,.05);
+    --shadow:0 2px 4px rgba(16,32,24,.05), 0 12px 28px rgba(16,32,24,.06);
+    --shadow-lg:0 24px 60px rgba(10,22,38,.16);
+    --r:18px; --r-sm:12px; --r-xs:10px; --sidebar-w:264px;
+    --ease:.24s cubic-bezier(.2,.7,.3,1);
+  }
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-size:15px}
+  h1,h2,h3,.disp{font-family:'Space Grotesk','Inter',sans-serif;letter-spacing:-.01em}
+  button{font-family:inherit}
+  .hidden{display:none !important}
+  .ico{width:19px;height:19px;flex-shrink:0}
 
-  <!-- Capa de mejoras del front (login + launcher). Va DESPUÉS del tema. -->
-  <style>
-    /* ===== HEADER (logo real + avatar) ===== */
-    .msg-header .brand-mark{width:34px;height:34px;border-radius:9px;background:#fff;display:grid;place-items:center;padding:5px;box-shadow:0 2px 8px rgba(0,0,0,.22)}
-    .msg-header .brand-mark img{width:100%;height:100%;object-fit:contain;display:block}
-    .msg-header .brand{letter-spacing:1px;font-size:17px}
-    .msg-user-wrap{display:flex;align-items:center;gap:11px}
-    .msg-user .avatar{width:36px;height:36px;border-radius:50%;background:var(--verde);color:#fff;display:grid;place-items:center;font-family:'Space Grotesk';font-weight:700;font-size:14px;flex-shrink:0}
+  /* ===================== LOGIN ===================== */
+  .stage{position:relative;min-height:100dvh;display:flex;align-items:center;justify-content:flex-end;padding:28px 0}
+  .stage .bg{position:fixed;inset:0;z-index:0;background:#06101e url('assets/hero-fleet.jpg') center 42% / cover no-repeat}
+  .stage .scrim{position:fixed;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(6,16,30,0) 30%,rgba(6,16,30,.42) 58%,rgba(6,16,30,.74) 80%,rgba(5,13,26,.9) 100%),linear-gradient(0deg,rgba(5,13,26,.5) 0%,rgba(5,13,26,0) 40%)}
+  .access{position:relative;z-index:3;width:min(390px,92vw);margin-right:clamp(20px,6vw,92px);padding:40px 38px 34px;border-radius:24px;background:var(--glass);border:1px solid var(--glass-line);box-shadow:0 30px 80px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(22px) saturate(120%);backdrop-filter:blur(22px) saturate(120%);color:#fff;animation:rise .7s cubic-bezier(.2,.7,.3,1) both}
+  @keyframes rise{from{transform:translateY(18px)}to{transform:none}}
+  @media (prefers-reduced-motion:reduce){.access{animation:none}}
+  .brand-mk{position:absolute;z-index:2;top:clamp(22px,4vw,48px);left:clamp(22px,4vw,56px);width:clamp(168px,19vw,260px);height:auto;display:block;filter:drop-shadow(0 2px 6px rgba(0,0,0,.30)) drop-shadow(0 10px 22px rgba(0,0,0,.28));pointer-events:none;user-select:none}
+  .eyebrow{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#7fe0a6;margin-bottom:14px}
+  .access h1{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:27px;letter-spacing:-.01em;line-height:1.12;margin-bottom:7px}
+  .access .sub{font-size:13.5px;font-weight:300;color:rgba(255,255,255,.66);margin-bottom:30px}
+  .lfield{position:relative;margin-bottom:18px}
+  .lfield label{position:absolute;left:0;top:-9px;font-size:10.5px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.5)}
+  .lfield .row{position:relative;display:flex;align-items:center}
+  .lfield .ic{position:absolute;left:0;width:18px;height:18px;color:rgba(255,255,255,.5);pointer-events:none}
+  .lfield input{width:100%;height:46px;padding:0 38px 0 28px;background:transparent;border:none;border-bottom:1.5px solid var(--field-line);color:#fff;font-family:inherit;font-size:15px;letter-spacing:.2px;transition:border-color .2s}
+  .lfield input::placeholder{color:rgba(255,255,255,.34)}
+  .lfield input:focus{outline:none;border-bottom-color:var(--brand)}
+  .lfield .toggle{position:absolute;right:0;background:none;border:none;cursor:pointer;color:rgba(255,255,255,.5);width:34px;height:34px;display:grid;place-items:center}
+  .lfield .toggle:hover{color:#fff}
+  .lfield .toggle svg{width:18px;height:18px}
+  .forgot{display:inline-block;font-size:12.5px;font-weight:500;color:rgba(255,255,255,.62);text-decoration:none;margin:2px 0 24px;background:none;border:none;cursor:pointer;padding:0}
+  .forgot:hover{color:#fff}
+  .lbtn{width:100%;height:50px;border:none;border-radius:13px;cursor:pointer;font-family:inherit;font-weight:600;font-size:14.5px;letter-spacing:.2px;display:flex;align-items:center;justify-content:center;gap:9px;transition:transform .15s,background .2s,box-shadow .2s}
+  .lbtn-primary{background:linear-gradient(180deg,var(--brand),var(--brand-d));color:#fff;box-shadow:0 12px 28px rgba(31,158,87,.34)}
+  .lbtn-primary:hover{transform:translateY(-1px);box-shadow:0 16px 34px rgba(31,158,87,.42)}
+  .lbtn-primary:active{transform:translateY(0)}
+  .lbtn-primary:disabled{opacity:.7;cursor:default;transform:none}
+  .lerr{background:rgba(224,72,58,.18);border:1px solid rgba(224,72,58,.4);color:#ffd9d4;font-size:13px;padding:10px 13px;border-radius:11px;margin-bottom:16px}
+  .legal{font-size:10.5px;color:rgba(255,255,255,.42);margin-top:24px;line-height:1.6;text-align:center;letter-spacing:.2px}
+  @media(max-width:760px){
+    .stage{align-items:flex-end;justify-content:center}
+    .stage .bg{background-position:center 40%}
+    .stage .scrim{background:linear-gradient(180deg,rgba(6,16,30,0) 24%,rgba(6,16,30,.55) 52%,rgba(5,13,26,.92) 82%)}
+    .access{margin:0 0 max(18px,env(safe-area-inset-bottom));width:min(420px,94vw);padding:32px 28px 28px}
+    .brand-mk{width:clamp(132px,42vw,180px);top:24px;left:22px}
+  }
 
-    /* ===== LOGIN ===== */
-    .login-wrap{min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr}
-    .login-hero{position:relative;color:#fff;padding:54px 50px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;background:#0a2e50 url('assets/portada.png') center/cover no-repeat}
-    .hero-carousel{position:absolute;inset:0;z-index:0}
-    .hc-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.6s ease;transform:scale(1.05);animation:hcZoom 9s ease-out forwards;animation-play-state:paused}
-    .hc-slide.on{opacity:1;animation-play-state:running}
-    @keyframes hcZoom{from{transform:scale(1.12)}to{transform:scale(1)}}
-    .login-hero::after{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(7,30,46,.74) 0%,rgba(10,40,30,.40) 55%,rgba(10,46,27,.12) 100%),linear-gradient(0deg,rgba(7,30,46,.55) 0%,rgba(7,30,46,0) 45%);pointer-events:none}
-    .login-hero>*{position:relative;z-index:2}
-    .hc-dots{position:absolute;right:50px;bottom:24px;z-index:3;display:flex;gap:7px}
-    .hc-dots button{width:8px;height:8px;border-radius:50%;border:none;background:rgba(255,255,255,.5);cursor:pointer;padding:0;transition:width .3s,background .3s}
-    .hc-dots button.on{background:#fff;width:22px;border-radius:4px}
-    .lh-lockup{display:flex;align-items:center;gap:13px}
-    .lh-mark{width:48px;height:48px;border-radius:50%;background:#fff;display:grid;place-items:center;padding:8px;box-shadow:0 8px 22px rgba(0,0,0,.4)}
-    .lh-mark img{width:100%;height:100%;object-fit:contain;display:block}
-    .lh-name{font-family:'Space Grotesk';font-weight:700;font-size:20px;line-height:1;letter-spacing:1px}
-    .lh-name small{display:block;font-size:11px;font-weight:500;opacity:.85;margin-top:4px;letter-spacing:3px}
-    .lh-title{font-family:'Space Grotesk';font-size:34px;line-height:1.12;margin:0 0 14px;max-width:14ch}
-    .lh-tag{opacity:.93;font-size:15px;max-width:38ch;margin:0 0 28px;line-height:1.55}
-    .lh-list{list-style:none;display:grid;gap:14px;padding:0;margin:0}
-    .lh-list li{position:relative;padding-left:27px;font-size:14.5px;opacity:.96}
-    .lh-list li::before{content:'';position:absolute;left:0;top:6px;width:9px;height:9px;border-radius:3px;background:var(--verde);box-shadow:0 0 0 4px rgba(255,255,255,.25)}
-    .lh-foot{font-size:11px;opacity:.75;letter-spacing:1px;text-transform:uppercase;font-weight:600}
-
-    .login-pane{display:grid;place-items:center;padding:40px 30px;background:var(--bg-primary)}
-    .login-card{width:100%;max-width:392px}
-    .login-card .brand-logo{height:46px;width:auto;display:block;margin-bottom:18px}
-    .login-card h1{font-size:21px;color:var(--azul-d);margin:0 0 2px}
-    .login-card .sub{color:var(--text-muted);font-size:12.5px;margin:0 0 22px}
-    .login-card .field{position:relative}
-    .login-card .field .toggle{position:absolute;right:8px;bottom:7px;background:none;border:none;color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;padding:6px}
-    .login-card .field .toggle:hover{color:var(--azul)}
-    .login-card .go{width:100%;margin-top:6px}
-    .login-foot{font-size:11px;color:var(--text-muted);margin-top:20px;text-align:center;line-height:1.5}
-    @media(max-width:820px){.login-wrap{grid-template-columns:1fr}.login-hero{display:none}}
-
-    /* ===== PORTAL / LAUNCHER ===== */
-    .portal-body{display:flex;align-items:flex-start}
-    .portal-side{width:248px;flex-shrink:0;padding:24px 18px;border-right:1px solid var(--border);min-height:calc(100vh - 57px);background:var(--bg-secondary)}
-    .portal-main{flex:1;padding:30px 34px;min-width:0}
-    .side-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-weight:700;margin:4px 0 12px}
-    .gps-link{display:flex;align-items:center;gap:10px;padding:12px 14px;margin-bottom:10px;border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--azul);font-weight:600;font-size:.9rem;transition:var(--transition);background:var(--bg-card)}
-    .gps-link:hover{border-color:var(--verde);color:var(--verde-d);background:var(--verde-l);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
-    .gps-link::before{content:'';width:16px;height:16px;flex-shrink:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231A6B3C'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z'/%3E%3C/svg%3E") center/contain no-repeat}
-    .gov-link{display:flex;align-items:center;gap:10px;padding:12px 14px;margin-bottom:10px;border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--azul);font-weight:600;font-size:.9rem;transition:var(--transition);background:var(--bg-card)}
-    .gov-link:hover{border-color:var(--azul);background:var(--azul-l);color:var(--azul-d);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
-    .gov-link::before{content:'';width:16px;height:16px;flex-shrink:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230D3B66'%3E%3Cpath d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z'/%3E%3C/svg%3E") center/contain no-repeat}
-    .side-note{font-size:.72rem;color:var(--text-muted);margin-top:6px;line-height:1.45}
-
-    .hello{font-family:'Space Grotesk';font-size:26px;margin:0 0 4px}
-    .hello-sub{color:var(--text-muted);margin-bottom:8px}
-    .grupo{margin:34px 0}
-    .grupo h2{font-family:'Space Grotesk';font-size:.95rem;color:var(--azul-d);margin:0 0 14px;display:flex;align-items:center;gap:9px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(244px,1fr));gap:18px}
-    .app-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-sm);transition:var(--transition);display:flex;flex-direction:column;gap:12px;min-height:150px;color:inherit}
-    a.app-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:var(--border-hover)}
-    .app-card.disabled{opacity:.6}
-    .app-top{display:flex;align-items:center;gap:12px}
-    .app-icon{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:20px;line-height:1;background:var(--verde-l);flex-shrink:0}
-    .grupo:nth-of-type(3n+2) .app-icon{background:var(--azul-l)}
-    .grupo:nth-of-type(3n) .app-icon{background:var(--amber-l)}
-    .app-name{font-weight:700;font-size:15px;color:var(--text-primary)}
-    .app-desc{font-size:.83rem;color:var(--text-secondary);flex:1}
-    .app-tag{font-weight:700;font-size:.85rem;color:var(--verde-d)}
-    .pill-soon{align-self:flex-start;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;background:#eef2f0;color:var(--text-secondary)}
-    @media(max-width:720px){.portal-body{flex-direction:column}.portal-side{width:100%;min-height:auto;border-right:none;border-bottom:1px solid var(--border)}}
-  </style>
+  /* ===================== PORTAL ===================== */
+  .app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;min-height:100dvh}
+  .scrim-side{display:none}
+  .side{position:sticky;top:0;height:100dvh;overflow:hidden;display:flex;flex-direction:column;color:#fff;background:linear-gradient(185deg,#0b1a2c 0%,#0a1626 60%,#081120 100%);border-right:1px solid rgba(255,255,255,.06)}
+  .side-head{display:flex;align-items:center;gap:12px;padding:20px 20px 16px}
+  .side-head .mark{width:38px;height:38px;border-radius:11px;background:#fff;display:grid;place-items:center;padding:6px;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+  .side-head .mark img{width:100%;height:100%;object-fit:contain}
+  .side-head .wm{font-family:'Space Grotesk';font-weight:700;font-size:18px;letter-spacing:2px;line-height:1}
+  .side-head .wm small{display:block;font-size:9.5px;letter-spacing:3px;opacity:.6;font-weight:500;margin-top:3px}
+  .side-scroll{flex:1;overflow-y:auto;padding:6px 12px 14px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}
+  .side-scroll::-webkit-scrollbar{width:8px}
+  .side-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:8px}
+  .nav-group{margin-top:14px}
+  .nav-group>.gl{font-size:10px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:rgba(255,255,255,.36);padding:6px 12px 8px;display:flex;align-items:center;gap:8px}
+  .nav-group>.gl .gico{width:14px;height:14px;opacity:.5}
+  .nav-link{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:11px;border:none;background:none;cursor:pointer;color:rgba(255,255,255,.74);font-size:14px;font-weight:500;text-align:left;transition:background var(--ease),color var(--ease);text-decoration:none}
+  .nav-link .ico{width:19px;height:19px;color:rgba(255,255,255,.55);transition:color var(--ease)}
+  .nav-link:hover{background:rgba(255,255,255,.06);color:#fff}
+  .nav-link:hover .ico{color:rgba(255,255,255,.85)}
+  .nav-link.active{background:linear-gradient(90deg,rgba(31,158,87,.22),rgba(31,158,87,.08));color:#fff;box-shadow:inset 2px 0 0 var(--brand)}
+  .nav-link.active .ico{color:#5fd896}
+  .nav-link.disabled{opacity:.4;cursor:default}
+  .side-foot{padding:12px;border-top:1px solid rgba(255,255,255,.07)}
+  .side-links{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+  .side-links a{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:9px;color:rgba(255,255,255,.6);font-size:12.5px;text-decoration:none;transition:background var(--ease),color var(--ease)}
+  .side-links a:hover{background:rgba(255,255,255,.06);color:#fff}
+  .side-links a .ico{width:15px;height:15px;opacity:.7}
+  .userbox{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:12px;background:rgba(255,255,255,.05)}
+  .userbox .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--navy));display:grid;place-items:center;font-family:'Space Grotesk';font-weight:700;font-size:13px;flex-shrink:0;color:#fff}
+  .userbox .meta{min-width:0;flex:1}
+  .userbox .meta b{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .userbox .meta span{display:block;font-size:11px;color:rgba(255,255,255,.5)}
+  .userbox .out{background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;width:30px;height:30px;display:grid;place-items:center;border-radius:8px;transition:var(--ease)}
+  .userbox .out:hover{background:rgba(255,255,255,.1);color:#fff}
+  .userbox .out .ico{width:17px;height:17px}
+  .main{min-width:0;display:flex;flex-direction:column}
+  .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:18px;height:66px;padding:0 30px;background:rgba(255,255,255,.82);border-bottom:1px solid var(--border);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%)}
+  .crumb{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted)}
+  .crumb b{color:var(--text);font-weight:600}
+  .topbar .grow{flex:1}
+  .search{position:relative;width:min(320px,34vw)}
+  .search .ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--faint)}
+  .search input{width:100%;height:40px;border:1px solid var(--border-2);border-radius:999px;padding:0 16px 0 38px;font-family:inherit;font-size:13.5px;background:#fff;transition:var(--ease)}
+  .search input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+  .icon-btn{width:40px;height:40px;border-radius:11px;border:1px solid var(--border-2);background:#fff;cursor:pointer;display:grid;place-items:center;color:var(--muted);transition:var(--ease)}
+  .icon-btn:hover{border-color:var(--brand);color:var(--brand-d);background:var(--brand-soft)}
+  .content{padding:30px 34px 56px;max-width:1320px;width:100%}
+  .hero-greet{position:relative;overflow:hidden;border-radius:22px;padding:30px 220px 30px 32px;margin-bottom:30px;color:#fff;background:linear-gradient(120deg,#0c2138 0%,#0a1626 55%,#0b2e1d 130%);box-shadow:var(--shadow-lg)}
+  .hero-greet::after{content:'';position:absolute;right:-60px;top:-60px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(31,158,87,.34),transparent 68%);pointer-events:none}
+  .hero-greet .eyb{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7fe0a6;font-weight:600;margin-bottom:10px}
+  .hero-greet h1{font-size:32px;line-height:1.08;margin-bottom:8px}
+  .hero-greet p{color:rgba(255,255,255,.72);font-size:14.5px;max-width:52ch}
+  .hero-greet .when{position:absolute;right:32px;top:30px;text-align:right;font-size:12.5px;color:rgba(255,255,255,.6)}
+  .hero-greet .when b{display:block;font-family:'Space Grotesk';font-size:18px;color:#fff;font-weight:600}
+  @media(max-width:680px){.hero-greet{padding:26px 24px}.hero-greet .when{display:none}}
+  .group-block{margin-bottom:34px}
+  .group-block .gh{display:flex;align-items:center;gap:11px;margin-bottom:15px}
+  .group-block .gh .gi{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--ink);color:#fff}
+  .group-block .gh .gi .ico{width:18px;height:18px}
+  .group-block .gh h2{font-size:16px;color:var(--ink2)}
+  .group-block .gh .count{font-size:11.5px;color:var(--faint);background:#fff;border:1px solid var(--border);border-radius:999px;padding:3px 10px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:16px}
+  .app-card{position:relative;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:var(--shadow-sm);cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:10px;min-height:142px;transition:var(--ease);color:inherit;text-decoration:none}
+  a.app-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:rgba(31,158,87,.4)}
+  .app-card.disabled{opacity:.6;cursor:default}
+  .app-card .ai{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand-d)}
+  .app-card .ai .ico{width:21px;height:21px}
+  .app-card .an{font-weight:700;font-size:15.5px;color:var(--text)}
+  .app-card .ad{font-size:13px;color:var(--muted);flex:1;line-height:1.5}
+  .app-card .go{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--brand-d);transition:gap var(--ease)}
+  .app-card:hover .go{gap:10px}
+  .app-card .go .ico{width:15px;height:15px}
+  .app-card .soon{align-self:flex-start;padding:3px 11px;border-radius:999px;font-size:11.5px;font-weight:700;background:#eef1ee;color:var(--muted)}
+  .empty-msg{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:22px;color:var(--muted)}
+  .menu-btn{display:none}
+  @media(max-width:860px){
+    .app{grid-template-columns:1fr}
+    .side{position:fixed;left:0;top:0;z-index:60;width:280px;transform:translateX(-102%);transition:transform var(--ease)}
+    .app.open .side{transform:none}
+    .scrim-side{position:fixed;inset:0;background:rgba(8,16,28,.5);z-index:55;opacity:0;pointer-events:none;transition:opacity var(--ease);display:block}
+    .app.open .scrim-side{opacity:1;pointer-events:auto}
+    .menu-btn{display:grid}
+    .search{width:auto;flex:1}
+  }
+</style>
 </head>
 <body>
-  <div id="login" class="login-wrap">
-    <aside class="login-hero">
-      <div class="hero-carousel" id="heroCar">
-        <div class="hc-slide on" style="background-image:url('assets/portada.png')"></div>
-        <div class="hc-slide" style="background-image:url('assets/flota-3.jpg')"></div>
-        <div class="hc-slide" style="background-image:url('assets/flota-1.jpg')"></div>
-        <div class="hc-slide" style="background-image:url('assets/flota-4.jpg')"></div>
-      </div>
-      <div class="hc-dots" id="heroDots"></div>
-      <div class="lh-lockup"><span class="lh-mark"><img src="assets/misagi-icon.png" alt="MISAGI"></span><div class="lh-name">MISAGI<small>S.A.C.</small></div></div>
-      <div>
-        <h2 class="lh-title">Toda la operación de MISAGI, en un solo lugar</h2>
-        <p class="lh-tag">Flota, operaciones, personal y finanzas — con el acceso que le corresponde a cada quien.</p>
-      </div>
-      <div class="lh-foot">Transporte de carga · MISAGI S.A.C.</div>
-    </aside>
-    <main class="login-pane">
-      <div class="login-card">
-        <img class="brand-logo" src="assets/misagi-logo.png" alt="MISAGI S.A.C.">
-        <h1>Iniciar sesión</h1>
-        <div class="sub">Acceso del personal · MISAGI S.A.C.</div>
-        <form id="loginForm">
-          <div class="field">
-            <label for="email">Correo</label>
-            <input type="email" id="email" autocomplete="username" required placeholder="tucorreo@misagi.com">
+
+  <!-- ===================== LOGIN ===================== -->
+  <div id="login" class="stage">
+    <div class="bg" aria-hidden="true"></div>
+    <div class="scrim" aria-hidden="true"></div>
+    <img class="brand-mk" src="assets/misagi-logo.png" alt="MISAGI S.A.C.">
+    <main class="access">
+      <div class="eyebrow">Portal de gestión</div>
+      <h1>Bienvenido de vuelta</h1>
+      <p class="sub">Ingresa con tu cuenta de personal MISAGI.</p>
+      <form id="loginForm" novalidate>
+        <div class="lfield">
+          <label for="email">Correo</label>
+          <div class="row">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            <input type="email" id="email" autocomplete="username" placeholder="correo@misagi.com" required>
           </div>
-          <div class="field">
-            <label for="password">Contraseña</label>
-            <input type="password" id="password" autocomplete="current-password" required placeholder="••••••••">
-            <button type="button" class="toggle" id="pwToggle" aria-label="Mostrar contraseña">Mostrar</button>
+        </div>
+        <div class="lfield">
+          <label for="password">Contraseña</label>
+          <div class="row">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            <input type="password" id="password" autocomplete="current-password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required>
+            <button type="button" class="toggle" id="pwToggle" aria-label="Mostrar contraseña">
+              <svg id="eyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg id="eyeOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a13.2 13.2 0 0 1-1.67 2.68"/><path d="M6.6 6.6C3.6 8.3 2 12 2 12s3.5 7 10 7a9.3 9.3 0 0 0 5.4-1.6"/><path d="m2 2 20 20"/></svg>
+            </button>
           </div>
-          <div id="loginError" class="msg-alert error hidden" role="alert" aria-live="assertive"></div>
-          <button type="submit" class="btn btn-primary go" id="loginBtn">Ingresar</button>
-        </form>
-        <p class="login-foot">Protegido con Firebase Authentication.</p>
-      </div>
+        </div>
+        <button type="button" class="forgot" id="forgotBtn">¿Olvidaste tu contraseña?</button>
+        <div id="loginError" class="lerr hidden" role="alert" aria-live="assertive"></div>
+        <button type="submit" class="lbtn lbtn-primary" id="loginBtn">Iniciar sesión</button>
+      </form>
+      <p class="legal">MISAGI S.A.C. · Transporte y logística<br>Protegido con Firebase Authentication</p>
     </main>
   </div>
 
-  <div id="portal" class="hidden">
-    <header class="msg-header">
-      <span class="brand-mark"><img src="assets/misagi-icon.png" alt="MISAGI"></span>
-      <div class="brand">MISAGI</div>
-      <div class="spacer"></div>
-      <div class="msg-user-wrap">
-        <div class="msg-user"><strong id="userName">-</strong><span id="userBadge"></span></div>
-        <span class="avatar" id="userAvatar">–</span>
+  <!-- ===================== PORTAL ===================== -->
+  <div id="portal" class="app hidden">
+    <div class="scrim-side" id="scrimSide"></div>
+    <aside class="side">
+      <div class="side-head">
+        <span class="mark"><img src="assets/misagi-icon.png" alt="MISAGI"></span>
+        <span class="wm">MISAGI<small>PORTAL DE GESTIÓN</small></span>
       </div>
-      <button class="btn btn-ghost" id="logoutBtn">Salir</button>
-    </header>
-    <div class="portal-body">
-      <aside class="portal-side" id="sidebar">
-        <div class="side-title">Rastreo GPS</div>
-        <div id="gpsLinks"></div>
-        <div class="side-note">Se abren en una pestaña nueva. Cada GPS usa su propio acceso.</div>
-        <div class="side-title" id="extraTitle" style="margin-top:22px;display:none">Trámites</div>
-        <div id="extraLinks"></div>
-      </aside>
-      <main class="portal-main">
-        <h1 class="hello" id="hello">Hola</h1>
-        <div class="hello-sub" id="helloSub"></div>
+      <nav class="side-scroll" id="nav"></nav>
+      <div class="side-foot">
+        <div class="side-links" id="sideLinks"></div>
+        <div class="userbox">
+          <span class="av" id="userAvatar">–</span>
+          <span class="meta"><b id="userName">-</b><span id="userRole"></span></span>
+          <button class="out" id="logoutBtn" title="Cerrar sesión" aria-label="Cerrar sesión">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <button class="icon-btn menu-btn" id="menuBtn" aria-label="Menú">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        </button>
+        <div class="crumb"><b>Inicio</b></div>
+        <div class="grow"></div>
+        <div class="search">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z M21 21l-3.6-3.6"/></svg>
+          <input type="search" id="moduleSearch" placeholder="Buscar módulos…" aria-label="Buscar módulos">
+        </div>
+      </header>
+      <main class="content" id="top">
+        <section class="hero-greet">
+          <div class="eyb">Portal de gestión · MISAGI S.A.C.</div>
+          <h1 id="helloName">Hola</h1>
+          <p>Este es tu centro de operaciones. Accede a cualquier módulo desde aquí o desde el menú lateral.</p>
+          <div class="when"><b id="clockTime">--:--</b><span id="clockDate"></span></div>
+        </section>
         <div id="menu"></div>
       </main>
     </div>
@@ -158,112 +242,132 @@
   <script src="assets/firebase-config.js"></script>
   <script src="assets/auth.js"></script>
   <script src="assets/portal.js"></script>
-
   <script>
     var $login = document.getElementById("login");
     var $portal = document.getElementById("portal");
     var $err = document.getElementById("loginError");
 
-    (function heroCarousel(){
-      var car=document.getElementById('heroCar'), dotsEl=document.getElementById('heroDots');
-      if(!car) return;
-      var slides=[].slice.call(car.querySelectorAll('.hc-slide')), i=0;
-      slides.forEach(function(_,n){var b=document.createElement('button');if(n===0)b.className='on';b.onclick=function(){go(n);};dotsEl.appendChild(b);});
-      var dots=[].slice.call(dotsEl.children);
-      function go(n){slides[i].classList.remove('on');dots[i].classList.remove('on');i=(n+slides.length)%slides.length;slides[i].classList.add('on');dots[i].classList.add('on');}
-      var timer=setInterval(function(){go(i+1);},5500);
-      dotsEl.addEventListener('click',function(){clearInterval(timer);timer=setInterval(function(){go(i+1);},5500);});
-    })();
-
+    /* ---- mostrar/ocultar contraseña ---- */
     (function(){
-      var t=document.getElementById('pwToggle'), p=document.getElementById('password');
-      t.addEventListener('click',function(){var s=p.type==='password';p.type=s?'text':'password';t.textContent=s?'Ocultar':'Mostrar';});
+      var t=document.getElementById('pwToggle'), p=document.getElementById('password'),
+          o=document.getElementById('eyeOpen'), x=document.getElementById('eyeOff');
+      t.addEventListener('click',function(){
+        var show=p.type==='password';
+        p.type=show?'text':'password';
+        o.style.display=show?'none':''; x.style.display=show?'':'none';
+      });
     })();
 
+    /* ---- ¿olvidaste tu contraseña? ---- */
+    document.getElementById('forgotBtn').addEventListener('click', function(){
+      var em = (document.getElementById('email').value || '').trim();
+      if(!em){ em = (prompt('Escribe tu correo para enviarte el enlace de restablecimiento:') || '').trim(); }
+      if(!em) return;
+      firebase.auth().sendPasswordResetEmail(em).then(function(){
+        $err.className='lerr'; $err.style.color='#bff3d4';
+        $err.textContent='Te enviamos un correo para restablecer tu contraseña.';
+        $err.classList.remove('hidden');
+      }).catch(function(e){
+        $err.className='lerr'; $err.style.color='';
+        $err.textContent=traducirError(e); $err.classList.remove('hidden');
+      });
+    });
+
+    /* ---- enlaces externos (GPS + SUNAT) ---- */
     var MISAGI_GPS = [
-      { nombre: "OneTrack", url: "https://app.onetrack.pe/new/?login=1#openCar=842905" },
-      { nombre: "Tracklog", url: "https://www.tracklogweb.com/#/login?returnUrl=%2Fmap" }
+      { nombre: "OneTrack · GPS", url: "https://app.onetrack.pe/new/?login=1#openCar=842905" },
+      { nombre: "Tracklog · GPS", url: "https://www.tracklogweb.com/#/login?returnUrl=%2Fmap" }
     ];
     var MISAGI_EXTRAS = [
-      { nombre: "Portal SUNAT (SOL)", url: "https://api-seguridad.sunat.gob.pe/v1/clientessol/4f3b88b3-d9d6-402a-b85d-6a0bc857746a/oauth2/loginMenuSol?lang=es-PE&showDni=true&showLanguages=false&originalUrl=https://e-menu.sunat.gob.pe/cl-ti-itmenu/AutenticaMenuInternet.htm" }
+      { nombre: "SUNAT (SOL)", url: "https://api-seguridad.sunat.gob.pe/v1/clientessol/4f3b88b3-d9d6-402a-b85d-6a0bc857746a/oauth2/loginMenuSol?lang=es-PE&showDni=true&showLanguages=false&originalUrl=https://e-menu.sunat.gob.pe/cl-ti-itmenu/AutenticaMenuInternet.htm" }
     ];
-    function renderExtras(perfil) {
-      var cont = document.getElementById("extraLinks");
-      var title = document.getElementById("extraTitle");
-      cont.textContent = "";
-      if (!MISAGI.esAdmin(perfil)) { title.style.display = "none"; return; }
-      title.style.display = "";
-      MISAGI_EXTRAS.forEach(function (g) {
-        var safeUrl;
-        try { var u = new URL(g.url); if (u.protocol !== "https:" && u.protocol !== "http:") return; safeUrl = u.href; }
-        catch (e) { return; }
-        var a = document.createElement("a");
-        a.className = "gov-link"; a.href = safeUrl; a.target = "_blank"; a.rel = "noopener noreferrer";
-        a.appendChild(document.createTextNode(g.nombre));
-        cont.appendChild(a);
-      });
+    function safeHref(u){ try{ var x=new URL(u); return (x.protocol==='https:'||x.protocol==='http:')?x.href:null; }catch(e){ return null; } }
+    function renderSideLinks(perfil){
+      var cont=document.getElementById('sideLinks'); cont.innerHTML='';
+      var verGPS = MISAGI.esAdmin(perfil) || MISAGI.puedeVer(perfil,'operaciones') || MISAGI.puedeVer(perfil,'mantenimiento');
+      if(verGPS){
+        MISAGI_GPS.forEach(function(g){ var h=safeHref(g.url); if(!h) return;
+          cont.insertAdjacentHTML('beforeend','<a href="'+h+'" target="_blank" rel="noopener noreferrer">'+msgIcon('pin')+'<span>'+g.nombre+'</span></a>'); });
+      }
+      if(MISAGI.esAdmin(perfil)){
+        MISAGI_EXTRAS.forEach(function(g){ var h=safeHref(g.url); if(!h) return;
+          cont.insertAdjacentHTML('beforeend','<a href="'+h+'" target="_blank" rel="noopener noreferrer">'+msgIcon('ext')+'<span>'+g.nombre+'</span></a>'); });
+      }
     }
-    function renderGPS(perfil) {
-      var ver = MISAGI.esAdmin(perfil) || MISAGI.puedeVer(perfil, "operaciones") || MISAGI.puedeVer(perfil, "mantenimiento");
-      var side = document.getElementById("sidebar");
-      if (!ver) { side.style.display = "none"; return; }
-      side.style.display = "";
-      var cont = document.getElementById("gpsLinks");
-      cont.textContent = "";
-      MISAGI_GPS.forEach(function (g) {
-        var safeUrl;
-        try { var u = new URL(g.url); if (u.protocol !== "http:" && u.protocol !== "https:") return; safeUrl = u.href; }
-        catch (e) { return; }
-        var a = document.createElement("a");
-        a.className = "gps-link"; a.href = safeUrl; a.target = "_blank"; a.rel = "noopener noreferrer";
-        a.appendChild(document.createTextNode(g.nombre));
-        cont.appendChild(a);
-      });
-    }
+
     function initials(name){return (name||"").trim().split(/\s+/).slice(0,2).map(function(w){return w.charAt(0).toUpperCase();}).join("")||"–";}
 
+    /* ---- reloj del saludo ---- */
+    function tick(){
+      var now=new Date();
+      var t=document.getElementById('clockTime'), d=document.getElementById('clockDate');
+      if(!t) return;
+      t.textContent=now.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
+      var ds=now.toLocaleDateString('es-PE',{weekday:'long',day:'numeric',month:'long'});
+      d.textContent=ds.charAt(0).toUpperCase()+ds.slice(1);
+    }
+
+    /* ---- buscador de módulos ---- */
+    document.getElementById('moduleSearch').addEventListener('input', function(e){
+      var q=(e.target.value||'').toLowerCase().trim();
+      document.querySelectorAll('#menu .app-card').forEach(function(c){
+        var hit = !q || (c.getAttribute('data-name')||'').indexOf(q)>=0;
+        c.style.display = hit?'':'none';
+      });
+      document.querySelectorAll('#menu .group-block').forEach(function(g){
+        var vis=g.querySelectorAll('.app-card:not([style*="display: none"])').length;
+        g.style.display = vis?'':'none';
+      });
+    });
+
+    /* ---- drawer móvil ---- */
+    document.getElementById('menuBtn').addEventListener('click',function(){$portal.classList.add('open');});
+    document.getElementById('scrimSide').addEventListener('click',function(){$portal.classList.remove('open');});
+
+    /* ---- login ---- */
     document.getElementById("loginForm").addEventListener("submit", async function (e) {
       e.preventDefault();
-      $err.classList.add("hidden");
+      $err.classList.add("hidden"); $err.style.color='';
       var btn = document.getElementById("loginBtn");
-      btn.disabled = true; btn.textContent = "Ingresando...";
+      btn.disabled = true; btn.textContent = "Ingresando…";
       try {
         await MISAGI.login(document.getElementById("email").value, document.getElementById("password").value);
       } catch (err) {
-        $err.textContent = traducirError(err);
-        $err.classList.remove("hidden");
+        $err.className='lerr'; $err.textContent = traducirError(err); $err.classList.remove("hidden");
       } finally {
-        btn.disabled = false; btn.textContent = "Ingresar";
+        btn.disabled = false; btn.textContent = "Iniciar sesión";
       }
     });
     document.getElementById("logoutBtn").addEventListener("click", function () { MISAGI.logout(); });
+
+    /* ---- estado de sesión ---- */
     MISAGI.onUser(function (sesion) {
       if (sesion && sesion.perfil) {
         var nombre = sesion.perfil.nombre || sesion.user.email;
         var primer = (nombre || "").split(" ")[0];
         document.getElementById("userName").textContent = nombre;
         document.getElementById("userAvatar").textContent = initials(nombre);
-        document.getElementById("hello").textContent = "Hola, " + primer;
-        document.getElementById("helloSub").textContent = "Estos son los módulos disponibles para tu cuenta.";
+        document.getElementById("helloName").textContent = "Hola, " + primer + " 👋";
         var esAdmin = MISAGI.esAdmin(sesion.perfil);
-        var badge = document.getElementById("userBadge");
-        badge.className = "badge " + (esAdmin ? "admin" : "conductor");
-        badge.textContent = esAdmin ? "Administrador" : (sesion.perfil.tipo || "Usuario");
+        document.getElementById("userRole").textContent = esAdmin ? "Administrador" : (sesion.perfil.tipo || "Usuario");
         renderMenu(sesion.perfil);
-        renderGPS(sesion.perfil);
-        renderExtras(sesion.perfil);
+        renderSidebar(sesion.perfil);
+        renderSideLinks(sesion.perfil);
+        tick(); if(!window.__msgClock){ window.__msgClock=setInterval(tick,30000); }
         $login.classList.add("hidden"); $portal.classList.remove("hidden");
       } else {
         $portal.classList.add("hidden"); $login.classList.remove("hidden");
       }
     });
+
     function traducirError(err) {
       var m = (err && err.code) || (err && err.message) || "";
       if (m.includes("wrong-password") || m.includes("invalid-credential")) return "Correo o contraseña incorrectos.";
       if (m.includes("user-not-found")) return "No existe un usuario con ese correo.";
+      if (m.includes("invalid-email")) return "El correo no tiene un formato válido.";
       if (m.includes("too-many-requests")) return "Demasiados intentos. Espera un momento.";
       if (m.includes("REEMPLAZAR") || m.includes("api-key")) return "Falta configurar Firebase (assets/firebase-config.js).";
-      return err.message || "No se pudo iniciar sesión.";
+      return (err && err.message) || "No se pudo iniciar sesión.";
     }
   </script>
 </body>
