@@ -28,11 +28,20 @@ service cloud.firestore {
       allow update, delete: if esAdmin();
     }
 
+    // ---- Solicitudes del personal (vacaciones, cambios de datos) ----
+    // Cada quien crea y lee SUS propias solicitudes; el admin las ve y resuelve.
+    match /solicitudes/{doc} {
+      allow create: if logueado() && request.resource.data.uid == request.auth.uid;
+      allow read:   if logueado() && (esAdmin() || resource.data.uid == request.auth.uid);
+      allow update, delete: if esAdmin();
+    }
+
     // ---- Colecciones por área (módulos futuros) ----
     match /operaciones/{doc}    { allow read, write: if tieneArea('operaciones'); }
     match /mantenimiento/{doc}  { allow read, write: if tieneArea('mantenimiento'); }
     match /rrhh/{doc}           { allow read, write: if tieneArea('rrhh'); }
     match /finanzas/{doc}       { allow read, write: if tieneArea('finanzas'); }
+    match /contabilidad/{doc}   { allow read, write: if tieneArea('contabilidad'); }
     match /proveedores/{doc}    { allow read, write: if tieneArea('proveedores'); }
     match /planificacion/{doc}  { allow read, write: if tieneArea('planificacion'); }
     match /imagen/{doc}         { allow read, write: if tieneArea('imagen'); }

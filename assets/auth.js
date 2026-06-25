@@ -19,6 +19,7 @@
     rrhh:         { label: "Recursos Humanos",     padre: null },
     imagen:       { label: "Imagen Institucional", padre: null },
     finanzas:     { label: "Finanzas",             padre: null },
+    contabilidad: { label: "Contabilidad",         padre: null },
     proveedores:  { label: "Proveedores",          padre: null },
     planificacion:{ label: "Planificación",        padre: null }
   };
@@ -81,6 +82,23 @@
     });
   }
 
+  // Para páginas de autoservicio (Mi espacio): exige solo sesión iniciada,
+  // sin requerir un área concreta. Devuelve { user, perfil }.
+  function requireLogin() {
+    return new Promise((resolve) => {
+      auth().onAuthStateChanged(async (user) => {
+        if (!user) { location.href = ROOT + "index.html"; return; }
+        const perfil = await fetchPerfil(user.uid);
+        if (!perfil || perfil.activo === false) {
+          await auth().signOut();
+          location.href = ROOT + "index.html";
+          return;
+        }
+        resolve({ user, perfil });
+      });
+    });
+  }
+
   // Observa el estado de sesión (para el portal)
   function onUser(cb) {
     auth().onAuthStateChanged(async (user) => {
@@ -88,5 +106,5 @@
     });
   }
 
-  global.MISAGI = { AREAS, ROOT, login, logout, requireAccess, onUser, puedeVer, esAdmin, fetchPerfil };
+  global.MISAGI = { AREAS, ROOT, login, logout, requireAccess, requireLogin, onUser, puedeVer, esAdmin, fetchPerfil };
 })(window);

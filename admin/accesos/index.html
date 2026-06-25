@@ -9,13 +9,22 @@
   <style>
     .st{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
     .st.on{background:var(--verde-l);color:var(--verde-d)} .st.off{background:var(--danger-light);color:var(--danger)}
-    .areas-chk{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-top:6px}
-    .areas-chk label{display:flex;align-items:center;gap:7px;font-size:.88rem;font-weight:500;color:var(--text-primary);text-transform:none;letter-spacing:0}
-    .areas-chk input{width:auto;margin:0}
-    .tags{display:flex;flex-wrap:wrap;gap:5px}
+    .tags{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
     .tag{background:var(--azul-l);color:var(--azul-d);font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:6px}
     .tag.adm{background:#fde9c8;color:#8a5310}
+    .tag.cnt{background:var(--verde-l);color:var(--verde-d)}
     .acts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+    /* checklist de módulos */
+    .mod-group{border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden}
+    .mod-head{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg-subtle);font-weight:700;font-size:.9rem;color:var(--azul-d);cursor:pointer;text-transform:none;letter-spacing:0}
+    .mod-items{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;padding:10px 12px}
+    @media(max-width:560px){.mod-items{grid-template-columns:1fr}}
+    .mod-items label{display:flex;align-items:center;gap:7px;font-size:.88rem;font-weight:500;color:var(--text-primary);text-transform:none;letter-spacing:0;cursor:pointer}
+    .mod-items input,.mod-head input{width:auto;margin:0}
+    .soont{color:var(--text-muted);font-size:.78rem}
+    .admin-toggle{display:flex;align-items:center;gap:8px;padding:11px 13px;border:1px dashed var(--border-strong);border-radius:12px;background:#fffdf6;font-weight:600;text-transform:none;letter-spacing:0}
+    .admin-toggle input{width:auto;margin:0}
+    #modBlock.dim{opacity:.4;pointer-events:none}
   </style>
 </head>
 <body>
@@ -34,23 +43,34 @@
     <div class="toolbar"><input type="search" id="buscar" placeholder="Buscar por nombre o correo…"></div>
     <div class="table-wrap">
       <table id="tabla"><thead><tr>
-        <th>Nombre</th><th>Correo</th><th>Tipo</th><th>Áreas</th><th>Estado</th><th></th>
+        <th>Nombre</th><th>DNI</th><th>Correo</th><th>Tipo</th><th>Qué ve</th><th>Estado</th><th></th>
       </tr></thead><tbody></tbody></table>
     </div>
-    <p class="side-note" style="margin-top:14px">La contraseña que pongas es temporal: el trabajador puede cambiarla luego. “Desactivar” le quita el acceso al instante. Borrar definitivamente una cuenta se hace desde la consola de Firebase.</p>
+    <p class="side-note" style="margin-top:14px">Marca exactamente los módulos que verá cada trabajador. La contraseña inicial es el <strong>DNI</strong> (la puede cambiar en su primer ingreso). “Desactivar” le quita el acceso al instante. Borrar una cuenta se hace desde la consola de Firebase.</p>
   </div>
 
   <div id="modal" class="modal-overlay hidden">
-    <div class="modal-box" style="max-width:520px">
+    <div class="modal-box" style="max-width:560px">
       <div class="modal-head"><h3 id="modalTit">Nuevo acceso</h3><button class="modal-x" id="modalX">✕</button></div>
       <form id="form">
         <div class="field"><label>Nombre completo *</label><input name="nombre" required></div>
+        <div class="field"><label>DNI *</label><input name="dni" inputmode="numeric" required placeholder="Ej. 71234567"></div>
         <div class="field"><label>Correo *</label><input name="email" type="email" required></div>
-        <div class="field" id="passField"><label>Contraseña temporal * (mín. 6)</label><input name="password" minlength="6"></div>
-        <div class="field"><label>Tipo</label><select name="tipo"><option value="administrativo">Administrativo</option><option value="conductor">Conductor</option></select></div>
-        <div class="field"><label>Áreas a las que accede</label>
-          <div class="areas-chk" id="areasChk"></div>
+        <div class="field" id="passField"><label>Contraseña inicial (por defecto el DNI)</label><input name="password" minlength="6">
+          <div class="side-note" style="margin-top:6px">Se autocompleta con el DNI. El trabajador la cambia en su primer ingreso.</div>
         </div>
+        <div class="field"><label>Tipo</label><select name="tipo"><option value="administrativo">Administrativo</option><option value="conductor">Conductor</option></select></div>
+
+        <div class="field">
+          <label style="margin-bottom:8px">Permisos</label>
+          <label class="admin-toggle"><input type="checkbox" id="chkAdmin"> Administrador — ve TODO el sistema</label>
+        </div>
+        <div class="field" id="modBlock">
+          <label>Módulos que verá este trabajador</label>
+          <div id="modList"></div>
+          <div class="side-note" style="margin-top:6px">“Mi espacio” (sus datos, boletas, CTS, roster, vacaciones) lo ven todos automáticamente; no hace falta marcarlo.</div>
+        </div>
+
         <div class="field"><label style="text-transform:none;letter-spacing:0"><input type="checkbox" name="activo" checked style="width:auto;margin-right:7px">Cuenta activa</label></div>
         <div id="formErr" class="msg-alert error hidden"></div>
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px">
@@ -66,12 +86,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="../../assets/firebase-config.js"></script>
   <script src="../../assets/auth.js"></script>
+  <script src="../../assets/portal.js"></script>
   <script>
-    var AREAS = [
-      ["admin","Administrador (todo)"],["operaciones","Operaciones"],["mantenimiento","Mantenimiento"],
-      ["rrhh","Recursos Humanos"],["finanzas","Finanzas"],["proveedores","Proveedores"],
-      ["planificacion","Planificación"],["imagen","Imagen Institucional"]
-    ];
     var db=function(){return firebase.firestore();};
     var sesion=null, datos=[];
     function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
@@ -82,28 +98,62 @@
       return ex || firebase.initializeApp(MISAGI_FIREBASE_CONFIG,"alta");
     }
 
-    function pintarAreasChk(sel){
-      document.getElementById("areasChk").innerHTML = AREAS.map(function(a){
-        return '<label><input type="checkbox" value="'+a[0]+'" '+((sel&&sel.indexOf(a[0])>=0)?"checked":"")+'>'+esc(a[1])+'</label>';
+    /* ---- Catálogo de módulos asignables (desde portal.js) ---- */
+    function gruposAsignables(){ return MISAGI_MODULOS.filter(function(g){return g.area!=="admin";}); }
+    function modulosDeAreas(areas){
+      var ids=[]; areas=areas||[];
+      gruposAsignables().forEach(function(g){
+        if(areas.indexOf(g.area)>=0){ g.apps.forEach(function(a){ if(!a.soloAdmin) ids.push(a.id); }); }
+      });
+      return ids;
+    }
+    function pintarModulos(sel){
+      sel=sel||[];
+      document.getElementById("modList").innerHTML = gruposAsignables().map(function(g){
+        var apps=g.apps.filter(function(a){return !a.soloAdmin;});
+        if(!apps.length) return "";
+        return '<div class="mod-group">'+
+          '<label class="mod-head"><input type="checkbox" class="grp" data-area="'+g.area+'"> '+esc(g.grupo)+'</label>'+
+          '<div class="mod-items">'+apps.map(function(a){
+            return '<label><input type="checkbox" class="mod" value="'+a.id+'" data-area="'+g.area+'" '+(sel.indexOf(a.id)>=0?"checked":"")+'>'+esc(a.nombre)+(a.estado!=="activo"?' <span class="soont">(próximamente)</span>':'')+'</label>';
+          }).join("")+'</div>'+
+        '</div>';
       }).join("");
+      // enganchar toggles de grupo y sincronizar
+      document.querySelectorAll("#modList .mod-group").forEach(function(blk){
+        var grp=blk.querySelector(".grp");
+        var mods=[].slice.call(blk.querySelectorAll(".mod"));
+        function sync(){ var on=mods.filter(function(m){return m.checked;}).length; grp.checked=on===mods.length; grp.indeterminate=on>0&&on<mods.length; }
+        grp.addEventListener("change",function(){ mods.forEach(function(m){m.checked=grp.checked;}); grp.indeterminate=false; });
+        mods.forEach(function(m){ m.addEventListener("change",sync); });
+        sync();
+      });
     }
+    function modulosSeleccionados(){ return [].slice.call(document.querySelectorAll("#modList .mod:checked")).map(function(i){return i.value;}); }
     function areasSeleccionadas(){
-      return Array.prototype.slice.call(document.querySelectorAll("#areasChk input:checked")).map(function(i){return i.value;});
+      var set={}; [].slice.call(document.querySelectorAll("#modList .mod:checked")).forEach(function(i){set[i.dataset.area]=1;});
+      return Object.keys(set);
     }
+    function toggleAdmin(on){ document.getElementById("modBlock").classList.toggle("dim", !!on); }
 
     function filtradas(){
       var q=(document.getElementById("buscar").value||"").toLowerCase().trim();
       if(!q) return datos;
       return datos.filter(function(d){return (String(d.nombre||"")+" "+String(d.email||"")).toLowerCase().indexOf(q)>=0;});
     }
+    function resumenAcceso(d){
+      if((d.areas||[]).indexOf("admin")>=0) return '<span class="tag adm">Administrador · todo</span>';
+      var n = Array.isArray(d.modulos)&&d.modulos.length ? d.modulos.length : modulosDeAreas(d.areas||[]).length;
+      var areas=(d.areas||[]).map(function(a){return '<span class="tag">'+esc(a)+'</span>';}).join(" ");
+      return '<div class="tags">'+(areas||'<span style="color:var(--text-muted)">—</span>')+(n?'<span class="tag cnt">'+n+' módulo'+(n>1?"s":"")+'</span>':'')+'</div>';
+    }
     function pintar(){
       var tb=document.querySelector("#tabla tbody"); var f=filtradas();
       document.getElementById("sub").textContent=datos.length+" cuenta(s)";
-      if(!f.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px">Sin cuentas. Usa “+ Nuevo acceso”.</td></tr>';return;}
+      if(!f.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">Sin cuentas. Usa “+ Nuevo acceso”.</td></tr>';return;}
       tb.innerHTML=f.map(function(d){
-        var areas=(d.areas||[]).map(function(a){return '<span class="tag'+(a==="admin"?" adm":"")+'">'+esc(a)+'</span>';}).join(" ")||'<span style="color:var(--text-muted)">—</span>';
         var est=d.activo===false?'<span class="st off">Inactiva</span>':'<span class="st on">Activa</span>';
-        return '<tr><td><strong>'+esc(d.nombre)+'</strong></td><td>'+esc(d.email)+'</td><td>'+esc(d.tipo||"")+'</td><td><div class="tags">'+areas+'</div></td><td>'+est+'</td>'+
+        return '<tr><td><strong>'+esc(d.nombre)+'</strong></td><td>'+esc(d.dni||"—")+'</td><td>'+esc(d.email)+'</td><td>'+esc(d.tipo||"")+'</td><td>'+resumenAcceso(d)+'</td><td>'+est+'</td>'+
           '<td><div class="acts"><button class="btn btn-ghost btn-sm" data-e="'+d._id+'">Editar</button>'+
           '<button class="btn btn-ghost btn-sm" data-t="'+d._id+'">'+(d.activo===false?"Activar":"Desactivar")+'</button>'+
           '<button class="btn btn-ghost btn-sm" data-r="'+esc(d.email)+'">Reset clave</button></div></td></tr>';
@@ -121,36 +171,56 @@
 
     function abrir(reg){
       var f=document.getElementById("form"); f.reset();
+      f.password.dataset.touched="";
       document.getElementById("formErr").classList.add("hidden");
       var editar=!!reg; f.dataset.id=editar?reg._id:"";
       document.getElementById("modalTit").textContent=editar?("Editar — "+(reg.nombre||"")):"Nuevo acceso";
-      // En edición no se cambia correo ni contraseña desde aquí
       document.getElementById("passField").style.display=editar?"none":"";
-      f.password.required=!editar;
+      f.password.required=false;
       f.email.readOnly=editar;
-      if(editar){ f.nombre.value=reg.nombre||""; f.email.value=reg.email||""; f.tipo.value=reg.tipo||"administrativo"; f.activo.checked=reg.activo!==false; }
-      pintarAreasChk(editar?reg.areas:[]);
+      var esAdminUser=editar && (reg.areas||[]).indexOf("admin")>=0;
+      document.getElementById("chkAdmin").checked=esAdminUser;
+      toggleAdmin(esAdminUser);
+      if(editar){
+        f.nombre.value=reg.nombre||""; f.dni.value=reg.dni||""; f.email.value=reg.email||"";
+        f.tipo.value=reg.tipo||"administrativo"; f.activo.checked=reg.activo!==false;
+        var sel = (Array.isArray(reg.modulos)&&reg.modulos.length) ? reg.modulos : modulosDeAreas(reg.areas||[]);
+        pintarModulos(sel);
+      } else {
+        pintarModulos([]);
+      }
       document.getElementById("btnGuardar").textContent=editar?"Guardar cambios":"Crear acceso";
       document.getElementById("modal").classList.remove("hidden");
     }
     function cerrar(){document.getElementById("modal").classList.add("hidden");}
 
+    document.getElementById("chkAdmin").addEventListener("change",function(){ toggleAdmin(this.checked); });
+
     document.getElementById("form").addEventListener("submit",function(e){
       e.preventDefault();
       var f=e.target, err=document.getElementById("formErr"); err.classList.add("hidden");
-      var perfil={ nombre:f.nombre.value.trim(), email:f.email.value.trim().toLowerCase(),
-                   tipo:f.tipo.value, areas:areasSeleccionadas(), activo:f.activo.checked };
+      var dni=f.dni.value.trim();
+      var admin=document.getElementById("chkAdmin").checked;
+      var perfil={ nombre:f.nombre.value.trim(), dni:dni, email:f.email.value.trim().toLowerCase(),
+                   tipo:f.tipo.value,
+                   areas: admin?["admin"]:areasSeleccionadas(),
+                   modulos: admin?[]:modulosSeleccionados(),
+                   activo:f.activo.checked };
       var btn=document.getElementById("btnGuardar"); btn.disabled=true; btn.textContent="Guardando…";
-      function fail(m){ err.textContent=m; err.classList.remove("hidden"); btn.disabled=false; btn.textContent="Crear acceso"; }
+      function fail(m){ err.textContent=m; err.classList.remove("hidden"); btn.disabled=false; btn.textContent=f.dataset.id?"Guardar cambios":"Crear acceso"; }
+
+      if(!admin && !perfil.modulos.length){ fail("Marca al menos un módulo, o activa “Administrador”."); return; }
 
       if(f.dataset.id){ // EDITAR: solo actualiza el perfil
         db().collection("usuarios").doc(f.dataset.id).set(perfil,{merge:true})
           .then(function(){cerrar();cargar();}).catch(function(e){fail(e.message);});
         return;
       }
-      // NUEVO: crea cuenta en Auth con app secundaria, luego el perfil
+      // Contraseña inicial = la escrita, o el DNI por defecto
+      var claveInicial=(f.password.value||dni).trim();
+      if(claveInicial.length<6){ fail("La contraseña inicial (o el DNI) debe tener al menos 6 caracteres."); return; }
       var secAuth=altaApp().auth();
-      secAuth.createUserWithEmailAndPassword(perfil.email, f.password.value).then(function(cred){
+      secAuth.createUserWithEmailAndPassword(perfil.email, claveInicial).then(function(cred){
         var uid=cred.user.uid;
         return db().collection("usuarios").doc(uid).set(Object.assign({_ts:firebase.firestore.FieldValue.serverTimestamp()},perfil)).then(function(){ return secAuth.signOut(); });
       }).then(function(){ cerrar(); cargar(); }).catch(function(e){
@@ -168,6 +238,13 @@
       if(!confirm("¿Enviar correo para restablecer la contraseña a "+email+"?"))return;
       firebase.auth().sendPasswordResetEmail(email).then(function(){alert("Correo de restablecimiento enviado a "+email);}).catch(function(e){alert(e.message);});
     }
+
+    // Autocompletar contraseña con el DNI mientras no se edite a mano
+    (function(){
+      var f=document.getElementById("form");
+      f.dni.addEventListener("input",function(){ if(!f.password.dataset.touched){ f.password.value=f.dni.value.trim(); } });
+      f.password.addEventListener("input",function(){ f.password.dataset.touched="1"; });
+    })();
 
     document.getElementById("btnNuevo").onclick=function(){abrir(null);};
     document.getElementById("buscar").oninput=pintar;

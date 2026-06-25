@@ -1,10 +1,10 @@
 /* ==========================================================================
    MISAGI S.A.C. — Lógica del Portal (menú dinámico por rol)
    --------------------------------------------------------------------------
-   Catálogo único de módulos. Para agregar un módulo nuevo basta con añadir
-   una entrada aquí: aparecerá automáticamente para quien tenga el área.
-   estado: 'activo' (enlaza al módulo) | 'proximamente' (deshabilitado).
-   Cada grupo tiene "ik" = icono (línea, estilo lucide) usado en sidebar y cards.
+   Catálogo único de módulos. Cada app tiene un "id" estable: el admin elige,
+   por trabajador, qué módulos ve (perfil.modulos[]). Si un usuario no tiene
+   "modulos" definido, se usa el respaldo por área (perfil.areas[]).
+   estado: 'activo' | 'proximamente'.   soloAdmin: true -> solo el admin.
    ========================================================================== */
 
 /* ---- Iconos de línea (lucide-style) ---- */
@@ -20,7 +20,9 @@ const ICONS = {
   cal:     "M3 5h18v16H3z M3 9h18 M8 3v4 M16 3v4",
   pin:     "M12 21s-7-7.5-7-12a7 7 0 0 1 14 0c0 4.5-7 12-7 12z M12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4",
   ext:     "M14 3h7v7 M21 3l-9 9 M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5",
-  chev:    "M9 6l6 6-6 6"
+  chev:    "M9 6l6 6-6 6",
+  user:    "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8",
+  book:    "M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z M9 7h7 M9 11h7"
 };
 function msgIcon(name, cls) {
   return '<svg class="ico ' + (cls || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="' + (ICONS[name] || '') + '"/></svg>';
@@ -30,71 +32,116 @@ const MISAGI_MODULOS = [
   {
     area: "admin", grupo: "Administración", ik: "lock",
     apps: [
-      { nombre: "Accesos del personal", url: "admin/accesos/", estado: "activo", desc: "Crear y gestionar los logins del equipo" }
+      { id: "admin.accesos", nombre: "Accesos del personal", url: "admin/accesos/", estado: "activo", desc: "Crear y gestionar los logins del equipo" }
     ]
   },
   {
     area: "operaciones", grupo: "Flota · Operaciones", ik: "truck",
     apps: [
-      { nombre: "Programación", url: "flota/operaciones/programacion/", estado: "activo", desc: "Programación de vehículos" },
-      { nombre: "Seguimiento",  url: "flota/operaciones/seguimiento/",  estado: "activo", desc: "Seguimiento de unidades" },
-      { nombre: "Tracker",      url: "flota/operaciones/tracker/",      estado: "activo", desc: "Seguimiento de conductores" }
+      { id: "operaciones.programacion", nombre: "Programación", url: "flota/operaciones/programacion/", estado: "activo", desc: "Programación de vehículos" },
+      { id: "operaciones.seguimiento",  nombre: "Seguimiento",  url: "flota/operaciones/seguimiento/",  estado: "activo", desc: "Seguimiento de unidades" },
+      { id: "operaciones.tracker",      nombre: "Tracker",      url: "flota/operaciones/tracker/",      estado: "activo", desc: "Seguimiento de conductores" }
     ]
   },
   {
     area: "mantenimiento", grupo: "Flota · Mantenimiento", ik: "wrench",
     apps: [
-      { nombre: "Estatus de flota", url: "flota/mantenimiento/estatus/", estado: "activo", desc: "Estado, llantas y mantenimiento de la flota" }
+      { id: "mantenimiento.estatus", nombre: "Estatus de flota", url: "flota/mantenimiento/estatus/", estado: "activo", desc: "Estado, llantas y mantenimiento de la flota" }
     ]
   },
   {
     area: "rrhh", grupo: "Recursos Humanos", ik: "users",
     apps: [
-      { nombre: "Asistencia",      url: "rrhh/asistencia/", estado: "activo", desc: "Marcaje de entrada/salida" },
-      { nombre: "Personal (RRHH)", url: "rrhh/personal/",   estado: "activo", desc: "Legajos del personal" },
-      { nombre: "CTS",             url: "rrhh/cts/",        estado: "activo", desc: "Liquidación de CTS" }
+      { id: "rrhh.asistencia", nombre: "Asistencia",      url: "rrhh/asistencia/", estado: "activo", desc: "Marcaje de entrada/salida" },
+      { id: "rrhh.personal",   nombre: "Personal (RRHH)", url: "rrhh/personal/",   estado: "activo", desc: "Legajos de todo el personal", soloAdmin: true },
+      { id: "rrhh.cts",        nombre: "CTS",             url: "rrhh/cts/",        estado: "activo", desc: "Liquidación de CTS del personal", soloAdmin: true }
     ]
   },
   {
     area: "imagen", grupo: "Imagen Institucional", ik: "mega",
     apps: [
-      { nombre: "Imagen Institucional", url: "imagen-institucional/", estado: "activo", desc: "Comunicación y redes" }
+      { id: "imagen.institucional", nombre: "Imagen Institucional", url: "imagen-institucional/", estado: "activo", desc: "Comunicación y redes" }
     ]
   },
   {
     area: "finanzas", grupo: "Finanzas", ik: "wallet",
     apps: [
-      { nombre: "Deudas",  url: "finanzas/deudas/",  estado: "activo", desc: "Control de deudas" },
-      { nombre: "Compras", url: "finanzas/compras/", estado: "activo", desc: "Registro de compras" }
+      { id: "finanzas.deudas",  nombre: "Deudas",  url: "finanzas/deudas/",  estado: "activo", desc: "Control de deudas" },
+      { id: "finanzas.compras", nombre: "Compras", url: "finanzas/compras/", estado: "activo", desc: "Registro de compras" }
+    ]
+  },
+  {
+    area: "contabilidad", grupo: "Contabilidad", ik: "book",
+    apps: [
+      { id: "contabilidad.general", nombre: "Contabilidad", url: "contabilidad/", estado: "proximamente", desc: "Libros, comprobantes y reportes" }
     ]
   },
   {
     area: "proveedores", grupo: "Proveedores", ik: "factory",
     apps: [
-      { nombre: "Portal de Proveedores", url: "proveedores/", estado: "activo", desc: "Registro y gestión de proveedores" }
+      { id: "proveedores.portal", nombre: "Portal de Proveedores", url: "proveedores/", estado: "activo", desc: "Registro y gestión de proveedores" }
     ]
   },
   {
     area: "planificacion", grupo: "Planificación", ik: "cal",
     apps: [
-      { nombre: "Plan Mensual", url: "planificacion/", estado: "activo", desc: "Plan de trabajo mensual" }
+      { id: "planificacion.plan", nombre: "Plan Mensual", url: "planificacion/", estado: "activo", desc: "Plan de trabajo mensual" }
     ]
   }
 ];
 
-/* ---- Tarjetas del contenido (filtradas por rol, enlazan a módulos reales) ---- */
+/* ---- "Mi espacio": autoservicio visible para TODO usuario con sesión ---- */
+const MISAGI_SELF = {
+  area: "self", grupo: "Mi espacio", ik: "user",
+  apps: [
+    { id: "self.datos",      nombre: "Mis datos",   url: "mi-espacio/#datos",      estado: "activo", desc: "Tu información y solicitar cambios" },
+    { id: "self.boletas",    nombre: "Mis boletas", url: "mi-espacio/#boletas",    estado: "activo", desc: "Tus boletas de pago" },
+    { id: "self.cts",        nombre: "Mi CTS",      url: "mi-espacio/#cts",        estado: "activo", desc: "Tus depósitos de CTS" },
+    { id: "self.roster",     nombre: "Roster",      url: "mi-espacio/#roster",     estado: "activo", desc: "Tus días trabajados" },
+    { id: "self.vacaciones", nombre: "Vacaciones",  url: "mi-espacio/#vacaciones", estado: "activo", desc: "Saldo y solicitar vacaciones" }
+  ]
+};
+
+/* Lista plana de módulos asignables (sin self ni soloAdmin), para el panel de accesos. */
+function modulosAsignables() {
+  const out = [];
+  MISAGI_MODULOS.forEach(function (g) {
+    g.apps.forEach(function (a) {
+      if (a.soloAdmin) return;
+      out.push({ id: a.id, nombre: a.nombre, grupo: g.grupo, area: g.area, ik: g.ik });
+    });
+  });
+  return out;
+}
+
+/* Apps visibles de un grupo según el perfil. */
+function appsVisibles(grupo, perfil) {
+  if (grupo.area === "self") return grupo.apps;            // autoservicio: todos
+  if (MISAGI.esAdmin(perfil)) return grupo.apps;           // admin ve todo
+  const porModulo = perfil && Array.isArray(perfil.modulos);
+  return grupo.apps.filter(function (a) {
+    if (a.soloAdmin) return false;                         // solo admin
+    if (porModulo) return perfil.modulos.indexOf(a.id) >= 0;
+    return MISAGI.puedeVer(perfil, grupo.area);            // respaldo por área
+  });
+}
+
+/* Grupos visibles: Mi espacio (siempre) + los que tengan al menos un módulo visible. */
+function gruposVisibles(perfil) {
+  return [MISAGI_SELF].concat(MISAGI_MODULOS).filter(function (g) {
+    return appsVisibles(g, perfil).length > 0;
+  });
+}
+
+/* ---- Tarjetas del contenido ---- */
 function renderMenu(perfil) {
   const cont = document.getElementById("menu");
   cont.innerHTML = "";
-  const visibles = MISAGI_MODULOS.filter(g => MISAGI.puedeVer(perfil, g.area));
-  if (!visibles.length) {
-    cont.innerHTML = '<p class="empty-msg">No tienes módulos asignados. Contacta al administrador.</p>';
-    return;
-  }
-  visibles.forEach(g => {
+  gruposVisibles(perfil).forEach(function (g) {
+    const apps = appsVisibles(g, perfil);
     const sec = document.createElement("section");
     sec.className = "group-block";
-    const n = g.apps.length;
+    const n = apps.length;
     sec.innerHTML =
       '<div class="gh">' +
         '<span class="gi">' + msgIcon(g.ik) + '</span>' +
@@ -103,7 +150,7 @@ function renderMenu(perfil) {
       '</div>';
     const cards = document.createElement("div");
     cards.className = "cards";
-    g.apps.forEach(app => {
+    apps.forEach(function (app) {
       const activo = app.estado === "activo";
       const card = document.createElement(activo ? "a" : "div");
       card.className = "app-card" + (activo ? "" : " disabled");
@@ -129,15 +176,14 @@ function renderMenu(perfil) {
   });
 }
 
-/* ---- Navegación lateral (mismos módulos, filtrados por rol) ---- */
+/* ---- Navegación lateral ---- */
 function renderSidebar(perfil) {
   const nav = document.getElementById("nav");
   if (!nav) return;
   nav.innerHTML = '<a class="nav-link active" href="#top">' + msgIcon('home') + '<span>Inicio</span></a>';
-  const visibles = MISAGI_MODULOS.filter(g => MISAGI.puedeVer(perfil, g.area));
-  visibles.forEach(g => {
+  gruposVisibles(perfil).forEach(function (g) {
     let html = '<div class="nav-group"><div class="gl">' + msgIcon(g.ik, 'gico') + g.grupo + '</div>';
-    g.apps.forEach(app => {
+    appsVisibles(g, perfil).forEach(function (app) {
       const activo = app.estado === "activo";
       if (activo) {
         html += '<a class="nav-link" href="' + MISAGI.ROOT + app.url + '">' + msgIcon(g.ik) + '<span>' + app.nombre + '</span></a>';

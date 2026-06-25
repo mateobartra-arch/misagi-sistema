@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mi espacio — MISAGI S.A.C.</title>
+<link rel="icon" type="image/png" href="../assets/misagi-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --brand:#1f9e57; --brand-d:#178048; --brand-soft:#e7f5ed;
+    --navy:#0d3b66; --navy-d:#0a2e50; --navy-soft:#eaf0f6;
+    --bg:#f3f5f4; --card:#fff; --text:#10201a; --muted:#697269; --faint:#9aa39c;
+    --border:#e6eae6; --border-2:#dde2dd; --amber:#a96416; --amber-soft:#fbeede;
+    --shadow-sm:0 1px 2px rgba(16,32,24,.05); --shadow:0 2px 4px rgba(16,32,24,.05),0 12px 28px rgba(16,32,24,.06);
+    --r:16px; --r-xs:10px; --ease:.2s cubic-bezier(.2,.7,.3,1);
+  }
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:'Space Grotesk','Inter',sans-serif;letter-spacing:-.01em}
+  a{color:var(--navy);text-decoration:none}
+  .hidden{display:none !important}
+  .ico{width:18px;height:18px;flex-shrink:0}
+  /* header */
+  .top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;padding:12px 24px;background:var(--navy-d);color:#fff}
+  .top .mk{width:32px;height:32px;border-radius:9px;background:#fff;display:grid;place-items:center;padding:5px}
+  .top .mk img{width:100%;height:100%;object-fit:contain}
+  .top .bn{font-family:'Space Grotesk';font-weight:600;font-size:16px;letter-spacing:.3px}
+  .top .grow{flex:1}
+  .top .btn{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:9px;padding:8px 13px;font-size:.86rem;font-weight:600;cursor:pointer;font-family:inherit}
+  .top .btn:hover{background:rgba(255,255,255,.16)}
+  /* tabs */
+  .tabs{display:flex;gap:4px;padding:0 24px;background:#fff;border-bottom:1px solid var(--border);overflow-x:auto;position:sticky;top:56px;z-index:25}
+  .tab{padding:14px 14px 12px;font-size:.92rem;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;font-family:inherit;transition:var(--ease)}
+  .tab:hover{color:var(--text)}
+  .tab.on{color:var(--brand-d);border-bottom-color:var(--brand)}
+  .wrap{max-width:1120px;margin:0 auto;padding:26px 24px 60px}
+  /* hero */
+  .hero{position:relative;overflow:hidden;border-radius:20px;padding:26px 30px;margin-bottom:22px;color:#fff;background:linear-gradient(120deg,#0c2138 0%,#0a1626 55%,#0b2e1d 130%);box-shadow:var(--shadow)}
+  .hero h1{font-size:27px;margin-bottom:6px}
+  .hero p{color:rgba(255,255,255,.74);font-size:14px}
+  /* kpis */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+  @media(max-width:860px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow-sm)}
+  .kpi .v{font-family:'Space Grotesk';font-size:24px;font-weight:600;color:var(--navy-d);line-height:1}
+  .kpi .v.g{color:var(--brand-d)} .kpi .v.a{color:var(--amber)}
+  .kpi .l{font-size:11px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin-top:8px}
+  /* layout cols */
+  .cols{display:grid;grid-template-columns:1.5fr 1fr;gap:20px}
+  @media(max-width:820px){.cols{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);padding:22px;margin-bottom:20px}
+  .panel h2{font-size:1rem;color:var(--navy-d);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+  .panel h2 .lk{font-size:.8rem;font-weight:600;color:var(--brand-d)}
+  /* quick actions */
+  .qa{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .qa .full{grid-column:1/-1}
+  .qbtn{display:flex;align-items:center;justify-content:center;gap:9px;padding:14px;border-radius:var(--r-xs);border:1px solid var(--border-2);background:#fff;color:var(--navy-d);font-weight:600;font-size:.9rem;cursor:pointer;font-family:inherit;transition:var(--ease);text-align:center}
+  .qbtn:hover{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-d)}
+  .qbtn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .qbtn.primary:hover{background:var(--brand-d);color:#fff}
+  /* festivos / list */
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--border)}
+  .row:first-of-type{border-top:none}
+  .row .nm{font-weight:600;font-size:.92rem}
+  .row .sub{font-size:.78rem;color:var(--muted)}
+  .chip{font-size:.75rem;font-weight:700;background:var(--brand-soft);color:var(--brand-d);padding:4px 11px;border-radius:999px;white-space:nowrap}
+  .empty{text-align:center;color:var(--muted);padding:22px 8px;font-size:.9rem}
+  .note{font-size:.78rem;color:var(--faint);margin-top:14px;display:flex;align-items:center;gap:7px;line-height:1.5}
+  /* datos grid */
+  .dg{display:grid;grid-template-columns:1fr 1fr;gap:16px 22px}
+  @media(max-width:640px){.dg{grid-template-columns:1fr}}
+  .dg .it .k{font-size:11px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .dg .it .val{font-size:.98rem;font-weight:500;color:var(--text)}
+  .dg .it .val.empty-v{color:var(--faint);font-weight:400}
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:.9rem}
+  thead th{text-align:left;padding:11px 14px;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);font-weight:700;background:#fafbfa;border-bottom:1px solid var(--border)}
+  tbody td{padding:12px 14px;border-bottom:1px solid var(--border)}
+  tbody tr:last-child td{border-bottom:none}
+  /* roster calendar */
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:6px}
+  .cal .dow{text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:4px 0}
+  .cal .cell{aspect-ratio:1;border:1px solid var(--border);border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.82rem;color:var(--text);background:#fff}
+  .cal .cell.empty{background:transparent;border:none}
+  .cal .cell.work{background:var(--brand-soft);border-color:rgba(31,158,87,.3);color:var(--brand-d);font-weight:600}
+  .cal .cell .dot{font-size:9px;margin-top:2px;color:var(--brand-d)}
+  /* form */
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:11px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .field input,.field textarea,.field select{width:100%;padding:10px 13px;border:1px solid var(--border-2);border-radius:var(--r-xs);font-family:inherit;font-size:.95rem;background:#fff}
+  .field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+  .ok-msg{background:var(--brand-soft);color:var(--brand-d);padding:10px 13px;border-radius:var(--r-xs);font-size:.88rem;margin-top:10px}
+  .err-msg{background:#fbe9eb;color:#b02531;padding:10px 13px;border-radius:var(--r-xs);font-size:.88rem;margin-top:10px}
+  .pagehead{margin-bottom:18px}
+  .pagehead h1{font-size:24px;color:var(--navy-d)}
+  .pagehead .s{color:var(--muted);font-size:.92rem;margin-top:4px}
+</style>
+</head>
+<body>
+  <header class="top">
+    <span class="mk"><img src="../assets/misagi-icon.png" alt="MISAGI"></span>
+    <span class="bn">MISAGI · Mi espacio</span>
+    <div class="grow"></div>
+    <a class="btn" href="../index.html"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5 M12 19l-7-7 7-7"/></svg> Portal</a>
+    <button class="btn" id="logoutBtn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9"/></svg> Salir</button>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab" data-tab="inicio">Inicio</button>
+    <button class="tab" data-tab="datos">Mis datos</button>
+    <button class="tab" data-tab="boletas">Mis boletas</button>
+    <button class="tab" data-tab="cts">Mi CTS</button>
+    <button class="tab" data-tab="roster">Roster</button>
+    <button class="tab" data-tab="vacaciones">Vacaciones</button>
+  </nav>
+
+  <div class="wrap" id="wrap"><div class="empty">Cargando tu información…</div></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../assets/firebase-config.js"></script>
+  <script src="../assets/auth.js"></script>
+  <script>
+    var SESION=null, PERFIL=null, UID=null;
+    function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+    function val(v){ return (v==null||v==="") ? '<span class="val empty-v">Pendiente</span>' : '<span class="val">'+esc(v)+'</span>'; }
+
+    /* ---- Festivos reales de Perú (próximos) ---- */
+    var FESTIVOS=[
+      ["2026-06-29","San Pedro y San Pablo"],["2026-07-23","Día de la Fuerza Aérea"],
+      ["2026-07-28","Fiestas Patrias"],["2026-07-29","Fiestas Patrias"],
+      ["2026-08-06","Batalla de Junín"],["2026-08-30","Santa Rosa de Lima"],
+      ["2026-10-08","Combate de Angamos"],["2026-11-01","Todos los Santos"],
+      ["2026-12-08","Inmaculada Concepción"],["2026-12-09","Batalla de Ayacucho"],["2026-12-25","Navidad"]
+    ];
+    function proxFestivos(n){
+      var hoy=new Date(); hoy.setHours(0,0,0,0);
+      return FESTIVOS.filter(function(f){return new Date(f[0]+"T00:00:00")>=hoy;}).slice(0,n||4);
+    }
+    function fechaCorta(iso){
+      var d=new Date(iso+"T00:00:00");
+      return d.toLocaleDateString('es-PE',{weekday:'short',day:'numeric',month:'short'});
+    }
+
+    /* ---- Render por pestaña ---- */
+    function vInicio(){
+      var nombre=PERFIL.nombre||SESION.user.email, primer=(nombre||"").split(" ")[0];
+      var hoy=new Date().toLocaleDateString('es-PE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+      hoy=hoy.charAt(0).toUpperCase()+hoy.slice(1);
+      var fest=proxFestivos(4).map(function(f){
+        return '<div class="row"><div><div class="nm">'+esc(f[1])+'</div><div class="sub">Feriado nacional</div></div><span class="chip">'+fechaCorta(f[0])+'</span></div>';
+      }).join("");
+      return ''+
+      '<section class="hero"><h1>Hola, '+esc(primer)+'</h1><p>'+hoy+'</p></section>'+
+      '<div class="kpis">'+
+        '<div class="kpi"><div class="v g" id="kpiVac">—</div><div class="l">Días de vacaciones</div></div>'+
+        '<div class="kpi"><div class="v">—</div><div class="l">Última boleta</div></div>'+
+        '<div class="kpi"><div class="v">—</div><div class="l">Último depósito CTS</div></div>'+
+        '<div class="kpi"><div class="v a">'+(proxFestivos(1)[0]?fechaCorta(proxFestivos(1)[0][0]).replace(/^\w+\.?\s/,''):'—')+'</div><div class="l">Próximo festivo</div></div>'+
+      '</div>'+
+      '<div class="cols"><div>'+
+        '<div class="panel"><h2>Acciones rápidas</h2>'+
+          '<div class="qa">'+
+            '<button class="qbtn primary full" data-go="vacaciones">Solicitar vacaciones</button>'+
+            '<button class="qbtn" data-go="boletas">Ver mi boleta</button>'+
+            '<button class="qbtn" data-go="cts">Ver mi CTS</button>'+
+            '<button class="qbtn" data-go="datos">Mis datos</button>'+
+            '<button class="qbtn" data-go="roster">Roster</button>'+
+          '</div>'+
+        '</div>'+
+        '<div class="panel"><h2>Próximos festivos</h2>'+(fest||'<div class="empty">Sin festivos próximos.</div>')+'</div>'+
+      '</div><div>'+
+        '<div class="panel"><h2>Mis solicitudes <a class="lk" href="#vacaciones">Ver todas</a></h2><div id="solList"><div class="empty">Cargando…</div></div></div>'+
+      '</div></div>';
+    }
+
+    function vDatos(){
+      var p=PERFIL, areas=(p.areas||[]).join(", ")||"—";
+      return ''+
+      '<div class="pagehead"><h1>Mis datos</h1><div class="s">Tu información registrada. Si algo está mal, solicita un cambio.</div></div>'+
+      '<div class="panel"><div class="dg">'+
+        '<div class="it"><div class="k">Nombre completo</div>'+val(p.nombre)+'</div>'+
+        '<div class="it"><div class="k">Correo</div>'+val(p.email||SESION.user.email)+'</div>'+
+        '<div class="it"><div class="k">DNI</div>'+val(p.dni)+'</div>'+
+        '<div class="it"><div class="k">Tipo</div>'+val(p.tipo)+'</div>'+
+        '<div class="it"><div class="k">Cargo</div>'+val(p.cargo)+'</div>'+
+        '<div class="it"><div class="k">Área(s)</div>'+val(areas)+'</div>'+
+        '<div class="it"><div class="k">Banco</div>'+val(p.banco)+'</div>'+
+        '<div class="it"><div class="k">Cuenta de abono</div>'+val(p.cuenta)+'</div>'+
+        '<div class="it"><div class="k">Licencia</div>'+val(p.licencia)+'</div>'+
+        '<div class="it"><div class="k">Vencimiento EMO</div>'+val(p.fecha_emo)+'</div>'+
+      '</div>'+
+      '<div class="note">Los campos en "Pendiente" se completan desde RRHH. Próximamente conectaremos tu legajo completo.</div>'+
+      '</div>'+
+      '<div class="panel"><h2>Solicitar un cambio</h2>'+
+        '<div class="field"><label>¿Qué dato quieres actualizar?</label><textarea id="cambioTxt" rows="3" placeholder="Ej.: Mi cuenta de abono cambió a..."></textarea></div>'+
+        '<button class="qbtn primary" id="cambioBtn">Enviar solicitud</button>'+
+        '<div id="cambioMsg"></div>'+
+      '</div>';
+    }
+
+    function vBoletas(){
+      return ''+
+      '<div class="pagehead"><h1>Mis boletas</h1><div class="s">Tus boletas de pago mensuales.</div></div>'+
+      '<div class="panel"><table><thead><tr><th>Periodo</th><th>Tipo</th><th>Monto</th><th></th></tr></thead>'+
+        '<tbody><tr><td colspan="4"><div class="empty">Aún no hay boletas cargadas.</div></td></tr></tbody></table>'+
+        '<div class="note">RRHH subirá aquí tus boletas en PDF. Esta sección se conecta con el módulo de RRHH.</div>'+
+      '</div>';
+    }
+
+    function vCts(){
+      return ''+
+      '<div class="pagehead"><h1>Mi CTS</h1><div class="s">Tus depósitos de Compensación por Tiempo de Servicios.</div></div>'+
+      '<div class="panel"><table><thead><tr><th>Periodo</th><th>Banco</th><th>Monto</th><th>Fecha</th></tr></thead>'+
+        '<tbody><tr><td colspan="4"><div class="empty">Aún no hay depósitos registrados.</div></td></tr></tbody></table>'+
+        '<div class="note">Se conecta con el módulo de CTS de RRHH.</div>'+
+      '</div>';
+    }
+
+    function vRoster(){
+      var now=new Date(), y=now.getFullYear(), m=now.getMonth();
+      var mesNombre=now.toLocaleDateString('es-PE',{month:'long',year:'numeric'});
+      mesNombre=mesNombre.charAt(0).toUpperCase()+mesNombre.slice(1);
+      var first=new Date(y,m,1).getDay(); first=(first===0?6:first-1); // lunes=0
+      var dias=new Date(y,m+1,0).getDate();
+      var dows=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+      var cells=dows.map(function(d){return '<div class="dow">'+d+'</div>';}).join("");
+      for(var i=0;i<first;i++){cells+='<div class="cell empty"></div>';}
+      for(var d=1;d<=dias;d++){ cells+='<div class="cell"><span>'+d+'</span></div>'; }
+      return ''+
+      '<div class="pagehead"><h1>Roster · '+esc(mesNombre)+'</h1><div class="s">Los días que has trabajado este mes.</div></div>'+
+      '<div class="panel"><div class="cal">'+cells+'</div>'+
+        '<div class="note">📌 Aún sin datos. El roster se conectará con el módulo de Operaciones, que controla la programación de conductores. Los días trabajados se marcarán en verde automáticamente.</div>'+
+      '</div>';
+    }
+
+    function vVacaciones(){
+      return ''+
+      '<div class="pagehead"><h1>Vacaciones</h1><div class="s">Consulta tu saldo y solicita tus días.</div></div>'+
+      '<div class="cols"><div>'+
+        '<div class="panel"><h2>Solicitar vacaciones</h2>'+
+          '<div class="field"><label>Desde</label><input type="date" id="vacD"></div>'+
+          '<div class="field"><label>Hasta</label><input type="date" id="vacH"></div>'+
+          '<div class="field"><label>Motivo / comentario (opcional)</label><textarea id="vacM" rows="2"></textarea></div>'+
+          '<button class="qbtn primary" id="vacBtn">Enviar solicitud</button>'+
+          '<div id="vacMsg"></div>'+
+        '</div>'+
+      '</div><div>'+
+        '<div class="panel"><h2>Saldo</h2>'+
+          '<div class="kpi" style="box-shadow:none;border:none;padding:0"><div class="v g" style="font-size:34px">—</div><div class="l">Días disponibles</div></div>'+
+          '<div class="note">Tu saldo se calculará según tus meses de servicio cuando conectemos RRHH.</div>'+
+        '</div>'+
+        '<div class="panel"><h2>Mis solicitudes</h2><div id="solList2"><div class="empty">Cargando…</div></div></div>'+
+      '</div></div>';
+    }
+
+    var VISTAS={inicio:vInicio,datos:vDatos,boletas:vBoletas,cts:vCts,roster:vRoster,vacaciones:vVacaciones};
+
+    function mostrar(tab){
+      if(!VISTAS[tab]) tab="inicio";
+      document.querySelectorAll(".tab").forEach(function(b){b.classList.toggle("on",b.dataset.tab===tab);});
+      document.getElementById("wrap").innerHTML=VISTAS[tab]();
+      window.scrollTo(0,0);
+      // enganches por pestaña
+      document.querySelectorAll("[data-go]").forEach(function(b){b.onclick=function(){location.hash="#"+b.dataset.go;};});
+      if(tab==="inicio"){ cargarSolicitudes("solList"); }
+      if(tab==="datos"){ engancharCambio(); }
+      if(tab==="vacaciones"){ engancharVacaciones(); cargarSolicitudes("solList2"); }
+    }
+
+    /* ---- Solicitudes (vacaciones / cambios) en Firestore ---- */
+    function db(){return firebase.firestore();}
+    function cargarSolicitudes(elId){
+      var el=document.getElementById(elId); if(!el) return;
+      db().collection("solicitudes").where("uid","==",UID).get().then(function(snap){
+        if(snap.empty){ el.innerHTML='<div class="empty">Aún no tienes solicitudes.</div>'; return; }
+        var docs=snap.docs.map(function(d){return d.data();}).sort(function(a,b){return (b.ts||0)-(a.ts||0);});
+        el.innerHTML=docs.map(function(s){
+          var et={pendiente:'#a96416',aprobada:'#178048',rechazada:'#b02531'}[s.estado]||'#697269';
+          return '<div class="row"><div><div class="nm">'+esc(s.titulo||s.tipo)+'</div><div class="sub">'+esc(s.detalle||"")+'</div></div>'+
+                 '<span class="chip" style="background:#eef1ee;color:'+et+'">'+esc(s.estado||"pendiente")+'</span></div>';
+        }).join("");
+      }).catch(function(){ el.innerHTML='<div class="empty">No se pudieron cargar (permisos pendientes).</div>'; });
+    }
+    function enviarSolicitud(tipo,titulo,detalle,msgEl,btn){
+      msgEl.innerHTML=""; if(btn){btn.disabled=true;}
+      var reg={uid:UID,nombre:PERFIL.nombre||SESION.user.email,tipo:tipo,titulo:titulo,detalle:detalle,estado:"pendiente",ts:Date.now()};
+      db().collection("solicitudes").add(reg).then(function(){
+        msgEl.innerHTML='<div class="ok-msg">✓ Solicitud enviada. Quedará como "pendiente" hasta que RRHH la revise.</div>';
+        if(btn){btn.disabled=false;}
+      }).catch(function(e){
+        msgEl.innerHTML='<div class="err-msg">No se pudo enviar todavía (faltan permisos en la base). Lo dejamos listo para cuando publiquemos las reglas.</div>';
+        if(btn){btn.disabled=false;}
+      });
+    }
+    function engancharCambio(){
+      var btn=document.getElementById("cambioBtn");
+      btn.onclick=function(){
+        var t=(document.getElementById("cambioTxt").value||"").trim();
+        if(!t){ document.getElementById("cambioMsg").innerHTML='<div class="err-msg">Escribe qué dato quieres cambiar.</div>'; return; }
+        enviarSolicitud("cambio_datos","Cambio de datos",t,document.getElementById("cambioMsg"),btn);
+      };
+    }
+    function engancharVacaciones(){
+      var btn=document.getElementById("vacBtn");
+      btn.onclick=function(){
+        var d=document.getElementById("vacD").value, h=document.getElementById("vacH").value, m=(document.getElementById("vacM").value||"").trim();
+        if(!d||!h){ document.getElementById("vacMsg").innerHTML='<div class="err-msg">Elige las fechas desde y hasta.</div>'; return; }
+        enviarSolicitud("vacaciones","Vacaciones",d+" a "+h+(m?(" · "+m):""),document.getElementById("vacMsg"),btn);
+      };
+    }
+
+    /* ---- Navegación por hash + arranque ---- */
+    document.querySelectorAll(".tab").forEach(function(b){b.onclick=function(){location.hash="#"+b.dataset.tab;};});
+    window.addEventListener("hashchange",function(){ mostrar((location.hash||"#inicio").slice(1)); });
+
+    MISAGI.requireLogin().then(function(s){
+      SESION=s; PERFIL=s.perfil||{}; UID=s.user.uid;
+      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+      mostrar((location.hash||"#inicio").slice(1));
+    });
+  </script>
+</body>
+</html>
