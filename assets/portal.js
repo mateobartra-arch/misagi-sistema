@@ -22,7 +22,10 @@ const ICONS = {
   ext:     "M14 3h7v7 M21 3l-9 9 M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5",
   chev:    "M9 6l6 6-6 6",
   user:    "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8",
-  book:    "M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z M9 7h7 M9 11h7"
+  book:    "M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z M9 7h7 M9 11h7",
+  shield:  "M12 3l7 3v6c0 4-3 7-7 8-4-1-7-4-7-8V6z",
+  bag:     "M6 7h12l1 13H5z M9 7a3 3 0 0 1 6 0",
+  chart:   "M4 20V10 M10 20V4 M16 20v-7 M21 20H3"
 };
 function msgIcon(name, cls) {
   return '<svg class="ico ' + (cls || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="' + (ICONS[name] || '') + '"/></svg>';
@@ -53,8 +56,8 @@ const MISAGI_MODULOS = [
     area: "rrhh", grupo: "Recursos Humanos", ik: "users",
     apps: [
       { id: "rrhh.asistencia", nombre: "Asistencia",      url: "rrhh/asistencia/", estado: "activo", desc: "Marcaje de entrada/salida" },
-      { id: "rrhh.personal",   nombre: "Personal (RRHH)", url: "rrhh/personal/",   estado: "activo", desc: "Legajos de todo el personal", soloAdmin: true },
-      { id: "rrhh.cts",        nombre: "CTS",             url: "rrhh/cts/",        estado: "activo", desc: "Liquidación de CTS del personal", soloAdmin: true }
+      { id: "rrhh.personal",   nombre: "Personal (RRHH)", url: "rrhh/personal/",   estado: "activo", desc: "Legajos de todo el personal" },
+      { id: "rrhh.cts",        nombre: "CTS",             url: "rrhh/cts/",        estado: "activo", desc: "Liquidación de CTS del personal" }
     ]
   },
   {
@@ -87,6 +90,18 @@ const MISAGI_MODULOS = [
     apps: [
       { id: "planificacion.plan", nombre: "Plan Mensual", url: "planificacion/", estado: "activo", desc: "Plan de trabajo mensual" }
     ]
+  },
+  {
+    area: "ssoma", grupo: "Seguridad y Salud (SSOMA)", ik: "shield",
+    apps: [ { id: "ssoma.general", nombre: "SSOMA", url: "ssoma/", estado: "proximamente", desc: "Seguridad y salud ocupacional" } ]
+  },
+  {
+    area: "comercial", grupo: "Comercial", ik: "bag",
+    apps: [ { id: "comercial.general", nombre: "Comercial", url: "comercial/", estado: "proximamente", desc: "Gestión comercial" } ]
+  },
+  {
+    area: "presupuesto", grupo: "Planeamiento y Presupuesto", ik: "chart",
+    apps: [ { id: "presupuesto.general", nombre: "Planeamiento", url: "presupuesto/", estado: "proximamente", desc: "Planeamiento y control presupuestal" } ]
   }
 ];
 

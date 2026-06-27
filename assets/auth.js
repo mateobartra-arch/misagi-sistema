@@ -20,6 +20,9 @@
     imagen:       { label: "Imagen Institucional", padre: null },
     finanzas:     { label: "Finanzas",             padre: null },
     contabilidad: { label: "Contabilidad",         padre: null },
+    ssoma:        { label: "Seguridad y Salud (SSOMA)", padre: null },
+    comercial:    { label: "Comercial",            padre: null },
+    presupuesto:  { label: "Planeamiento y Presupuesto", padre: null },
     proveedores:  { label: "Proveedores",          padre: null },
     planificacion:{ label: "Planificación",        padre: null }
   };
