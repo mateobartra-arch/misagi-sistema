@@ -66,6 +66,12 @@ service cloud.firestore {
       allow read, write: if tieneArea('operaciones') || tieneArea('rrhh');
     }
 
+    // ---- Configuración (correos de alertas, etc.) ----
+    match /config/{doc} {
+      allow read:  if logueado();
+      allow write: if esAdmin();
+    }
+
     // ---- Colecciones por área (módulos futuros) ----
     match /operaciones/{doc}    { allow read, write: if tieneArea('operaciones'); }
     match /mantenimiento/{doc}  { allow read, write: if tieneArea('mantenimiento'); }

@@ -9,11 +9,21 @@
   <style>
     .st{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
     .st.ok{background:var(--verde-l);color:var(--verde-d)} .st.warn{background:var(--amber-l);color:var(--amber)} .st.bad{background:var(--danger-light);color:var(--danger)} .st.none{background:#eef2f0;color:var(--text-muted)}
-    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-    .chip{border:1px solid var(--border-strong);background:#fff;border-radius:999px;padding:6px 14px;font-size:.85rem;font-weight:600;color:var(--text-secondary);cursor:pointer}
-    .chip.on{background:var(--azul-d);color:#fff;border-color:var(--azul-d)}
+    .seg{display:inline-flex;background:#fff;border:1px solid var(--border-strong);border-radius:10px;padding:3px;gap:2px;margin-bottom:14px}
+    .seg button{border:none;background:none;cursor:pointer;padding:8px 14px;border-radius:7px;font-size:.85rem;font-weight:600;color:var(--text-muted)}
+    .seg button.on{background:var(--azul-d);color:#fff}
     .lnk{color:var(--azul);font-weight:600;font-size:.85rem;text-decoration:underline}
     .acts{display:flex;gap:6px;justify-content:flex-end;white-space:nowrap}
+    .fichas{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+    .ficha{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:18px;cursor:pointer;transition:var(--transition,.2s)}
+    .ficha:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+    .ficha .nm{font-weight:700;color:var(--text-primary);margin-bottom:2px}
+    .ficha .cat{font-size:.76rem;color:var(--text-muted);margin-bottom:12px}
+    .bar{height:8px;border-radius:6px;background:#eef1ee;overflow:hidden;margin:6px 0}
+    .bar > span{display:block;height:100%;background:var(--verde)}
+    .bar.b > span{background:var(--amber)} .bar.r > span{background:var(--danger)}
+    .ficha .pct{display:flex;justify-content:space-between;font-size:.78rem;color:var(--text-secondary);font-weight:600}
+    . filabad{color:var(--danger)}
   </style>
 </head>
 <body>
@@ -34,25 +44,21 @@
       <div class="kpi-card"><div class="kpi-v" id="kWarn" style="color:var(--amber)">—</div><div class="kpi-l">Por vencer (≤30 d)</div></div>
       <div class="kpi-card"><div class="kpi-v" id="kBad" style="color:var(--danger)">—</div><div class="kpi-l">Vencidos</div></div>
     </div>
-    <div class="chips" id="chips">
-      <span class="chip on" data-f="todos">Todos</span>
-      <span class="chip" data-f="vencidos">Vencidos</span>
-      <span class="chip" data-f="porvencer">Por vencer</span>
-      <span class="chip" data-f="Unidad">Unidades</span>
-      <span class="chip" data-f="Conductor">Conductores</span>
+    <div class="seg" id="seg">
+      <button class="on" data-m="lista">Lista</button>
+      <button data-m="Conductor">Fichas · Conductores</button>
+      <button data-m="Unidad">Fichas · Unidades</button>
     </div>
     <div class="toolbar"><input type="search" id="buscar" placeholder="Buscar por placa, conductor, tipo…"></div>
-    <div class="table-wrap"><table id="tabla"><thead><tr>
-      <th>Pertenece a</th><th>Categoría</th><th>Documento</th><th>N°</th><th>Vencimiento</th><th>Archivo</th><th></th>
-    </tr></thead><tbody></tbody></table></div>
-    <p class="side-note" style="margin-top:14px" id="note"></p>
+    <div id="vista"></div>
   </div>
 
+  <!-- Modal alta/edición -->
   <div id="modal" class="modal-overlay hidden">
     <div class="modal-box" style="max-width:540px">
       <div class="modal-head"><h3 id="mtit">Nuevo documento</h3><button class="modal-x" id="mx">✕</button></div>
       <form id="form">
-        <div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:0 14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 14px">
           <div class="field"><label>Categoría *</label><select name="categoria" id="cat"><option value="Unidad">Unidad</option><option value="Conductor">Conductor</option></select></div>
           <div class="field"><label id="lblEnt">Placa de la unidad *</label><input name="entidad" required placeholder="Ej. CFF-841"></div>
           <div class="field"><label>Tipo de documento *</label><select name="tipo" id="tipo"></select></div>
@@ -68,6 +74,14 @@
     </div>
   </div>
 
+  <!-- Modal ficha (detalle por entidad) -->
+  <div id="fmodal" class="modal-overlay hidden">
+    <div class="modal-box" style="max-width:780px">
+      <div class="modal-head"><h3 id="ftit">Ficha</h3><button class="modal-x" id="fx">✕</button></div>
+      <div id="fbody"></div>
+    </div>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -76,11 +90,12 @@
   <script src="../assets/auth.js"></script>
   <script>
     var db=function(){return firebase.firestore();};
-    var DOCS=[], filtro="todos";
+    var DOCS=[], modo="lista";
     var TIPOS={
       Unidad:["SOAT","Revisión Técnica","Tarjeta de propiedad","Habilitación MTC","Póliza","Tarjeta de circulación","Otro"],
       Conductor:["Licencia","DNI","EMO / Examen médico","Contrato","Homologación Hudbay","Homologación Raciemsa","Homologación Mepsa","SCTR","Récord de conductor","Otro"]
     };
+    var REQ={ Conductor:["Licencia","DNI","EMO / Examen médico","SCTR","Contrato"], Unidad:["SOAT","Revisión Técnica","Tarjeta de propiedad","Habilitación MTC"] };
     function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
     function estadoVenc(v){
       if(!v) return {cls:"none",txt:"Sin vencimiento",dias:null};
@@ -95,47 +110,82 @@
       document.getElementById("lblEnt").textContent = cat==="Unidad" ? "Placa de la unidad *" : "Conductor (nombre o DNI) *";
     }
 
-    function filtradas(){
-      var q=(document.getElementById("buscar").value||"").toLowerCase().trim();
-      return DOCS.filter(function(d){
-        if(filtro==="Unidad"||filtro==="Conductor"){ if(d.categoria!==filtro) return false; }
-        else if(filtro==="vencidos"){ if(estadoVenc(d.vencimiento).cls!=="bad") return false; }
-        else if(filtro==="porvencer"){ if(estadoVenc(d.vencimiento).cls!=="warn") return false; }
-        if(q) return (String(d.entidad||"")+" "+String(d.tipo||"")+" "+String(d.numero||"")).toLowerCase().indexOf(q)>=0;
-        return true;
-      }).sort(function(a,b){ return String(a.vencimiento||"9999").localeCompare(String(b.vencimiento||"9999")); });
-    }
-    function pintar(){
-      var tb=document.querySelector("#tabla tbody"); var f=filtradas();
+    function render(){
       document.getElementById("kTot").textContent=DOCS.length;
       document.getElementById("kWarn").textContent=DOCS.filter(function(d){return estadoVenc(d.vencimiento).cls==="warn";}).length;
       document.getElementById("kBad").textContent=DOCS.filter(function(d){return estadoVenc(d.vencimiento).cls==="bad";}).length;
       document.getElementById("sub").textContent=DOCS.length+" documento(s)";
-      if(!f.length){ tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">Sin documentos.</td></tr>'; return; }
-      tb.innerHTML=f.map(function(d){
-        var e=estadoVenc(d.vencimiento);
+      if(modo==="lista") renderLista(); else renderFichas(modo);
+    }
+    function filtroTxt(d){
+      var q=(document.getElementById("buscar").value||"").toLowerCase().trim();
+      return !q || (String(d.entidad||"")+" "+String(d.tipo||"")+" "+String(d.numero||"")).toLowerCase().indexOf(q)>=0;
+    }
+    function renderLista(){
+      var f=DOCS.filter(filtroTxt).sort(function(a,b){return String(a.vencimiento||"9999").localeCompare(String(b.vencimiento||"9999"));});
+      var html='<div class="table-wrap"><table><thead><tr><th>Pertenece a</th><th>Categoría</th><th>Documento</th><th>N°</th><th>Vencimiento</th><th>Archivo</th><th></th></tr></thead><tbody>';
+      if(!f.length) html+='<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">Sin documentos.</td></tr>';
+      else html+=f.map(function(d){ var e=estadoVenc(d.vencimiento);
         var arch=d.archivo_url?'<a class="lnk" href="'+esc(d.archivo_url)+'" target="_blank" rel="noopener noreferrer">ver ↗</a>':'<span style="color:var(--text-muted)">—</span>';
-        return '<tr><td><strong>'+esc(d.entidad)+'</strong></td><td>'+esc(d.categoria)+'</td><td>'+esc(d.tipo)+'</td><td>'+esc(d.numero||"")+'</td>'+
-          '<td>'+(d.vencimiento?esc(d.vencimiento)+' ':'')+'<span class="st '+e.cls+'">'+e.txt+'</span></td><td>'+arch+'</td>'+
-          '<td><div class="acts"><button class="btn btn-ghost btn-sm" data-e="'+d._id+'">Editar</button><button class="btn btn-ghost btn-sm" data-d="'+d._id+'">✕</button></div></td></tr>';
+        return '<tr><td><strong>'+esc(d.entidad)+'</strong></td><td>'+esc(d.categoria)+'</td><td>'+esc(d.tipo)+'</td><td>'+esc(d.numero||"")+'</td><td>'+(d.vencimiento?esc(d.vencimiento)+' ':'')+'<span class="st '+e.cls+'">'+e.txt+'</span></td><td>'+arch+'</td><td><div class="acts"><button class="btn btn-ghost btn-sm" data-e="'+d._id+'">Editar</button><button class="btn btn-ghost btn-sm" data-d="'+d._id+'">✕</button></div></td></tr>';
       }).join("");
-      tb.querySelectorAll("[data-e]").forEach(function(b){b.onclick=function(){abrir(DOCS.filter(function(x){return x._id===b.dataset.e;})[0]);};});
-      tb.querySelectorAll("[data-d]").forEach(function(b){b.onclick=function(){borrar(b.dataset.d);};});
+      html+='</tbody></table></div>';
+      var v=document.getElementById("vista"); v.innerHTML=html;
+      v.querySelectorAll("[data-e]").forEach(function(b){b.onclick=function(){abrir(DOCS.filter(function(x){return x._id===b.dataset.e;})[0]);};});
+      v.querySelectorAll("[data-d]").forEach(function(b){b.onclick=function(){borrar(b.dataset.d);};});
     }
-    function cargar(){
-      db().collection("documentos").get().then(function(snap){
-        DOCS=snap.docs.map(function(doc){var o=doc.data();o._id=doc.id;return o;});
-        pintar();
-      }).catch(function(e){ document.getElementById("sub").textContent="Error: "+e.message; });
+    function entidades(cat){
+      var map={};
+      DOCS.filter(function(d){return d.categoria===cat;}).forEach(function(d){ (map[d.entidad]=map[d.entidad]||[]).push(d); });
+      return map;
     }
+    function pctDoc(cat,docs){
+      var req=REQ[cat]||[]; if(!req.length) return {pct:100,faltan:[],vencidos:0};
+      var tieneVigente={}; var vencidos=0;
+      docs.forEach(function(d){ var e=estadoVenc(d.vencimiento); if(e.cls==="bad") vencidos++; if(e.cls!=="bad") tieneVigente[d.tipo]=true; });
+      var ok=req.filter(function(t){return tieneVigente[t];}).length;
+      var faltan=req.filter(function(t){return !tieneVigente[t];});
+      return {pct:Math.round(ok/req.length*100), faltan:faltan, vencidos:vencidos};
+    }
+    function renderFichas(cat){
+      var map=entidades(cat); var keys=Object.keys(map).filter(function(k){ var q=(document.getElementById("buscar").value||"").toLowerCase().trim(); return !q||k.toLowerCase().indexOf(q)>=0; }).sort();
+      var v=document.getElementById("vista");
+      if(!keys.length){ v.innerHTML='<p class="side-note">Aún no hay documentos de '+(cat==="Conductor"?"conductores":"unidades")+'. Usa “+ Nuevo documento”.</p>'; return; }
+      v.innerHTML='<div class="fichas">'+keys.map(function(k){
+        var p=pctDoc(cat,map[k]); var bcl=p.pct>=100?'':(p.pct>=50?'b':'r');
+        return '<div class="ficha" data-k="'+esc(k)+'"><div class="nm">'+esc(k)+'</div><div class="cat">'+cat+' · '+map[k].length+' documento(s)'+(p.vencidos?' · <span style="color:var(--danger);font-weight:700">'+p.vencidos+' vencido(s)</span>':'')+'</div>'+
+          '<div class="bar '+bcl+'"><span style="width:'+p.pct+'%"></span></div><div class="pct"><span>Documentación</span><span>'+p.pct+'%</span></div></div>';
+      }).join("")+'</div>';
+      v.querySelectorAll(".ficha").forEach(function(c){ c.onclick=function(){ verFicha(cat, c.dataset.k); }; });
+    }
+    function verFicha(cat, ent){
+      var docs=DOCS.filter(function(d){return d.categoria===cat && d.entidad===ent;});
+      var p=pctDoc(cat,docs);
+      var rows=docs.sort(function(a,b){return String(a.vencimiento||"9999").localeCompare(String(b.vencimiento||"9999"));}).map(function(d){
+        var e=estadoVenc(d.vencimiento);
+        var arch=d.archivo_url?'<a class="lnk" href="'+esc(d.archivo_url)+'" target="_blank" rel="noopener noreferrer">ver ↗</a>':'—';
+        return '<tr><td>'+esc(d.tipo)+'</td><td>'+esc(d.numero||"")+'</td><td>'+(d.vencimiento?esc(d.vencimiento)+' ':'')+'<span class="st '+e.cls+'">'+e.txt+'</span></td><td>'+arch+'</td><td style="text-align:right"><button class="btn btn-ghost btn-sm" data-e="'+d._id+'">Editar</button></td></tr>';
+      }).join("");
+      var faltan = p.faltan.length ? '<p class="side-note" style="margin-top:10px"><strong>Faltan / vencidos:</strong> '+p.faltan.map(esc).join(", ")+'</p>' : '<p class="side-note" style="margin-top:10px">✓ Documentación requerida completa.</p>';
+      document.getElementById("ftit").textContent=ent;
+      document.getElementById("fbody").innerHTML=
+        '<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px"><div style="flex:1"><div class="cat" style="color:var(--text-muted);font-size:.8rem">'+cat+'</div><div class="bar '+(p.pct>=100?'':(p.pct>=50?'b':'r'))+'" style="max-width:260px"><span style="width:'+p.pct+'%"></span></div></div><div style="font-family:\'Space Grotesk\';font-size:1.4rem;font-weight:700;color:var(--azul-d)">'+p.pct+'%</div>'+
+        '<button class="btn btn-primary btn-sm" id="fadd">+ Agregar documento</button></div>'+
+        '<div class="table-wrap"><table><thead><tr><th>Tipo</th><th>N°</th><th>Vigencia</th><th>Archivo</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:18px">Sin documentos</td></tr>')+'</tbody></table></div>'+faltan;
+      document.getElementById("fbody").querySelectorAll("[data-e]").forEach(function(b){b.onclick=function(){ cerrarF(); abrir(DOCS.filter(function(x){return x._id===b.dataset.e;})[0]); };});
+      document.getElementById("fadd").onclick=function(){ cerrarF(); abrir(null, cat, ent); };
+      document.getElementById("fmodal").classList.remove("hidden");
+    }
+    function cerrarF(){ document.getElementById("fmodal").classList.add("hidden"); }
 
-    function abrir(reg){
+    function abrir(reg, catPre, entPre){
       var f=document.getElementById("form"); f.reset();
       document.getElementById("err").classList.add("hidden");
       f.dataset.id=reg?reg._id:""; f.dataset.url=reg&&reg.archivo_url?reg.archivo_url:""; f.dataset.fname=reg&&reg.archivo_nombre?reg.archivo_nombre:"";
       document.getElementById("mtit").textContent=reg?"Editar documento":"Nuevo documento";
-      var cat=reg?reg.categoria:"Unidad"; f.categoria.value=cat; llenarTipos(cat, reg?reg.tipo:null);
+      var cat=reg?reg.categoria:(catPre||"Unidad"); f.categoria.value=cat; llenarTipos(cat, reg?reg.tipo:null);
       if(reg){ ["entidad","numero","emision","vencimiento","obs"].forEach(function(k){ if(reg[k]!=null) f[k].value=reg[k]; }); }
+      else if(entPre){ f.entidad.value=entPre; }
       document.getElementById("curFile").textContent = (reg&&reg.archivo_nombre)?("Archivo actual: "+reg.archivo_nombre+" (sube otro para reemplazar)"):"";
       document.getElementById("modal").classList.remove("hidden");
     }
@@ -166,10 +216,10 @@
     });
     function borrar(id){ if(!confirm("¿Borrar este documento?")) return; db().collection("documentos").doc(id).delete().then(cargar); }
 
-    document.getElementById("chips").addEventListener("click",function(e){
-      if(!e.target.classList.contains("chip")) return;
-      document.querySelectorAll(".chip").forEach(function(c){c.classList.remove("on");});
-      e.target.classList.add("on"); filtro=e.target.dataset.f; pintar();
+    document.getElementById("seg").addEventListener("click",function(e){
+      if(e.target.tagName!=="BUTTON") return;
+      document.querySelectorAll("#seg button").forEach(function(b){b.classList.remove("on");});
+      e.target.classList.add("on"); modo=e.target.dataset.m; render();
     });
     document.getElementById("btnExp").onclick=function(){
       var cols=["entidad","categoria","tipo","numero","emision","vencimiento","obs","archivo_url"];
@@ -179,15 +229,20 @@
       var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"})); a.download="documentos.csv"; a.click();
     };
     document.getElementById("btnNew").onclick=function(){abrir(null);};
-    document.getElementById("buscar").oninput=pintar;
-    document.getElementById("mx").onclick=cerrar; document.getElementById("cancel").onclick=cerrar;
+    document.getElementById("buscar").oninput=render;
+    document.getElementById("mx").onclick=cerrar; document.getElementById("cancel").onclick=cerrar; document.getElementById("fx").onclick=cerrarF;
 
+    function cargar(){
+      db().collection("documentos").get().then(function(snap){
+        DOCS=snap.docs.map(function(doc){var o=doc.data();o._id=doc.id;return o;});
+        render();
+      }).catch(function(e){ document.getElementById("sub").textContent="Error: "+e.message; });
+    }
     MISAGI.requireLogin().then(function(s){
       var p=s.perfil;
       if(!(MISAGI.esAdmin(p)||MISAGI.puedeVer(p,"operaciones")||MISAGI.puedeVer(p,"rrhh"))){ alert("No tienes acceso a este módulo."); location.href="../index.html"; return; }
       document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
       document.getElementById("app").style.display="";
-      document.getElementById("note").textContent="Los archivos se guardan en MISAGI (Firebase Storage). Verde = vigente, ámbar = por vencer (≤30 d), rojo = vencido.";
       cargar();
     });
   </script>
