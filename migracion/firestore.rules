@@ -55,6 +55,12 @@ service cloud.firestore {
       allow write: if tieneArea('operaciones');
     }
 
+    // ---- Lista de conductores del roster (Operaciones la administra) ----
+    match /roster_conductores/{doc} {
+      allow read:  if logueado();
+      allow write: if tieneArea('operaciones');
+    }
+
     // ---- Colecciones por área (módulos futuros) ----
     match /operaciones/{doc}    { allow read, write: if tieneArea('operaciones'); }
     match /mantenimiento/{doc}  { allow read, write: if tieneArea('mantenimiento'); }

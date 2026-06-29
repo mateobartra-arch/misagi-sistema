@@ -7,26 +7,23 @@
   <link rel="icon" type="image/png" href="../../../assets/misagi-icon.png">
   <link rel="stylesheet" href="../../../assets/theme.css">
   <style>
-    .rosterbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+    .rosterbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
     .rosterbar .mes{font-family:'Space Grotesk';font-weight:600;font-size:1.1rem;color:var(--azul-d);min-width:170px;text-align:center}
-    .leg{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 16px;font-size:.8rem;color:var(--text-secondary)}
+    .leg{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 14px;font-size:.78rem;color:var(--text-secondary)}
     .leg span{display:inline-flex;align-items:center;gap:6px}
-    .leg i{width:14px;height:14px;border-radius:4px;display:inline-block}
-    .e-T{background:#d6f0e0;color:#12502d} .e-D{background:#eef1ee;color:#697269} .e-V{background:#dbe7f5;color:#0d3b66}
-    .e-F{background:#fbe0e0;color:#b02531} .e-R{background:#fbeede;color:#a96416}
-    .i-T{background:#1A6B3C}.i-D{background:#9aa39c}.i-V{background:#0d3b66}.i-F{background:#b02531}.i-R{background:#b9701a}
-    .rtable-wrap{overflow:auto;border:1px solid var(--border);border-radius:14px;background:#fff;max-height:70vh}
+    .leg i{width:22px;height:18px;border-radius:4px;display:grid;place-items:center;font-size:.62rem;font-weight:700}
+    .rtable-wrap{overflow:auto;border:1px solid var(--border);border-radius:14px;background:#fff;max-height:72vh}
     table.roster{border-collapse:collapse;font-size:.8rem}
-    table.roster th,table.roster td{border:1px solid var(--border);text-align:center;white-space:nowrap}
-    table.roster thead th{position:sticky;top:0;background:var(--bg-subtle);z-index:3;padding:6px 4px;font-weight:700;color:var(--text-muted)}
-    table.roster th.dow{font-size:.62rem;line-height:1.1;min-width:30px}
+    table.roster th,table.roster td{border:1px solid var(--border);text-align:center;white-space:nowrap;padding:0}
+    table.roster thead th{position:sticky;top:0;background:var(--bg-subtle);z-index:3;padding:5px 3px;font-weight:700;color:var(--text-muted)}
+    table.roster th.dow{font-size:.6rem;line-height:1.1;min-width:34px}
     table.roster th.we,table.roster td.we{background:#f6f7f6}
-    table.roster td.name,table.roster th.name{position:sticky;left:0;background:#fff;z-index:2;text-align:left;padding:6px 12px;font-weight:600;min-width:190px;box-shadow:1px 0 0 var(--border)}
+    table.roster td.name,table.roster th.name{position:sticky;left:0;background:#fff;z-index:2;text-align:left;padding:6px 12px;font-weight:600;min-width:200px;box-shadow:1px 0 0 var(--border)}
     table.roster thead th.name{z-index:4;background:var(--bg-subtle)}
-    table.roster td.cnt{position:sticky;left:190px;background:#fff;z-index:2;font-weight:700;color:var(--verde-d);min-width:44px;box-shadow:1px 0 0 var(--border)}
+    table.roster td.cnt{position:sticky;left:200px;background:#fff;z-index:2;font-weight:700;color:var(--verde-d);min-width:44px;box-shadow:1px 0 0 var(--border)}
     table.roster thead th.cnt{z-index:4;background:var(--bg-subtle)}
-    .cell{width:30px;height:30px;cursor:pointer;user-select:none;font-weight:700}
-    .cell:hover{outline:2px solid var(--verde);outline-offset:-2px}
+    input.cinp{width:36px;height:30px;border:none;background:transparent;text-align:center;font-weight:700;font-size:.78rem;color:inherit;text-transform:uppercase;padding:0}
+    input.cinp:focus{outline:2px solid var(--verde);outline-offset:-2px}
   </style>
 </head>
 <body>
@@ -40,20 +37,20 @@
   <div class="container">
     <div class="page-head">
       <div><h1>Roster de Conductores</h1><div class="page-sub" id="sub">Cargando…</div></div>
-      <button class="btn btn-ghost" id="btnExport">⬇ Descargar (Excel)</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary" id="btnImport">Importar del Sheet</button>
+        <button class="btn btn-ghost" id="btnAdd">+ Agregar conductor</button>
+        <button class="btn btn-ghost" id="btnExport">⬇ Excel</button>
+      </div>
     </div>
     <div class="rosterbar">
       <button class="btn btn-ghost btn-sm" id="prev">← Mes anterior</button>
       <span class="mes" id="mes">—</span>
       <button class="btn btn-ghost btn-sm" id="next">Mes siguiente →</button>
-      <div class="spacer" style="flex:1"></div>
-      <span class="page-sub">Haz clic en un día para cambiar su estado.</span>
+      <div style="flex:1"></div>
+      <span class="page-sub">Escribe el código en cada día; se guarda solo.</span>
     </div>
-    <div class="leg">
-      <span><i class="i-T"></i> Trabajó</span><span><i class="i-D"></i> Descanso</span>
-      <span><i class="i-V"></i> Vacaciones</span><span><i class="i-F"></i> Falta</span>
-      <span><i class="i-R"></i> En ruta</span><span><i style="background:#fff;border:1px solid var(--border-strong)"></i> Sin marcar</span>
-    </div>
+    <div class="leg" id="leg"></div>
     <div class="rtable-wrap"><table class="roster" id="tabla"></table></div>
   </div>
 
@@ -63,28 +60,52 @@
   <script src="../../../assets/firebase-config.js"></script>
   <script src="../../../assets/auth.js"></script>
   <script src="../../../assets/seed-personal.js"></script>
+  <script src="../../../assets/seed-roster.js"></script>
   <script>
     var db=function(){return firebase.firestore();};
-    var ESTADOS=["","T","D","V","F","R"];
-    var LABEL={T:"Trabajó",D:"Descanso",V:"Vacaciones",F:"Falta",R:"En ruta"};
+    // Códigos (misma idea que el Sheet): D descanso, H1/H2/H3 turnos, P, R1..R5 rutas
+    var CODES={
+      "D": {bg:"#eef1ee",fg:"#697269",t:"Descanso"},
+      "H1":{bg:"#e7f5ed",fg:"#12502d",t:"Horario 1"},
+      "H2":{bg:"#fbeede",fg:"#a96416",t:"Horario 2"},
+      "H3":{bg:"#fbe0e0",fg:"#b02531",t:"Horario 3"},
+      "P": {bg:"#0d3b66",fg:"#ffffff",t:"P"},
+      "T1":{bg:"#d8f0ef",fg:"#0c5f5a",t:"Turno 1"},
+      "T2":{bg:"#b6e3e0",fg:"#0c5f5a",t:"Turno 2"},
+      "C1":{bg:"#ede0f5",fg:"#5a2d82",t:"C1"},
+      "C2":{bg:"#dcc4ee",fg:"#5a2d82",t:"C2"},
+      "A1":{bg:"#fde7d2",fg:"#9a4d12",t:"A1"},
+      "A2":{bg:"#fbd4ad",fg:"#9a4d12",t:"A2"},
+      "A3":{bg:"#f7bd86",fg:"#7a3a0c",t:"A3"},
+      "R1":{bg:"#dbe7f5",fg:"#0d3b66",t:"Ruta 1"},
+      "R2":{bg:"#b9d2ee",fg:"#0d3b66",t:"Ruta 2"},
+      "R3":{bg:"#8fb8e0",fg:"#0a2e50",t:"Ruta 3"},
+      "R4":{bg:"#5f97d0",fg:"#ffffff",t:"Ruta 4"},
+      "R5":{bg:"#356bb0",fg:"#ffffff",t:"Ruta 5"}
+    };
     var hoy=new Date(), Y=hoy.getFullYear(), M=hoy.getMonth();
-    var CONDUCTORES=[], DATA={}; // DATA[dni+"_"+fecha]=estado
+    var CONDUCTORES=[], DATA={};
     function pad(n){return (n<10?"0":"")+n;}
     function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
-
-    function conductoresSeed(){
-      var s=window.MISAGI_SEED_PERSONAL||[];
-      return s.filter(function(r){return /CONDUCTOR/i.test(String(r.cargo||"")+" "+String(r.departamento||""));})
-              .map(function(r){return {dni:String(r.dni),nombre:r.nombre};})
-              .sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
+    function condFiltro(r){return /CONDUCTOR/i.test(String(r.cargo||"")+" "+String(r.departamento||""));}
+    function seedConductores(){
+      return (window.MISAGI_SEED_PERSONAL||[]).filter(condFiltro).map(function(r){return {dni:String(r.dni),nombre:r.nombre};}).sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
     }
-
-    function nombreMes(){
-      var d=new Date(Y,M,1).toLocaleDateString('es-PE',{month:'long',year:'numeric'});
-      return d.charAt(0).toUpperCase()+d.slice(1);
-    }
+    function nombreMes(){var d=new Date(Y,M,1).toLocaleDateString('es-PE',{month:'long',year:'numeric'});return d.charAt(0).toUpperCase()+d.slice(1);}
     function diasMes(){return new Date(Y,M+1,0).getDate();}
     function fechaDe(d){return Y+"-"+pad(M+1)+"-"+pad(d);}
+    function trabajado(code){return code && code!=="D";}
+
+    function pintarLeyenda(){
+      document.getElementById("leg").innerHTML=Object.keys(CODES).map(function(k){
+        var c=CODES[k]; return '<span><i style="background:'+c.bg+';color:'+c.fg+'">'+k+'</i> '+esc(c.t)+'</span>';
+      }).join("")+'<span><i style="background:#fff;border:1px solid var(--border-strong)"></i> Sin marcar</span>';
+    }
+    function styleInp(inp){
+      var v=(inp.value||"").toUpperCase(); var c=CODES[v];
+      if(c){ inp.style.background=c.bg; inp.style.color=c.fg; inp.title=c.t; }
+      else { inp.style.background=""; inp.style.color="inherit"; inp.title=v?("Código libre: "+v):""; }
+    }
 
     function pintar(){
       document.getElementById("mes").textContent=nombreMes();
@@ -94,40 +115,42 @@
       head+='</tr></thead>';
       var body='<tbody>';
       CONDUCTORES.forEach(function(c){
-        var trab=0;
-        var row='<td class="name">'+esc(c.nombre)+'</td>';
-        var cells='';
+        var trab=0, cells='';
         for(var d=1;d<=nd;d++){
-          var f=fechaDe(d), key=c.dni+"_"+f, est=DATA[key]||"";
-          if(est==="T"||est==="R") trab++;
+          var f=fechaDe(d), est=DATA[c.dni+"_"+f]||"";
+          if(trabajado(est)) trab++;
           var wd=new Date(Y,M,d).getDay(); var we=(wd===0||wd===6)?" we":"";
-          cells+='<td class="cell'+we+(est?(" e-"+est):"")+'" data-dni="'+c.dni+'" data-f="'+f+'" data-nom="'+esc(c.nombre)+'">'+(est||"")+'</td>';
+          cells+='<td class="'+we.trim()+'"><input class="cinp" maxlength="3" data-dni="'+c.dni+'" data-f="'+f+'" data-nom="'+esc(c.nombre)+'" value="'+est+'"></td>';
         }
         body+='<tr><td class="name">'+esc(c.nombre)+'</td><td class="cnt" id="cnt_'+c.dni+'">'+trab+'</td>'+cells+'</tr>';
       });
       body+='</tbody>';
-      document.getElementById("tabla").innerHTML=head+body;
+      var t=document.getElementById("tabla"); t.innerHTML=head+body;
       document.getElementById("sub").textContent=CONDUCTORES.length+" conductor(es) · "+nombreMes();
-      document.querySelectorAll("#tabla .cell").forEach(function(td){ td.onclick=function(){ clic(td); }; });
+      t.querySelectorAll(".cinp").forEach(styleInp);
     }
 
     function recuenta(dni){
-      var nd=diasMes(), t=0;
-      for(var d=1;d<=nd;d++){ var e=DATA[dni+"_"+fechaDe(d)]; if(e==="T"||e==="R") t++; }
-      var el=document.getElementById("cnt_"+dni); if(el) el.textContent=t;
+      var nd=diasMes(), tt=0;
+      for(var d=1;d<=nd;d++){ if(trabajado(DATA[dni+"_"+fechaDe(d)])) tt++; }
+      var el=document.getElementById("cnt_"+dni); if(el) el.textContent=tt;
     }
 
-    function clic(td){
-      var dni=td.dataset.dni, f=td.dataset.f, nom=td.dataset.nom, key=dni+"_"+f;
-      var cur=DATA[key]||"", nx=ESTADOS[(ESTADOS.indexOf(cur)+1)%ESTADOS.length];
-      // visual inmediato
-      td.className="cell"+(td.classList.contains("we")?" we":"")+(nx?(" e-"+nx):""); td.textContent=nx||"";
-      DATA[key]=nx; recuenta(dni);
+    // Delegación: escribir y guardar solo
+    document.getElementById("tabla").addEventListener("input",function(e){
+      if(!e.target.classList.contains("cinp")) return;
+      e.target.value=(e.target.value||"").toUpperCase(); styleInp(e.target);
+    });
+    document.getElementById("tabla").addEventListener("change",function(e){
+      if(!e.target.classList.contains("cinp")) return;
+      var inp=e.target, dni=inp.dataset.dni, f=inp.dataset.f, nom=inp.dataset.nom;
+      var v=(inp.value||"").toUpperCase().trim(); var key=dni+"_"+f;
+      DATA[key]=v; recuenta(dni);
       var ref=db().collection("roster").doc(key);
-      if(nx){ ref.set({modulo:"roster",dni:dni,nombre:nom,fecha:f,estado:nx},{merge:true}).catch(err); }
+      if(v){ ref.set({modulo:"roster",dni:dni,nombre:nom,fecha:f,estado:v},{merge:true}).catch(err); }
       else { ref.delete().catch(err); }
-      function err(e){ document.getElementById("sub").textContent="No se pudo guardar (¿reglas publicadas?): "+e.message; }
-    }
+      function err(e2){ document.getElementById("sub").textContent="No se pudo guardar (¿reglas publicadas?): "+e2.message; }
+    });
 
     function cargar(){
       DATA={};
@@ -135,16 +158,53 @@
       db().collection("roster").where("fecha",">=",ini).where("fecha","<=",fin).get().then(function(snap){
         snap.forEach(function(doc){ var o=doc.data(); DATA[String(o.dni)+"_"+o.fecha]=o.estado; });
         pintar();
-      }).catch(function(e){ pintar(); document.getElementById("sub").textContent="Aviso: no se pudo leer la base ("+e.message+"). Marca igual; se guardará al publicar reglas."; });
+      }).catch(function(e){ pintar(); document.getElementById("sub").textContent="Aviso: no se pudo leer la base ("+e.message+")."; });
     }
 
+    function cargarConductores(cb){
+      db().collection("roster_conductores").get().then(function(snap){
+        if(snap.empty){
+          CONDUCTORES=seedConductores();
+          var batch=db().batch();
+          CONDUCTORES.forEach(function(c){ batch.set(db().collection("roster_conductores").doc(c.dni),{dni:c.dni,nombre:c.nombre}); });
+          batch.commit().catch(function(){});
+        } else {
+          CONDUCTORES=snap.docs.map(function(d){var o=d.data();return {dni:String(o.dni),nombre:o.nombre};}).sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
+        }
+        cb();
+      }).catch(function(){ CONDUCTORES=seedConductores(); cb(); });
+    }
+
+    document.getElementById("btnAdd").onclick=function(){
+      var nom=prompt("Nombre del conductor (Apellidos, Nombres):"); if(!nom||!nom.trim()) return;
+      var dni=prompt("DNI del conductor:"); if(!dni||!dni.trim()) return; dni=dni.trim();
+      db().collection("roster_conductores").doc(dni).set({dni:dni,nombre:nom.trim()}).then(function(){
+        cargarConductores(function(){ cargar(); });
+      }).catch(function(e){ alert("No se pudo agregar (¿reglas publicadas?): "+e.message); });
+    };
+    document.getElementById("btnImport").onclick=function(){
+      if(!window.MISAGI_SEED_ROSTER){ alert("No se encontró el archivo del roster."); return; }
+      if(!confirm("Se cargarán "+MISAGI_SEED_ROSTER.length+" registros (ene–jun 2026) y "+MISAGI_SEED_ROSTER_COND.length+" conductores. ¿Continuar?")) return;
+      var btn=this; btn.disabled=true; btn.textContent="Importando…";
+      var cb=db().batch();
+      MISAGI_SEED_ROSTER_COND.forEach(function(c){ cb.set(db().collection("roster_conductores").doc(c.dni),{dni:c.dni,nombre:c.nombre}); });
+      cb.commit().then(function(){
+        var recs=MISAGI_SEED_ROSTER.slice();
+        (function lote(){
+          if(!recs.length){ btn.textContent="✓ Importado"; cargarConductores(function(){ cargar(); }); return; }
+          var chunk=recs.splice(0,450), b=db().batch();
+          chunk.forEach(function(r){ b.set(db().collection("roster").doc(r.dni+"_"+r.fecha),{modulo:"roster",dni:r.dni,nombre:r.nombre,fecha:r.fecha,estado:r.estado},{merge:true}); });
+          b.commit().then(function(){ btn.textContent="Importando… ("+recs.length+" restantes)"; lote(); }).catch(function(e){ alert("Error: "+e.message); btn.disabled=false; btn.textContent="Importar del Sheet"; });
+        })();
+      }).catch(function(e){ alert("Error (conductores): "+e.message+" — ¿reglas publicadas?"); btn.disabled=false; btn.textContent="Importar del Sheet"; });
+    };
     document.getElementById("prev").onclick=function(){ M--; if(M<0){M=11;Y--;} cargar(); };
     document.getElementById("next").onclick=function(){ M++; if(M>11){M=0;Y++;} cargar(); };
     document.getElementById("btnExport").onclick=function(){
       var nd=diasMes(), head=["Conductor","Trabajados"]; for(var d=1;d<=nd;d++) head.push(d);
       var rows=CONDUCTORES.map(function(c){
         var t=0, arr=[c.nombre];
-        for(var d=1;d<=nd;d++){ var e=DATA[c.dni+"_"+fechaDe(d)]||""; if(e==="T"||e==="R")t++; }
+        for(var d=1;d<=nd;d++){ if(trabajado(DATA[c.dni+"_"+fechaDe(d)])) t++; }
         arr.push(t);
         for(var d2=1;d2<=nd;d2++){ arr.push(DATA[c.dni+"_"+fechaDe(d2)]||""); }
         return arr.map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';}).join(";");
@@ -156,8 +216,8 @@
 
     MISAGI.requireAccess("operaciones").then(function(s){
       document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
-      CONDUCTORES=conductoresSeed();
-      cargar();
+      pintarLeyenda();
+      cargarConductores(function(){ cargar(); });
     });
   </script>
 </body>

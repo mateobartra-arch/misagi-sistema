@@ -239,7 +239,7 @@
       return ''+
       '<div class="pagehead"><h1>Roster · '+esc(mesNombre)+'</h1><div class="s">Los días que has trabajado este mes.</div></div>'+
       '<div class="panel"><div class="cal">'+cells+'</div>'+
-        '<div class="leg-me" style="display:flex;gap:12px;flex-wrap:wrap;font-size:.72rem;color:var(--muted);margin-top:12px"><span>🟩 Trabajó/Ruta</span><span>⬜ Descanso</span><span>🟦 Vacaciones</span><span>🟥 Falta</span></div>'+'<div class="note">Lo marca Operaciones en el módulo de Roster. Si ves un día vacío, aún no se ha registrado.</div>'+
+        '<div class="leg-me" style="display:flex;gap:10px;flex-wrap:wrap;font-size:.72rem;color:var(--muted);margin-top:12px"><span>D · descanso</span><span>H1/H2/H3 · turnos</span><span>P</span><span>R1–R5 · rutas</span></div>'+'<div class="note">Lo marca Operaciones en el módulo de Roster. Si ves un día vacío, aún no se ha registrado.</div>'+
       '</div>';
     }
 
@@ -264,6 +264,7 @@
     }
 
     function pad2(n){return (n<10?"0":"")+n;}
+    var ME_CODES={"D":{bg:"#eef1ee",fg:"#697269"},"H1":{bg:"#e7f5ed",fg:"#12502d"},"H2":{bg:"#fbeede",fg:"#a96416"},"H3":{bg:"#fbe0e0",fg:"#b02531"},"P":{bg:"#0d3b66",fg:"#fff"},"T1":{bg:"#d8f0ef",fg:"#0c5f5a"},"T2":{bg:"#b6e3e0",fg:"#0c5f5a"},"C1":{bg:"#ede0f5",fg:"#5a2d82"},"C2":{bg:"#dcc4ee",fg:"#5a2d82"},"A1":{bg:"#fde7d2",fg:"#9a4d12"},"A2":{bg:"#fbd4ad",fg:"#9a4d12"},"A3":{bg:"#f7bd86",fg:"#7a3a0c"},"R1":{bg:"#dbe7f5",fg:"#0d3b66"},"R2":{bg:"#b9d2ee",fg:"#0d3b66"},"R3":{bg:"#8fb8e0",fg:"#0a2e50"},"R4":{bg:"#5f97d0",fg:"#fff"},"R5":{bg:"#356bb0",fg:"#fff"}};
     function cargarRosterMe(){
       if(!PERFIL.dni) return;
       var now=new Date(), y=now.getFullYear(), m=now.getMonth();
@@ -271,7 +272,7 @@
         snap.forEach(function(doc){ var o=doc.data();
           if(o.fecha && o.fecha.slice(0,7)===(y+"-"+pad2(m+1))){
             var d=parseInt(o.fecha.slice(8,10),10); var cell=document.getElementById("me-rc-"+d);
-            if(cell){ cell.classList.add("e-"+o.estado); var lab=document.createElement("span"); lab.className="rlab"; lab.textContent=({T:"Trab.",D:"Desc.",V:"Vac.",F:"Falta",R:"Ruta"})[o.estado]||""; cell.appendChild(lab); }
+            if(cell){ var c=ME_CODES[o.estado]; if(c){ cell.style.background=c.bg; cell.style.color=c.fg; cell.style.fontWeight="600"; } var lab=document.createElement("span"); lab.className="rlab"; lab.textContent=o.estado; cell.appendChild(lab); }
           }
         });
       }).catch(function(){});
