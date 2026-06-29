@@ -18,7 +18,7 @@
     table.roster thead th{position:sticky;top:0;background:var(--bg-subtle);z-index:3;padding:5px 3px;font-weight:700;color:var(--text-muted)}
     table.roster th.dow{font-size:.6rem;line-height:1.1;min-width:34px}
     table.roster th.we,table.roster td.we{background:#f6f7f6}
-    table.roster td.name,table.roster th.name{position:sticky;left:0;background:#fff;z-index:2;text-align:left;padding:6px 12px;font-weight:600;min-width:200px;box-shadow:1px 0 0 var(--border)}
+    table.roster td.name,table.roster th.name{position:sticky;left:0;background:#fff;z-index:2;text-align:left;padding:6px 12px;font-weight:600;width:200px;max-width:200px;overflow:hidden;text-overflow:ellipsis;box-shadow:1px 0 0 var(--border)}
     table.roster thead th.name{z-index:4;background:var(--bg-subtle)}
     table.roster td.cnt{position:sticky;left:200px;background:#fff;z-index:2;font-weight:700;color:var(--verde-d);min-width:44px;box-shadow:1px 0 0 var(--border)}
     table.roster thead th.cnt{z-index:4;background:var(--bg-subtle)}
@@ -65,23 +65,23 @@
     var db=function(){return firebase.firestore();};
     // Códigos (misma idea que el Sheet): D descanso, H1/H2/H3 turnos, P, R1..R5 rutas
     var CODES={
-      "D": {bg:"#eef1ee",fg:"#697269",t:"Descanso"},
-      "H1":{bg:"#e7f5ed",fg:"#12502d",t:"Horario 1"},
-      "H2":{bg:"#fbeede",fg:"#a96416",t:"Horario 2"},
-      "H3":{bg:"#fbe0e0",fg:"#b02531",t:"Horario 3"},
-      "P": {bg:"#0d3b66",fg:"#ffffff",t:"P"},
-      "T1":{bg:"#d8f0ef",fg:"#0c5f5a",t:"Turno 1"},
-      "T2":{bg:"#b6e3e0",fg:"#0c5f5a",t:"Turno 2"},
-      "C1":{bg:"#ede0f5",fg:"#5a2d82",t:"C1"},
-      "C2":{bg:"#dcc4ee",fg:"#5a2d82",t:"C2"},
-      "A1":{bg:"#fde7d2",fg:"#9a4d12",t:"A1"},
-      "A2":{bg:"#fbd4ad",fg:"#9a4d12",t:"A2"},
-      "A3":{bg:"#f7bd86",fg:"#7a3a0c",t:"A3"},
-      "R1":{bg:"#dbe7f5",fg:"#0d3b66",t:"Ruta 1"},
-      "R2":{bg:"#b9d2ee",fg:"#0d3b66",t:"Ruta 2"},
-      "R3":{bg:"#8fb8e0",fg:"#0a2e50",t:"Ruta 3"},
-      "R4":{bg:"#5f97d0",fg:"#ffffff",t:"Ruta 4"},
-      "R5":{bg:"#356bb0",fg:"#ffffff",t:"Ruta 5"}
+      "D":{bg:"#eef1f3",fg:"#6b7680",t:"Descanso"},
+      "P":{bg:"#123a63",fg:"#ffffff",t:"P"},
+      "H1":{bg:"#dcf2e4",fg:"#15703f",t:"Horario 1"},
+      "H2":{bg:"#d3ecf5",fg:"#0f6c87",t:"Horario 2"},
+      "H3":{bg:"#fde0df",fg:"#c5362f",t:"Horario 3"},
+      "T1":{bg:"#fdecca",fg:"#97670f",t:"Turno 1"},
+      "T2":{bg:"#fbdca2",fg:"#7a5210",t:"Turno 2"},
+      "C1":{bg:"#ece1f7",fg:"#6a3fa0",t:"C1"},
+      "C2":{bg:"#dcc7f0",fg:"#532a7d",t:"C2"},
+      "A1":{bg:"#fde3cf",fg:"#9a531a",t:"A1"},
+      "A2":{bg:"#f9cda3",fg:"#82440f",t:"A2"},
+      "A3":{bg:"#f3b783",fg:"#6e3909",t:"A3"},
+      "R1":{bg:"#e0ecfa",fg:"#1f5fa8",t:"Ruta 1"},
+      "R2":{bg:"#bdd6f4",fg:"#1a5398",t:"Ruta 2"},
+      "R3":{bg:"#97bdeb",fg:"#134a8c",t:"Ruta 3"},
+      "R4":{bg:"#5e95d6",fg:"#ffffff",t:"Ruta 4"},
+      "R5":{bg:"#2f6cb5",fg:"#ffffff",t:"Ruta 5"}
     };
     var hoy=new Date(), Y=hoy.getFullYear(), M=hoy.getMonth();
     var CONDUCTORES=[], DATA={};
@@ -161,24 +161,30 @@
       }).catch(function(e){ pintar(); document.getElementById("sub").textContent="Aviso: no se pudo leer la base ("+e.message+")."; });
     }
 
+    function ordenRef(dni){ var ref=window.MISAGI_SEED_ROSTER_COND||[]; for(var i=0;i<ref.length;i++){ if(String(ref[i].dni)===String(dni)) return i; } return 999; }
+    function ordenarCond(arr){ arr.sort(function(a,b){ var oa=(a.orden!=null?a.orden:ordenRef(a.dni)), ob=(b.orden!=null?b.orden:ordenRef(b.dni)); return oa-ob || (a.nombre||"").localeCompare(b.nombre||""); }); return arr; }
+    function condInicial(){
+      if(window.MISAGI_SEED_ROSTER_COND && MISAGI_SEED_ROSTER_COND.length){ return MISAGI_SEED_ROSTER_COND.map(function(c,i){return {dni:String(c.dni),nombre:c.nombre,orden:i};}); }
+      return seedConductores().map(function(c,i){return {dni:c.dni,nombre:c.nombre,orden:i};});
+    }
     function cargarConductores(cb){
       db().collection("roster_conductores").get().then(function(snap){
         if(snap.empty){
-          CONDUCTORES=seedConductores();
+          CONDUCTORES=condInicial();
           var batch=db().batch();
-          CONDUCTORES.forEach(function(c){ batch.set(db().collection("roster_conductores").doc(c.dni),{dni:c.dni,nombre:c.nombre}); });
+          CONDUCTORES.forEach(function(c){ batch.set(db().collection("roster_conductores").doc(c.dni),{dni:c.dni,nombre:c.nombre,orden:c.orden}); });
           batch.commit().catch(function(){});
         } else {
-          CONDUCTORES=snap.docs.map(function(d){var o=d.data();return {dni:String(o.dni),nombre:o.nombre};}).sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
+          CONDUCTORES=ordenarCond(snap.docs.map(function(d){var o=d.data();return {dni:String(o.dni),nombre:o.nombre,orden:o.orden};}));
         }
         cb();
-      }).catch(function(){ CONDUCTORES=seedConductores(); cb(); });
+      }).catch(function(){ CONDUCTORES=condInicial(); cb(); });
     }
 
     document.getElementById("btnAdd").onclick=function(){
       var nom=prompt("Nombre del conductor (Apellidos, Nombres):"); if(!nom||!nom.trim()) return;
       var dni=prompt("DNI del conductor:"); if(!dni||!dni.trim()) return; dni=dni.trim();
-      db().collection("roster_conductores").doc(dni).set({dni:dni,nombre:nom.trim()}).then(function(){
+      db().collection("roster_conductores").doc(dni).set({dni:dni,nombre:nom.trim(),orden:CONDUCTORES.length}).then(function(){
         cargarConductores(function(){ cargar(); });
       }).catch(function(e){ alert("No se pudo agregar (¿reglas publicadas?): "+e.message); });
     };
@@ -187,7 +193,7 @@
       if(!confirm("Se cargarán "+MISAGI_SEED_ROSTER.length+" registros (ene–jun 2026) y "+MISAGI_SEED_ROSTER_COND.length+" conductores. ¿Continuar?")) return;
       var btn=this; btn.disabled=true; btn.textContent="Importando…";
       var cb=db().batch();
-      MISAGI_SEED_ROSTER_COND.forEach(function(c){ cb.set(db().collection("roster_conductores").doc(c.dni),{dni:c.dni,nombre:c.nombre}); });
+      MISAGI_SEED_ROSTER_COND.forEach(function(c,i){ cb.set(db().collection("roster_conductores").doc(c.dni),{dni:c.dni,nombre:c.nombre,orden:i}); });
       cb.commit().then(function(){
         var recs=MISAGI_SEED_ROSTER.slice();
         (function lote(){

@@ -1,0 +1,13 @@
+rules_version = '2';
+// Reglas de Firebase Storage — pegar en consola: Storage → Rules → Publicar.
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Documentos del sistema: solo usuarios con sesión. Subidas hasta 15 MB.
+    match /documentos/{allPaths=**} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null && request.resource.size < 15 * 1024 * 1024;
+    }
+    // Todo lo demás, bloqueado.
+    match /{allPaths=**} { allow read, write: if false; }
+  }
+}

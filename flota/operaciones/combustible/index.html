@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de combustible — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../../assets/theme.css">
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Control de combustible</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" id="reg"></div>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../../../assets/firebase-config.js"></script>
+  <script src="../../../assets/auth.js"></script>
+  <script src="../../../assets/registro.js"></script>
+  <script>
+    MISAGI_REGISTRO.init({
+      area:"operaciones", coleccion:"operaciones", modulo:"combustible",
+      titulo:"Control de combustible",
+      campos:[{k:"fecha",label:"Fecha",tipo:"date"},{k:"placa",label:"Unidad/Placa"},{k:"conductor",label:"Conductor"},{k:"galones",label:"Galones",tipo:"number"},{k:"costo",label:"Costo (S/)",tipo:"number"},{k:"km",label:"Kilometraje",tipo:"number"},{k:"grifo",label:"Grifo"},{k:"obs",label:"Observación",tipo:"textarea"}],
+      columnas:["fecha","placa","conductor","galones","costo"],
+      resumen:[{label:"Galones",campo:"galones",op:"sum"},{label:"Costo (S/)",campo:"costo",op:"sum",money:true},{label:"Registros",op:"count"}]
+    });
+  </script>
+</body>
+</html>

@@ -61,6 +61,11 @@ service cloud.firestore {
       allow write: if tieneArea('operaciones');
     }
 
+    // ---- Gestión documentaria (unidades y conductores) ----
+    match /documentos/{doc} {
+      allow read, write: if tieneArea('operaciones') || tieneArea('rrhh');
+    }
+
     // ---- Colecciones por área (módulos futuros) ----
     match /operaciones/{doc}    { allow read, write: if tieneArea('operaciones'); }
     match /mantenimiento/{doc}  { allow read, write: if tieneArea('mantenimiento'); }
@@ -70,6 +75,9 @@ service cloud.firestore {
     match /proveedores/{doc}    { allow read, write: if tieneArea('proveedores'); }
     match /planificacion/{doc}  { allow read, write: if tieneArea('planificacion'); }
     match /imagen/{doc}         { allow read, write: if tieneArea('imagen'); }
+    match /ssoma/{doc}          { allow read, write: if tieneArea('ssoma'); }
+    match /comercial/{doc}      { allow read, write: if tieneArea('comercial'); }
+    match /presupuesto/{doc}    { allow read, write: if tieneArea('presupuesto'); }
 
     // Todo lo no declarado queda BLOQUEADO por defecto.
     match /{document=**} { allow read, write: if false; }

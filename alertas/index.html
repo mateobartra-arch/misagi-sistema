@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alertas y Vencimientos — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../assets/theme.css">
+  <style>
+    .kpis-reg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:22px}
+    .grid-al{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+    .al-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden}
+    .al-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border)}
+    .al-head h2{font-size:1rem;color:var(--azul-d);flex:1}
+    .al-head .ico{width:20px;height:20px;color:var(--azul)}
+    .al-count{font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:20px}
+    .al-count.bad{background:var(--danger-light);color:var(--danger)} .al-count.warn{background:var(--amber-l);color:var(--amber)} .al-count.ok{background:var(--verde-l);color:var(--verde-d)}
+    .al-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 18px;border-top:1px solid var(--border);font-size:.88rem}
+    .al-row:first-child{border-top:none}
+    .al-row .nm{font-weight:600}
+    .al-row .sub{font-size:.76rem;color:var(--text-muted)}
+    .st{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+    .st.bad{background:var(--danger-light);color:var(--danger)} .st.warn{background:var(--amber-l);color:var(--amber)}
+    .al-empty{padding:18px;color:var(--text-muted);font-size:.88rem;text-align:center}
+    .al-more{padding:9px 18px;font-size:.8rem;color:var(--text-muted);border-top:1px solid var(--border);background:var(--bg-subtle)}
+  </style>
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Alertas</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" id="app" style="display:none">
+    <div class="page-head"><div><h1>Alertas y Vencimientos</h1><div class="page-sub" id="sub">Cargando…</div></div></div>
+    <div class="kpis-reg">
+      <div class="kpi-card"><div class="kpi-v" id="kBad" style="color:var(--danger)">—</div><div class="kpi-l">Vencidos / críticos</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kWarn" style="color:var(--amber)">—</div><div class="kpi-l">Por vencer pronto</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kTot">—</div><div class="kpi-l">Total alertas</div></div>
+    </div>
+    <div class="grid-al" id="grid"></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../assets/firebase-config.js"></script>
+  <script src="../assets/auth.js"></script>
+  <script>
+    var db=function(){return firebase.firestore();};
+    var TOT={bad:0,warn:0};
+    function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+    function ico(d){return '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="'+d+'"/></svg>';}
+    function diasA(v){ if(!v) return null; var h=new Date(); h.setHours(0,0,0,0); var d=new Date(v+"T00:00:00"); if(isNaN(d)) return null; return Math.round((d-h)/86400000); }
+
+    function card(titulo, iconpath, items){
+      // items: [{nm, sub, dias}]  dias<0 vencido, <=umbral por vencer
+      var bad=items.filter(function(i){return i.dias!=null && i.dias<0;}).length;
+      var warn=items.filter(function(i){return i.dias!=null && i.dias>=0;}).length;
+      TOT.bad+=bad; TOT.warn+=warn;
+      var cc = bad?'bad':(warn?'warn':'ok');
+      var rows = items.slice(0,8).map(function(i){
+        var st = i.dias<0 ? '<span class="st bad">Vencido '+(Math.abs(i.dias))+' d</span>' : '<span class="st warn">Vence '+i.dias+' d</span>';
+        return '<div class="al-row"><div><div class="nm">'+esc(i.nm)+'</div><div class="sub">'+esc(i.sub||"")+'</div></div>'+st+'</div>';
+      }).join("");
+      var more = items.length>8 ? '<div class="al-more">+ '+(items.length-8)+' más…</div>' : '';
+      return '<div class="al-card"><div class="al-head">'+ico(iconpath)+'<h2>'+esc(titulo)+'</h2><span class="al-count '+cc+'">'+items.length+'</span></div>'+
+             (items.length?rows+more:'<div class="al-empty">Sin alertas 🎉</div>')+'</div>';
+    }
+    function addCard(html){ document.getElementById("grid").insertAdjacentHTML("beforeend",html); }
+
+    function run(perfil){
+      var grid=document.getElementById("grid"); grid.innerHTML="";
+      var jobs=[];
+      // 1) Documentos por vencer/vencidos
+      jobs.push(db().collection("documentos").get().then(function(snap){
+        var items=[];
+        snap.forEach(function(doc){ var o=doc.data(); var d=diasA(o.vencimiento); if(d!=null && d<=30) items.push({nm:o.entidad+" · "+o.tipo, sub:o.categoria, dias:d}); });
+        items.sort(function(a,b){return a.dias-b.dias;});
+        addCard(card("Documentos por vencer","M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 3v5h5",items));
+      }).catch(function(){}));
+      // 2) EMO del personal
+      jobs.push(db().collection("rrhh").where("modulo","==","personal").get().then(function(snap){
+        var items=[];
+        snap.forEach(function(doc){ var o=doc.data(); var venc=o.vcto_emo||o.fecha_emo; var d=diasA(venc); if(d!=null && d<=30) items.push({nm:o.nombre, sub:"EMO · "+(o.cargo||""), dias:d}); });
+        items.sort(function(a,b){return a.dias-b.dias;});
+        addCard(card("Exámenes médicos (EMO)","M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3 5.5 5.5 0 0 0 12 5.36 5.5 5.5 0 0 0 7.5 3 5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7z",items));
+      }).catch(function(){}));
+      // 3) Mantenimiento preventivo próximo
+      jobs.push(db().collection("mantenimiento").where("modulo","==","preventivo").get().then(function(snap){
+        var items=[];
+        snap.forEach(function(doc){ var o=doc.data(); var dias=parseInt(o.dias_faltantes,10); if(!isNaN(dias) && dias<=20) items.push({nm:o.placa, sub:"Mantto a "+(o.km_proximo||"?")+" km", dias:dias}); });
+        items.sort(function(a,b){return a.dias-b.dias;});
+        addCard(card("Mantenimiento preventivo","M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.1 2.1-2-2z",items));
+      }).catch(function(){}));
+      // 4) Correctivos abiertos
+      jobs.push(db().collection("mantenimiento").where("modulo","==","correctivo").get().then(function(snap){
+        var items=[];
+        snap.forEach(function(doc){ var o=doc.data(); if(o.estado && o.estado.toLowerCase()!=="cerrado"){ var d=diasA(o.fecha); items.push({nm:o.placa+" · "+(o.descripcion||"").slice(0,30), sub:o.estado+" · "+(o.gravedad||""), dias:(d!=null?d:0)}); } });
+        // para correctivos abiertos mostramos como "pendiente" (no por fecha)
+        var html='<div class="al-card"><div class="al-head">'+ico("M12 9v4 M12 17h.01 M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z")+'<h2>Correctivos abiertos</h2><span class="al-count '+(items.length?'bad':'ok')+'">'+items.length+'</span></div>';
+        TOT.bad+=items.length;
+        html += items.length ? items.slice(0,8).map(function(i){return '<div class="al-row"><div><div class="nm">'+esc(i.nm)+'</div><div class="sub">'+esc(i.sub)+'</div></div><span class="st bad">Abierto</span></div>';}).join("")+(items.length>8?'<div class="al-more">+ '+(items.length-8)+' más…</div>':'') : '<div class="al-empty">Sin correctivos abiertos 🎉</div>';
+        html+='</div>';
+        addCard(html);
+      }).catch(function(){}));
+
+      Promise.all(jobs).then(function(){
+        document.getElementById("kBad").textContent=TOT.bad;
+        document.getElementById("kWarn").textContent=TOT.warn;
+        document.getElementById("kTot").textContent=TOT.bad+TOT.warn;
+        document.getElementById("sub").textContent="Actualizado "+new Date().toLocaleString('es-PE');
+        if(!document.getElementById("grid").children.length){ document.getElementById("grid").innerHTML='<div class="al-empty">No tienes módulos con alertas asignados.</div>'; }
+      });
+    }
+
+    MISAGI.requireLogin().then(function(s){
+      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+      document.getElementById("app").style.display="";
+      run(s.perfil);
+    });
+  </script>
+</body>
+</html>

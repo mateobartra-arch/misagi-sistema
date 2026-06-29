@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lavado y engrase — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../../assets/theme.css">
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Lavado y engrase</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" id="reg"></div>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../../../assets/firebase-config.js"></script>
+  <script src="../../../assets/auth.js"></script>
+  <script src="../../../assets/seed-lavado.js"></script>
+  <script src="../../../assets/registro.js"></script>
+  <script>
+    MISAGI_REGISTRO.init({
+      area:"operaciones", coleccion:"operaciones", modulo:"lavado",
+      titulo:"Lavado y engrase",
+      campos:[{k:"fecha",label:"Fecha",tipo:"date"},{k:"placa",label:"Unidad/Placa"},{k:"tipo",label:"Tipo",tipo:"select",opciones:["Lavado","Engrase","Lavado y engrase"]},{k:"costo",label:"Costo (S/)",tipo:"number"},{k:"proveedor",label:"Proveedor"},{k:"obs",label:"Observación",tipo:"textarea"}],
+      columnas:["fecha","placa","tipo","costo","proveedor"],
+      resumen:[{label:"Costo (S/)",campo:"costo",op:"sum",money:true},{label:"Servicios",op:"count"}]
+    });
+  </script>
+</body>
+</html>

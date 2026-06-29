@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mantenimiento correctivo — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../../assets/theme.css">
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Mantenimiento correctivo</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" id="reg"></div>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../../../assets/firebase-config.js"></script>
+  <script src="../../../assets/auth.js"></script>
+  <script src="../../../assets/seed-flota-mant.js"></script>
+  <script src="../../../assets/registro.js"></script>
+  <script>
+    MISAGI_REGISTRO.init({
+  area:"mantenimiento", coleccion:"mantenimiento", modulo:"correctivo", titulo:"Mantenimiento correctivo",
+  campos:[{k:"fecha",label:"Fecha reporte",tipo:"date"},{k:"placa",label:"Unidad/Placa"},{k:"tipo_unidad",label:"Tipo",tipo:"select",opciones:["Tracto","Tolva"]},{k:"descripcion",label:"Descripción de falla",tipo:"textarea"},{k:"gravedad",label:"Gravedad",tipo:"select",opciones:["LEVE","GRAVE","MUY GRAVE"]},{k:"estado",label:"Estado",tipo:"select",opciones:["Abierto","En proceso","Cerrado"]},{k:"accion",label:"Acción correctiva",tipo:"textarea"},{k:"taller",label:"Técnico/Taller"},{k:"fecha_solucion",label:"Fecha solución",tipo:"date"},{k:"costo",label:"Costo (S/)",tipo:"number"}],
+  columnas:["fecha","placa","descripcion","estado","costo"],
+  resumen:[{label:"Reportes",op:"count"},{label:"Costo (S/)",campo:"costo",op:"sum",money:true}]
+});
+  </script>
+</body>
+</html>

@@ -142,3 +142,9 @@ textarea:focus-visible, .app-card:focus-visible, .gps-link:focus-visible {
   * { transition: none !important; animation: none !important; }
   a.app-card:hover, .gps-link:hover { transform: none; }
 }
+
+/* ---- Resumen (KPIs) de los módulos de registro ---- */
+.kpis-reg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:18px}
+.kpi-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:16px 18px}
+.kpi-v{font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:var(--azul-d);line-height:1}
+.kpi-l{font-size:.78rem;color:var(--text-muted);margin-top:6px;text-transform:uppercase;letter-spacing:.4px;font-weight:600}

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unidades (flota) — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../../assets/theme.css">
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Unidades (flota)</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" id="reg"></div>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../../../assets/firebase-config.js"></script>
+  <script src="../../../assets/auth.js"></script>
+  <script src="../../../assets/seed-flota-mant.js"></script>
+  <script src="../../../assets/registro.js"></script>
+  <script>
+    MISAGI_REGISTRO.init({
+  area:"operaciones", coleccion:"operaciones", modulo:"unidades", titulo:"Unidades de flota",
+  campos:[{k:"placa",label:"Placa"},{k:"tipo",label:"Tipo",tipo:"select",opciones:["Tracto","Tolva"]},{k:"marca",label:"Marca"},{k:"anio",label:"Año modelo"},{k:"mtc",label:"MTC"},{k:"empresa",label:"Empresa"}],
+  columnas:["placa","tipo","marca","anio","empresa"],
+  resumen:[{label:"Unidades",op:"count"}]
+});
+  </script>
+</body>
+</html>

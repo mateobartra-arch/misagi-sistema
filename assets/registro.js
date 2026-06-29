@@ -1,0 +1,147 @@
+/* ==========================================================================
+   MISAGI S.A.C. — Motor genérico de "registros"
+   --------------------------------------------------------------------------
+   Con un objeto de configuración levanta un módulo completo:
+   formulario + tabla + buscador + resumen (sumas/conteo) + exportar Excel.
+   Guarda en Firestore (colección + campo "modulo"), gated por área.
+   Uso (en la página del módulo):
+     MISAGI_REGISTRO.init({
+       area:"operaciones", coleccion:"operaciones", modulo:"combustible",
+       titulo:"Control de combustible",
+       campos:[ {k:"fecha",label:"Fecha",tipo:"date"}, {k:"placa",label:"Unidad/Placa"}, ... ],
+       columnas:["fecha","placa","conductor","galones","costo"],
+       resumen:[ {label:"Galones",campo:"galones",op:"sum"}, {label:"Costo (S/)",campo:"costo",op:"sum",money:true} ]
+     });
+   ========================================================================== */
+(function (global) {
+  function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+  function db(){return firebase.firestore();}
+  function fmtNum(n){ n=Number(n||0); return n.toLocaleString('es-PE',{maximumFractionDigits:2}); }
+
+  function init(cfg){
+    var DATA=[], esAdmin=false;
+    var root=document.getElementById("reg");
+    var idCampoFecha=(cfg.campos.filter(function(c){return c.tipo==="date";})[0]||{}).k;
+
+    function shell(){
+      var resumenHtml = (cfg.resumen||[]).map(function(r,i){
+        return '<div class="kpi-card"><div class="kpi-v" id="kpi_'+i+'">—</div><div class="kpi-l">'+esc(r.label)+'</div></div>';
+      }).join("");
+      root.innerHTML =
+        '<div class="page-head"><div><h1>'+esc(cfg.titulo)+'</h1><div class="page-sub" id="sub">Cargando…</div></div>'+
+          '<div style="display:flex;gap:10px">'+((window.REGISTRO_SEED||{})[cfg.modulo]&&(window.REGISTRO_SEED||{})[cfg.modulo].length?'<button class="btn btn-ghost" id="btnImp">Importar histórico ('+(window.REGISTRO_SEED[cfg.modulo].length)+')</button>':'')+'<button class="btn btn-ghost" id="btnExp">⬇ Excel</button><button class="btn btn-primary" id="btnNew">+ Nuevo</button></div></div>'+
+        (resumenHtml?('<div class="kpis-reg">'+resumenHtml+'</div>'):'')+
+        '<div class="toolbar"><input type="search" id="buscar" placeholder="Buscar…"></div>'+
+        '<div class="table-wrap"><table id="tabla"><thead><tr>'+
+          cfg.columnas.map(function(k){return '<th>'+esc(label(k))+'</th>';}).join("")+'<th></th></tr></thead><tbody></tbody></table></div>';
+      document.getElementById("btnNew").onclick=function(){abrir(null);};
+      var bi=document.getElementById("btnImp"); if(bi) bi.onclick=importarSeed;
+      document.getElementById("btnExp").onclick=exportar;
+      document.getElementById("buscar").oninput=pintar;
+    }
+    function label(k){ var c=cfg.campos.filter(function(x){return x.k===k;})[0]; return c?c.label:k; }
+
+    function filtradas(){
+      var q=(document.getElementById("buscar").value||"").toLowerCase().trim();
+      var arr=DATA.slice().sort(function(a,b){ if(idCampoFecha) return String(b[idCampoFecha]||"").localeCompare(String(a[idCampoFecha]||"")); return 0; });
+      if(!q) return arr;
+      return arr.filter(function(d){ return cfg.campos.some(function(c){ return String(d[c.k]||"").toLowerCase().indexOf(q)>=0; }); });
+    }
+    function pintar(){
+      var tb=document.querySelector("#tabla tbody"); var f=filtradas();
+      document.getElementById("sub").textContent=DATA.length+" registro(s)";
+      // resumen
+      (cfg.resumen||[]).forEach(function(r,i){
+        var el=document.getElementById("kpi_"+i); if(!el) return; var val;
+        if(r.op==="count") val=DATA.length;
+        else { val=DATA.reduce(function(a,d){return a+Number(d[r.campo]||0);},0); }
+        el.textContent=(r.money?"S/ ":"")+fmtNum(val);
+      });
+      if(!f.length){ tb.innerHTML='<tr><td colspan="'+(cfg.columnas.length+1)+'" style="text-align:center;color:var(--text-muted);padding:24px">Sin registros. Usa “+ Nuevo”.</td></tr>'; return; }
+      tb.innerHTML=f.map(function(d){
+        return '<tr>'+cfg.columnas.map(function(k){return '<td>'+esc(d[k])+'</td>';}).join("")+
+          '<td style="text-align:right;white-space:nowrap"><button class="btn btn-ghost btn-sm" data-e="'+d._id+'">Editar</button> <button class="btn btn-ghost btn-sm" data-d="'+d._id+'">✕</button></td></tr>';
+      }).join("");
+      tb.querySelectorAll("[data-e]").forEach(function(b){b.onclick=function(){abrir(DATA.filter(function(x){return x._id===b.dataset.e;})[0]);};});
+      tb.querySelectorAll("[data-d]").forEach(function(b){b.onclick=function(){borrar(b.dataset.d);};});
+    }
+    function cargar(){
+      db().collection(cfg.coleccion).where("modulo","==",cfg.modulo).get().then(function(snap){
+        DATA=snap.docs.map(function(doc){var o=doc.data();o._id=doc.id;return o;});
+        pintar();
+      }).catch(function(e){ document.getElementById("sub").textContent="Error: "+e.message; });
+    }
+
+    // ---- Modal ----
+    function modal(){
+      if(document.getElementById("regModal")) return;
+      var m=document.createElement("div"); m.id="regModal"; m.className="modal-overlay hidden";
+      m.innerHTML='<div class="modal-box" style="max-width:520px"><div class="modal-head"><h3 id="regTit">Nuevo</h3><button class="modal-x" id="regX">✕</button></div>'+
+        '<form id="regForm">'+cfg.campos.map(function(c){
+          var t=c.tipo||"text";
+          if(t==="select"){ return '<div class="field"><label>'+esc(c.label)+'</label><select name="'+c.k+'">'+(c.opciones||[]).map(function(o){return '<option value="'+esc(o)+'">'+esc(o)+'</option>';}).join("")+'</select></div>'; }
+          if(t==="textarea"){ return '<div class="field"><label>'+esc(c.label)+'</label><textarea name="'+c.k+'" rows="2"></textarea></div>'; }
+          return '<div class="field"><label>'+esc(c.label)+'</label><input name="'+c.k+'" type="'+t+'"'+(t==="number"?' step="any"':'')+'></div>';
+        }).join("")+
+        '<div id="regErr" class="msg-alert error hidden"></div>'+
+        '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px"><button type="button" class="btn btn-ghost" id="regCancel">Cancelar</button><button type="submit" class="btn btn-primary" id="regSave">Guardar</button></div>'+
+        '</form></div>';
+      document.body.appendChild(m);
+      document.getElementById("regX").onclick=cerrar;
+      document.getElementById("regCancel").onclick=cerrar;
+      document.getElementById("regForm").addEventListener("submit",guardar);
+    }
+    function abrir(reg){
+      modal();
+      var f=document.getElementById("regForm"); f.reset();
+      document.getElementById("regErr").classList.add("hidden");
+      f.dataset.id=reg?reg._id:"";
+      document.getElementById("regTit").textContent=reg?"Editar registro":"Nuevo registro";
+      if(reg){ cfg.campos.forEach(function(c){ if(f[c.k]!==undefined && reg[c.k]!=null) f[c.k].value=reg[c.k]; }); }
+      else if(idCampoFecha && f[idCampoFecha]){ f[idCampoFecha].value=new Date().toISOString().slice(0,10); }
+      document.getElementById("regModal").classList.remove("hidden");
+    }
+    function cerrar(){ var m=document.getElementById("regModal"); if(m) m.classList.add("hidden"); }
+    function guardar(e){
+      e.preventDefault(); var f=e.target, err=document.getElementById("regErr"); err.classList.add("hidden");
+      var reg={modulo:cfg.modulo};
+      cfg.campos.forEach(function(c){ if(f[c.k]!==undefined) reg[c.k]=f[c.k].value.trim(); });
+      var btn=document.getElementById("regSave"); btn.disabled=true; btn.textContent="Guardando…";
+      reg._ts=firebase.firestore.FieldValue.serverTimestamp();
+      var op = f.dataset.id ? db().collection(cfg.coleccion).doc(f.dataset.id).set(reg,{merge:true}) : db().collection(cfg.coleccion).add(reg);
+      op.then(function(){ btn.disabled=false; btn.textContent="Guardar"; cerrar(); cargar(); })
+        .catch(function(e2){ err.textContent=e2.message; err.classList.remove("hidden"); btn.disabled=false; btn.textContent="Guardar"; });
+    }
+    function borrar(id){ if(!confirm("¿Borrar este registro?")) return; db().collection(cfg.coleccion).doc(id).delete().then(cargar); }
+
+    function importarSeed(){
+      var seed=(window.REGISTRO_SEED||{})[cfg.modulo]||[]; if(!seed.length) return;
+      if(DATA.length && !confirm("Ya hay "+DATA.length+" registros. ¿Importar igual "+seed.length+" del histórico?")) return;
+      if(!confirm("Se importarán "+seed.length+" registros. ¿Continuar?")) return;
+      var btn=document.getElementById("btnImp"); btn.disabled=true; btn.textContent="Importando…";
+      var recs=seed.slice();
+      (function lote(){
+        if(!recs.length){ btn.textContent="✓ Importado"; cargar(); return; }
+        var chunk=recs.splice(0,450), b=db().batch();
+        chunk.forEach(function(r){ b.set(db().collection(cfg.coleccion).doc(), Object.assign({modulo:cfg.modulo},r)); });
+        b.commit().then(function(){ btn.textContent="Importando… ("+recs.length+")"; lote(); }).catch(function(e){ alert("Error: "+e.message); btn.disabled=false; btn.textContent="Importar histórico"; });
+      })();
+    }
+    function exportar(){
+      var cols=cfg.campos.map(function(c){return c.k;});
+      var head=cfg.campos.map(function(c){return c.label;}).join(";");
+      var rows=DATA.map(function(d){ return cols.map(function(k){var v=String(d[k]==null?"":d[k]).replace(/"/g,'""'); return '"'+v+'"';}).join(";"); });
+      var csv="﻿"+head+"\n"+rows.join("\n");
+      var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));
+      a.download=cfg.modulo+".csv"; a.click();
+    }
+
+    MISAGI.requireAccess(cfg.area).then(function(s){
+      esAdmin=MISAGI.esAdmin(s.perfil);
+      var lo=document.getElementById("logoutBtn"); if(lo) lo.onclick=function(){MISAGI.logout();};
+      shell(); cargar();
+    });
+  }
+
+  global.MISAGI_REGISTRO = { init: init };
+})(window);

@@ -36,7 +36,8 @@ const MISAGI_MODULOS = [
     area: "admin", grupo: "Administración", ik: "lock",
     apps: [
       { id: "admin.accesos", nombre: "Accesos del personal", url: "admin/accesos/", estado: "activo", desc: "Crear y gestionar los logins del equipo" },
-      { id: "admin.enlaces", nombre: "Accesos directos (Drive)", url: "admin/enlaces/", estado: "activo", desc: "Gestionar enlaces y quién los ve" }
+      { id: "admin.enlaces", nombre: "Accesos directos (Drive)", url: "admin/enlaces/", estado: "activo", desc: "Gestionar enlaces y quién los ve" },
+      { id: "admin.alertas", nombre: "Alertas / Vencimientos", url: "alertas/", estado: "activo", desc: "Documentos, EMO, mantenimiento y correctivos por vencer" }
     ]
   },
   {
@@ -45,13 +46,21 @@ const MISAGI_MODULOS = [
       { id: "operaciones.programacion", nombre: "Programación", url: "flota/operaciones/programacion/", estado: "activo", desc: "Programación de vehículos" },
       { id: "operaciones.seguimiento",  nombre: "Seguimiento",  url: "flota/operaciones/seguimiento/",  estado: "activo", desc: "Seguimiento de unidades" },
       { id: "operaciones.tracker",      nombre: "Tracker",      url: "flota/operaciones/tracker/",      estado: "activo", desc: "Seguimiento de conductores" },
-      { id: "operaciones.roster",       nombre: "Roster",       url: "flota/operaciones/roster/",       estado: "activo", desc: "Días trabajados por conductor" }
+      { id: "operaciones.roster",       nombre: "Roster",       url: "flota/operaciones/roster/",       estado: "activo", desc: "Días trabajados por conductor" },
+      { id: "operaciones.combustible",  nombre: "Combustible",  url: "flota/operaciones/combustible/",  estado: "activo", desc: "Control de combustible por unidad" },
+      { id: "operaciones.lavado",       nombre: "Lavado y engrase", url: "flota/operaciones/lavado/",    estado: "activo", desc: "Registro de lavado y engrase" },
+      { id: "operaciones.checklist",    nombre: "Check list",   url: "flota/operaciones/checklist/",    estado: "activo", desc: "Check list de conductores por cliente" },
+      { id: "operaciones.unidades",     nombre: "Unidades (flota)", url: "flota/operaciones/unidades/", estado: "activo", desc: "Tractos y tolvas" },
+      { id: "operaciones.rutas",        nombre: "Rutas",        url: "flota/operaciones/rutas/",        estado: "activo", desc: "Rutas y distancias" },
+      { id: "operaciones.documentos",   nombre: "Gestión documentaria", url: "documentos/", estado: "activo", desc: "Documentos y vencimientos de unidades/conductores" }
     ]
   },
   {
     area: "mantenimiento", grupo: "Flota · Mantenimiento", ik: "wrench",
     apps: [
-      { id: "mantenimiento.estatus", nombre: "Estatus de flota", url: "flota/mantenimiento/estatus/", estado: "activo", desc: "Estado, llantas y mantenimiento de la flota" }
+      { id: "mantenimiento.estatus", nombre: "Estatus de flota", url: "flota/mantenimiento/estatus/", estado: "activo", desc: "Estado, llantas y mantenimiento de la flota" },
+      { id: "mantenimiento.correctivos", nombre: "Correctivos", url: "flota/mantenimiento/correctivos/", estado: "activo", desc: "Reporte de fallas y reparaciones" },
+      { id: "mantenimiento.preventivos", nombre: "Preventivos", url: "flota/mantenimiento/preventivos/", estado: "activo", desc: "Plan preventivo por unidad (km)" }
     ]
   },
   {
@@ -59,7 +68,8 @@ const MISAGI_MODULOS = [
     apps: [
       { id: "rrhh.asistencia", nombre: "Asistencia",      url: "rrhh/asistencia/", estado: "activo", desc: "Marcaje de entrada/salida" },
       { id: "rrhh.personal",   nombre: "Personal (RRHH)", url: "rrhh/personal/",   estado: "activo", desc: "Legajos de todo el personal" },
-      { id: "rrhh.cts",        nombre: "CTS",             url: "rrhh/cts/",        estado: "activo", desc: "Liquidación de CTS del personal" }
+      { id: "rrhh.cts",        nombre: "CTS",             url: "rrhh/cts/",        estado: "activo", desc: "Liquidación de CTS del personal" },
+      { id: "rrhh.documentos", nombre: "Gestión documentaria", url: "documentos/", estado: "activo", desc: "Documentos y vencimientos del personal" }
     ]
   },
   {
@@ -95,7 +105,10 @@ const MISAGI_MODULOS = [
   },
   {
     area: "ssoma", grupo: "Seguridad y Salud (SSOMA)", ik: "shield",
-    apps: [ { id: "ssoma.general", nombre: "SSOMA", url: "ssoma/", estado: "proximamente", desc: "Seguridad y salud ocupacional" } ]
+    apps: [
+      { id: "ssoma.gastos", nombre: "Gastos SSOMA", url: "ssoma/gastos/", estado: "activo", desc: "Gastos de seguridad y salud" },
+      { id: "ssoma.general", nombre: "SSOMA", url: "ssoma/", estado: "proximamente", desc: "Seguridad y salud ocupacional" }
+    ]
   },
   {
     area: "comercial", grupo: "Comercial", ik: "bag",
