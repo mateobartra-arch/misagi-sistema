@@ -44,7 +44,8 @@ const MISAGI_MODULOS = [
     apps: [
       { id: "operaciones.programacion", nombre: "Programación", url: "flota/operaciones/programacion/", estado: "activo", desc: "Programación de vehículos" },
       { id: "operaciones.seguimiento",  nombre: "Seguimiento",  url: "flota/operaciones/seguimiento/",  estado: "activo", desc: "Seguimiento de unidades" },
-      { id: "operaciones.tracker",      nombre: "Tracker",      url: "flota/operaciones/tracker/",      estado: "activo", desc: "Seguimiento de conductores" }
+      { id: "operaciones.tracker",      nombre: "Tracker",      url: "flota/operaciones/tracker/",      estado: "activo", desc: "Seguimiento de conductores" },
+      { id: "operaciones.roster",       nombre: "Roster",       url: "flota/operaciones/roster/",       estado: "activo", desc: "Días trabajados por conductor" }
     ]
   },
   {

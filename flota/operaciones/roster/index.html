@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roster de Conductores — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../../assets/theme.css">
+  <style>
+    .rosterbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+    .rosterbar .mes{font-family:'Space Grotesk';font-weight:600;font-size:1.1rem;color:var(--azul-d);min-width:170px;text-align:center}
+    .leg{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 16px;font-size:.8rem;color:var(--text-secondary)}
+    .leg span{display:inline-flex;align-items:center;gap:6px}
+    .leg i{width:14px;height:14px;border-radius:4px;display:inline-block}
+    .e-T{background:#d6f0e0;color:#12502d} .e-D{background:#eef1ee;color:#697269} .e-V{background:#dbe7f5;color:#0d3b66}
+    .e-F{background:#fbe0e0;color:#b02531} .e-R{background:#fbeede;color:#a96416}
+    .i-T{background:#1A6B3C}.i-D{background:#9aa39c}.i-V{background:#0d3b66}.i-F{background:#b02531}.i-R{background:#b9701a}
+    .rtable-wrap{overflow:auto;border:1px solid var(--border);border-radius:14px;background:#fff;max-height:70vh}
+    table.roster{border-collapse:collapse;font-size:.8rem}
+    table.roster th,table.roster td{border:1px solid var(--border);text-align:center;white-space:nowrap}
+    table.roster thead th{position:sticky;top:0;background:var(--bg-subtle);z-index:3;padding:6px 4px;font-weight:700;color:var(--text-muted)}
+    table.roster th.dow{font-size:.62rem;line-height:1.1;min-width:30px}
+    table.roster th.we,table.roster td.we{background:#f6f7f6}
+    table.roster td.name,table.roster th.name{position:sticky;left:0;background:#fff;z-index:2;text-align:left;padding:6px 12px;font-weight:600;min-width:190px;box-shadow:1px 0 0 var(--border)}
+    table.roster thead th.name{z-index:4;background:var(--bg-subtle)}
+    table.roster td.cnt{position:sticky;left:190px;background:#fff;z-index:2;font-weight:700;color:var(--verde-d);min-width:44px;box-shadow:1px 0 0 var(--border)}
+    table.roster thead th.cnt{z-index:4;background:var(--bg-subtle)}
+    .cell{width:30px;height:30px;cursor:pointer;user-select:none;font-weight:700}
+    .cell:hover{outline:2px solid var(--verde);outline-offset:-2px}
+  </style>
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Roster</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+
+  <div class="container">
+    <div class="page-head">
+      <div><h1>Roster de Conductores</h1><div class="page-sub" id="sub">Cargando…</div></div>
+      <button class="btn btn-ghost" id="btnExport">⬇ Descargar (Excel)</button>
+    </div>
+    <div class="rosterbar">
+      <button class="btn btn-ghost btn-sm" id="prev">← Mes anterior</button>
+      <span class="mes" id="mes">—</span>
+      <button class="btn btn-ghost btn-sm" id="next">Mes siguiente →</button>
+      <div class="spacer" style="flex:1"></div>
+      <span class="page-sub">Haz clic en un día para cambiar su estado.</span>
+    </div>
+    <div class="leg">
+      <span><i class="i-T"></i> Trabajó</span><span><i class="i-D"></i> Descanso</span>
+      <span><i class="i-V"></i> Vacaciones</span><span><i class="i-F"></i> Falta</span>
+      <span><i class="i-R"></i> En ruta</span><span><i style="background:#fff;border:1px solid var(--border-strong)"></i> Sin marcar</span>
+    </div>
+    <div class="rtable-wrap"><table class="roster" id="tabla"></table></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../../../assets/firebase-config.js"></script>
+  <script src="../../../assets/auth.js"></script>
+  <script src="../../../assets/seed-personal.js"></script>
+  <script>
+    var db=function(){return firebase.firestore();};
+    var ESTADOS=["","T","D","V","F","R"];
+    var LABEL={T:"Trabajó",D:"Descanso",V:"Vacaciones",F:"Falta",R:"En ruta"};
+    var hoy=new Date(), Y=hoy.getFullYear(), M=hoy.getMonth();
+    var CONDUCTORES=[], DATA={}; // DATA[dni+"_"+fecha]=estado
+    function pad(n){return (n<10?"0":"")+n;}
+    function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+
+    function conductoresSeed(){
+      var s=window.MISAGI_SEED_PERSONAL||[];
+      return s.filter(function(r){return /CONDUCTOR/i.test(String(r.cargo||"")+" "+String(r.departamento||""));})
+              .map(function(r){return {dni:String(r.dni),nombre:r.nombre};})
+              .sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
+    }
+
+    function nombreMes(){
+      var d=new Date(Y,M,1).toLocaleDateString('es-PE',{month:'long',year:'numeric'});
+      return d.charAt(0).toUpperCase()+d.slice(1);
+    }
+    function diasMes(){return new Date(Y,M+1,0).getDate();}
+    function fechaDe(d){return Y+"-"+pad(M+1)+"-"+pad(d);}
+
+    function pintar(){
+      document.getElementById("mes").textContent=nombreMes();
+      var nd=diasMes(), dows=["D","L","M","M","J","V","S"];
+      var head='<thead><tr><th class="name">Conductor</th><th class="cnt">Trab.</th>';
+      for(var d=1;d<=nd;d++){ var wd=new Date(Y,M,d).getDay(); var we=(wd===0||wd===6)?" we":""; head+='<th class="dow'+we+'">'+dows[wd]+'<br>'+d+'</th>'; }
+      head+='</tr></thead>';
+      var body='<tbody>';
+      CONDUCTORES.forEach(function(c){
+        var trab=0;
+        var row='<td class="name">'+esc(c.nombre)+'</td>';
+        var cells='';
+        for(var d=1;d<=nd;d++){
+          var f=fechaDe(d), key=c.dni+"_"+f, est=DATA[key]||"";
+          if(est==="T"||est==="R") trab++;
+          var wd=new Date(Y,M,d).getDay(); var we=(wd===0||wd===6)?" we":"";
+          cells+='<td class="cell'+we+(est?(" e-"+est):"")+'" data-dni="'+c.dni+'" data-f="'+f+'" data-nom="'+esc(c.nombre)+'">'+(est||"")+'</td>';
+        }
+        body+='<tr><td class="name">'+esc(c.nombre)+'</td><td class="cnt" id="cnt_'+c.dni+'">'+trab+'</td>'+cells+'</tr>';
+      });
+      body+='</tbody>';
+      document.getElementById("tabla").innerHTML=head+body;
+      document.getElementById("sub").textContent=CONDUCTORES.length+" conductor(es) · "+nombreMes();
+      document.querySelectorAll("#tabla .cell").forEach(function(td){ td.onclick=function(){ clic(td); }; });
+    }
+
+    function recuenta(dni){
+      var nd=diasMes(), t=0;
+      for(var d=1;d<=nd;d++){ var e=DATA[dni+"_"+fechaDe(d)]; if(e==="T"||e==="R") t++; }
+      var el=document.getElementById("cnt_"+dni); if(el) el.textContent=t;
+    }
+
+    function clic(td){
+      var dni=td.dataset.dni, f=td.dataset.f, nom=td.dataset.nom, key=dni+"_"+f;
+      var cur=DATA[key]||"", nx=ESTADOS[(ESTADOS.indexOf(cur)+1)%ESTADOS.length];
+      // visual inmediato
+      td.className="cell"+(td.classList.contains("we")?" we":"")+(nx?(" e-"+nx):""); td.textContent=nx||"";
+      DATA[key]=nx; recuenta(dni);
+      var ref=db().collection("roster").doc(key);
+      if(nx){ ref.set({modulo:"roster",dni:dni,nombre:nom,fecha:f,estado:nx},{merge:true}).catch(err); }
+      else { ref.delete().catch(err); }
+      function err(e){ document.getElementById("sub").textContent="No se pudo guardar (¿reglas publicadas?): "+e.message; }
+    }
+
+    function cargar(){
+      DATA={};
+      var ini=Y+"-"+pad(M+1)+"-01", fin=Y+"-"+pad(M+1)+"-"+pad(diasMes());
+      db().collection("roster").where("fecha",">=",ini).where("fecha","<=",fin).get().then(function(snap){
+        snap.forEach(function(doc){ var o=doc.data(); DATA[String(o.dni)+"_"+o.fecha]=o.estado; });
+        pintar();
+      }).catch(function(e){ pintar(); document.getElementById("sub").textContent="Aviso: no se pudo leer la base ("+e.message+"). Marca igual; se guardará al publicar reglas."; });
+    }
+
+    document.getElementById("prev").onclick=function(){ M--; if(M<0){M=11;Y--;} cargar(); };
+    document.getElementById("next").onclick=function(){ M++; if(M>11){M=0;Y++;} cargar(); };
+    document.getElementById("btnExport").onclick=function(){
+      var nd=diasMes(), head=["Conductor","Trabajados"]; for(var d=1;d<=nd;d++) head.push(d);
+      var rows=CONDUCTORES.map(function(c){
+        var t=0, arr=[c.nombre];
+        for(var d=1;d<=nd;d++){ var e=DATA[c.dni+"_"+fechaDe(d)]||""; if(e==="T"||e==="R")t++; }
+        arr.push(t);
+        for(var d2=1;d2<=nd;d2++){ arr.push(DATA[c.dni+"_"+fechaDe(d2)]||""); }
+        return arr.map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';}).join(";");
+      });
+      var csv="﻿"+head.join(";")+"\n"+rows.join("\n");
+      var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));
+      a.download="roster-"+Y+"-"+pad(M+1)+".csv"; a.click();
+    };
+
+    MISAGI.requireAccess("operaciones").then(function(s){
+      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+      CONDUCTORES=conductoresSeed();
+      cargar();
+    });
+  </script>
+</body>
+</html>

@@ -48,6 +48,13 @@ service cloud.firestore {
       allow read, write: if logueado() && request.auth.uid == uid;
     }
 
+    // ---- Roster de conductores: Operaciones escribe y ve todo; cada
+    // conductor lee SOLO sus propios días (por su DNI). ----
+    match /roster/{doc} {
+      allow read:  if tieneArea('operaciones') || (activo() && resource.data.dni == perfil().dni);
+      allow write: if tieneArea('operaciones');
+    }
+
     // ---- Colecciones por área (módulos futuros) ----
     match /operaciones/{doc}    { allow read, write: if tieneArea('operaciones'); }
     match /mantenimiento/{doc}  { allow read, write: if tieneArea('mantenimiento'); }

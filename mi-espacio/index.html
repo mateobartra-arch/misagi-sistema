@@ -85,6 +85,12 @@
   .cal .cell{aspect-ratio:1;border:1px solid var(--border);border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.82rem;color:var(--text);background:#fff}
   .cal .cell.empty{background:transparent;border:none}
   .cal .cell.work{background:var(--brand-soft);border-color:rgba(31,158,87,.3);color:var(--brand-d);font-weight:600}
+  .cal .cell.e-T{background:#d6f0e0;border-color:rgba(26,107,60,.3);color:#12502d;font-weight:600}
+  .cal .cell.e-D{background:#eef1ee;color:#697269}
+  .cal .cell.e-V{background:#dbe7f5;border-color:#bcd2ea;color:#0d3b66;font-weight:600}
+  .cal .cell.e-F{background:#fbe0e0;color:#b02531;font-weight:600}
+  .cal .cell.e-R{background:#fbeede;color:#a96416;font-weight:600}
+  .cal .cell .rlab{font-size:8px;margin-top:1px;line-height:1}
   .cal .cell .dot{font-size:9px;margin-top:2px;color:var(--brand-d)}
   /* form */
   .field{margin-bottom:14px}
@@ -229,11 +235,11 @@
       var dows=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
       var cells=dows.map(function(d){return '<div class="dow">'+d+'</div>';}).join("");
       for(var i=0;i<first;i++){cells+='<div class="cell empty"></div>';}
-      for(var d=1;d<=dias;d++){ cells+='<div class="cell"><span>'+d+'</span></div>'; }
+      for(var d=1;d<=dias;d++){ cells+='<div class="cell" id="me-rc-'+d+'"><span>'+d+'</span></div>'; }
       return ''+
       '<div class="pagehead"><h1>Roster · '+esc(mesNombre)+'</h1><div class="s">Los días que has trabajado este mes.</div></div>'+
       '<div class="panel"><div class="cal">'+cells+'</div>'+
-        '<div class="note">📌 Aún sin datos. El roster se conectará con el módulo de Operaciones, que controla la programación de conductores. Los días trabajados se marcarán en verde automáticamente.</div>'+
+        '<div class="leg-me" style="display:flex;gap:12px;flex-wrap:wrap;font-size:.72rem;color:var(--muted);margin-top:12px"><span>🟩 Trabajó/Ruta</span><span>⬜ Descanso</span><span>🟦 Vacaciones</span><span>🟥 Falta</span></div>'+'<div class="note">Lo marca Operaciones en el módulo de Roster. Si ves un día vacío, aún no se ha registrado.</div>'+
       '</div>';
     }
 
@@ -257,6 +263,19 @@
       '</div></div>';
     }
 
+    function pad2(n){return (n<10?"0":"")+n;}
+    function cargarRosterMe(){
+      if(!PERFIL.dni) return;
+      var now=new Date(), y=now.getFullYear(), m=now.getMonth();
+      db().collection("roster").where("dni","==",String(PERFIL.dni)).get().then(function(snap){
+        snap.forEach(function(doc){ var o=doc.data();
+          if(o.fecha && o.fecha.slice(0,7)===(y+"-"+pad2(m+1))){
+            var d=parseInt(o.fecha.slice(8,10),10); var cell=document.getElementById("me-rc-"+d);
+            if(cell){ cell.classList.add("e-"+o.estado); var lab=document.createElement("span"); lab.className="rlab"; lab.textContent=({T:"Trab.",D:"Desc.",V:"Vac.",F:"Falta",R:"Ruta"})[o.estado]||""; cell.appendChild(lab); }
+          }
+        });
+      }).catch(function(){});
+    }
     var VISTAS={inicio:vInicio,datos:vDatos,boletas:vBoletas,cts:vCts,roster:vRoster,vacaciones:vVacaciones};
 
     function mostrar(tab){
@@ -268,6 +287,7 @@
       document.querySelectorAll("[data-go]").forEach(function(b){b.onclick=function(){location.hash="#"+b.dataset.go;};});
       if(tab==="inicio"){ cargarSolicitudes("solList"); }
       if(tab==="datos"){ engancharCambio(); }
+      if(tab==="roster"){ cargarRosterMe(); }
       if(tab==="vacaciones"){ engancharVacaciones(); cargarSolicitudes("solList2"); }
     }
 
