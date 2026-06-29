@@ -82,9 +82,10 @@
       if(sel) document.querySelector('#form select[name=area]').value=sel;
     }
 
+    function byOrden(a,b){return (a.orden==null?9999:a.orden)-(b.orden==null?9999:b.orden) || (a.nombre||"").localeCompare(b.nombre||"");}
     function filtradas(){
       var q=(document.getElementById("buscar").value||"").toLowerCase().trim();
-      var arr=ENL.slice().sort(function(a,b){return (a.area+a.nombre).localeCompare(b.area+b.nombre);});
+      var arr=ENL.slice().sort(byOrden);
       if(!q) return arr;
       return arr.filter(function(d){return (String(d.nombre||"")+" "+areaLabel(d.area)).toLowerCase().indexOf(q)>=0;});
     }
@@ -97,9 +98,20 @@
         var cl=d.area==="todos"?"tag todos":"tag";
         return '<tr><td><strong>'+esc(d.nombre)+'</strong></td><td><span class="'+cl+'">'+esc(areaLabel(d.area))+'</span></td><td>'+esc(d.desc||"")+'</td>'+
           '<td><a class="lnk" href="'+esc(d.url)+'" target="_blank" rel="noopener noreferrer">abrir ↗</a></td>'+
-          '<td><div class="acts"><button class="btn btn-ghost btn-sm" data-e="'+d._id+'">Editar</button></div></td></tr>';
+          '<td><div class="acts"><button class="btn btn-ghost btn-sm" data-up="'+d._id+'" title="Subir">↑</button><button class="btn btn-ghost btn-sm" data-down="'+d._id+'" title="Bajar">↓</button><button class="btn btn-ghost btn-sm" data-e="'+d._id+'">Editar</button></div></td></tr>';
       }).join("");
       tb.querySelectorAll("[data-e]").forEach(function(b){b.onclick=function(){abrir(ENL.filter(function(x){return x._id===b.dataset.e;})[0]);};});
+      tb.querySelectorAll("[data-up]").forEach(function(b){b.onclick=function(){mover(b.dataset.up,-1);};});
+      tb.querySelectorAll("[data-down]").forEach(function(b){b.onclick=function(){mover(b.dataset.down,1);};});
+    }
+    function mover(id, dir){
+      var arr=ENL.slice().sort(byOrden);
+      var i=-1; arr.forEach(function(x,k){ if(x._id===id) i=k; });
+      var j=i+dir; if(i<0||j<0||j>=arr.length) return;
+      var it=arr.splice(i,1)[0]; arr.splice(j,0,it);
+      var batch=db().batch();
+      arr.forEach(function(x,k){ batch.update(db().collection("enlaces").doc(x._id),{orden:k}); });
+      batch.commit().then(cargar);
     }
     function cargar(){
       db().collection("enlaces").get().then(function(snap){
@@ -126,6 +138,7 @@
       var reg={ nombre:f.nombre.value.trim(), url:f.url.value.trim(), area:f.area.value, desc:f.desc.value.trim() };
       if(!/^https?:\/\//i.test(reg.url)){ err.textContent="La URL debe empezar con http:// o https://"; err.classList.remove("hidden"); return; }
       var btn=document.getElementById("btnGuardar"); btn.disabled=true; btn.textContent="Guardando…";
+      if(!f.dataset.id){ reg.orden = ENL.length; }
       var op = f.dataset.id ? db().collection("enlaces").doc(f.dataset.id).set(reg,{merge:true}) : db().collection("enlaces").add(reg);
       op.then(function(){ btn.disabled=false; btn.textContent="Guardar"; cerrar(); cargar(); })
         .catch(function(e){ err.textContent=e.message; err.classList.remove("hidden"); btn.disabled=false; btn.textContent="Guardar"; });
@@ -142,7 +155,7 @@
       if(!confirm("Se cargarán "+MISAGI_SEED_ENLACES.length+" enlaces. ¿Continuar?")) return;
       var btn=this; btn.disabled=true; btn.textContent="Importando…";
       var batch=db().batch();
-      MISAGI_SEED_ENLACES.forEach(function(r){ batch.set(db().collection("enlaces").doc(), {nombre:r.nombre,url:r.url,area:r.area,desc:r.desc||""}); });
+      MISAGI_SEED_ENLACES.forEach(function(r,i){ batch.set(db().collection("enlaces").doc(), {nombre:r.nombre,url:r.url,area:r.area,desc:r.desc||"",orden:i}); });
       batch.commit().then(function(){ btn.textContent="✓ Importado"; cargar(); })
         .catch(function(e){ alert("Error: "+e.message); btn.disabled=false; btn.textContent="Importar los 53"; });
     };

@@ -43,6 +43,11 @@ service cloud.firestore {
       allow write: if esAdmin();
     }
 
+    // ---- Preferencias personales de accesos directos (nombre/orden propio) ----
+    match /prefs_enlaces/{uid} {
+      allow read, write: if logueado() && request.auth.uid == uid;
+    }
+
     // ---- Colecciones por área (módulos futuros) ----
     match /operaciones/{doc}    { allow read, write: if tieneArea('operaciones'); }
     match /mantenimiento/{doc}  { allow read, write: if tieneArea('mantenimiento'); }

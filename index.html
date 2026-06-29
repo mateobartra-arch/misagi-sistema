@@ -311,27 +311,72 @@
        El admin ve todas. Edita esta lista para agregar/quitar enlaces. */
     var MISAGI_DRIVE = window.MISAGI_SEED_ENLACES || [];
     var DRIVE_ICON = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
-    function renderDrive(perfil){
-      firebase.firestore().collection("enlaces").get().then(function(snap){
-        var lista = snap.empty ? (window.MISAGI_SEED_ENLACES||[]) : snap.docs.map(function(d){return d.data();});
-        pintarDrive(perfil, lista);
-      }).catch(function(){ pintarDrive(perfil, window.MISAGI_SEED_ENLACES||[]); });
+    var REAL_UID=null, DRIVE_DRAG=null;
+    function escD(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+    function renderDrive(perfil, preview){
+      var fx=firebase.firestore();
+      var pE=fx.collection("enlaces").get().then(function(snap){
+        return snap.empty ? (window.MISAGI_SEED_ENLACES||[]).map(function(d,i){return {nombre:d.nombre,url:d.url,area:d.area,desc:d.desc,orden:i};})
+                          : snap.docs.map(function(d){return d.data();});
+      }).catch(function(){ return (window.MISAGI_SEED_ENLACES||[]).map(function(d,i){return {nombre:d.nombre,url:d.url,area:d.area,desc:d.desc,orden:i};}); });
+      var pP=(preview||!REAL_UID)?Promise.resolve({}):
+        fx.collection("prefs_enlaces").doc(REAL_UID).get().then(function(x){return x.exists?(x.data()||{}):{};}).catch(function(){return {};});
+      Promise.all([pE,pP]).then(function(r){ pintarDrive(perfil, r[0], r[1], !preview); });
     }
-    function pintarDrive(perfil, lista){
-      var vis = lista.filter(function(d){ return d.area==="todos" || MISAGI.esAdmin(perfil) || MISAGI.puedeVer(perfil, d.area); });
+    function pintarDrive(perfil, base, prefs, editable){
+      var pm={}; ((prefs&&prefs.lista)||[]).forEach(function(x){ pm[x.url]=x; });
+      var vis=base.filter(function(d){ return d.area==="todos" || MISAGI.esAdmin(perfil) || MISAGI.puedeVer(perfil, d.area); });
       if(!vis.length) return;
+      vis=vis.map(function(d,i){ var pr=pm[d.url]||{}; return {url:d.url,area:d.area,desc:d.desc,nombre:(pr.nombre||d.nombre),_o:(pr.orden!=null?pr.orden:(d.orden!=null?d.orden:i))}; })
+             .sort(function(a,b){ return a._o-b._o || a.nombre.localeCompare(b.nombre); });
       var sec=document.createElement("section"); sec.className="group-block";
-      sec.innerHTML='<div class="gh"><span class="gi">'+DRIVE_ICON+'</span><h2>Accesos directos · Drive</h2><span class="count">'+vis.length+'</span></div>';
-      var cards=document.createElement("div"); cards.className="cards";
+      sec.innerHTML='<div class="gh"><span class="gi">'+DRIVE_ICON+'</span><h2>Accesos directos · Drive</h2><span class="count">'+vis.length+'</span>'+
+        (editable?'<button id="orgBtn" type="button" style="margin-left:auto;background:#fff;border:1px solid #dfe3df;border-radius:9px;padding:6px 12px;font-size:.82rem;font-weight:600;cursor:pointer;color:#0D3B66">&#9998; Organizar</button>':'')+'</div>';
+      var cards=document.createElement("div"); cards.className="cards"; cards.id="driveCards";
       vis.forEach(function(d){
         var url=safeHref(d.url); if(!url) return;
         var a=document.createElement("a"); a.className="app-card"; a.href=url; a.target="_blank"; a.rel="noopener noreferrer";
-        a.setAttribute("data-name",(d.nombre||"").toLowerCase());
-        a.innerHTML='<span class="ai">'+DRIVE_ICON+'</span><span class="an">'+d.nombre+'</span><span class="ad">'+(d.desc||"Carpeta de Drive")+'</span><span class="go">Abrir &#8599;</span>';
+        a.setAttribute("data-name",(d.nombre||"").toLowerCase()); a.setAttribute("data-url", d.url);
+        a.innerHTML='<span class="ai">'+DRIVE_ICON+'</span><span class="an">'+escD(d.nombre)+'</span><span class="ad">'+escD(d.desc||"Carpeta de Drive")+'</span><span class="go">Abrir &#8599;</span>';
         cards.appendChild(a);
       });
       sec.appendChild(cards);
       document.getElementById("menu").appendChild(sec);
+      if(editable){ var b=document.getElementById("orgBtn"); if(b) b.onclick=function(){ toggleOrg(b); }; }
+    }
+    function prevClick(e){ e.preventDefault(); }
+    function toggleOrg(btn){
+      var cont=document.getElementById("driveCards"); if(!cont) return;
+      var on=btn.dataset.on==="1"; on=!on; btn.dataset.on=on?"1":""; btn.innerHTML=on?"&#10003; Listo":"&#9998; Organizar";
+      cont.querySelectorAll(".app-card").forEach(function(c){
+        if(on){
+          c.setAttribute("draggable","true"); c.style.cursor="grab"; c.style.position="relative";
+          if(c.getAttribute("href")){ c.dataset.href=c.getAttribute("href"); c.removeAttribute("href"); }
+          c.addEventListener("click", prevClick);
+          if(!c.querySelector(".org-ren")){
+            var t=document.createElement("button"); t.type="button"; t.className="org-ren"; t.innerHTML="&#9998;"; t.title="Renombrar";
+            t.style.cssText="position:absolute;top:8px;right:8px;border:none;background:#eef2f0;border-radius:7px;width:26px;height:26px;cursor:pointer;z-index:2";
+            t.onclick=function(ev){ ev.preventDefault(); ev.stopPropagation(); var sp=c.querySelector(".an"); var nv=prompt("Nuevo nombre:", sp.textContent); if(nv && nv.trim()) sp.textContent=nv.trim(); };
+            c.appendChild(t);
+          }
+          c.ondragstart=function(){ DRIVE_DRAG=c; setTimeout(function(){c.style.opacity=".4";},0); };
+          c.ondragend=function(){ c.style.opacity=""; DRIVE_DRAG=null; };
+          c.ondragover=function(e){ e.preventDefault(); if(!DRIVE_DRAG||DRIVE_DRAG===c) return; var box=c.getBoundingClientRect(); var before=e.clientY<box.top+box.height/2; cont.insertBefore(DRIVE_DRAG, before?c:c.nextSibling); };
+        } else {
+          c.removeAttribute("draggable"); c.style.cursor=""; c.removeEventListener("click", prevClick);
+          if(c.dataset.href){ c.setAttribute("href", c.dataset.href); }
+          var t=c.querySelector(".org-ren"); if(t) t.remove();
+          c.ondragstart=c.ondragend=c.ondragover=null;
+        }
+      });
+      if(!on) guardarPrefs(cont);
+    }
+    function guardarPrefs(cont){
+      if(!REAL_UID) return;
+      var lista=[].slice.call(cont.querySelectorAll(".app-card")).map(function(c,i){
+        return { url:c.getAttribute("data-url"), nombre:(c.querySelector(".an")?c.querySelector(".an").textContent:""), orden:i };
+      });
+      firebase.firestore().collection("prefs_enlaces").doc(REAL_UID).set({lista:lista}).catch(function(){});
     }
 
     function initials(name){return (name||"").trim().split(/\s+/).slice(0,2).map(function(w){return w.charAt(0).toUpperCase();}).join("")||"–";}
@@ -384,11 +429,12 @@
       var primer=((perfil && perfil.nombre) || "Usuario").split(" ")[0];
       document.getElementById("helloName").textContent = preview ? ("Vista de " + nombrePreview) : ("Hola, " + primer + " 👋");
       var banner=document.getElementById("verComoBanner"); if(banner) banner.style.display = preview ? "flex" : "none";
-      renderMenu(perfil); renderSidebar(perfil); renderSideLinks(perfil); renderDrive(perfil);
+      renderMenu(perfil); renderSidebar(perfil); renderSideLinks(perfil); renderDrive(perfil, preview);
     }
     MISAGI.onUser(function (sesion) {
       var bt=document.getElementById("booting"); if(bt) bt.style.display="none";
       if (sesion && sesion.perfil) {
+        REAL_UID = sesion.user.uid;
         var nombre = sesion.perfil.nombre || sesion.user.email;
         document.getElementById("userName").textContent = nombre;
         document.getElementById("userAvatar").textContent = initials(nombre);
