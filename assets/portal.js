@@ -35,7 +35,8 @@ const MISAGI_MODULOS = [
   {
     area: "admin", grupo: "Administración", ik: "lock",
     apps: [
-      { id: "admin.accesos", nombre: "Accesos del personal", url: "admin/accesos/", estado: "activo", desc: "Crear y gestionar los logins del equipo" }
+      { id: "admin.accesos", nombre: "Accesos del personal", url: "admin/accesos/", estado: "activo", desc: "Crear y gestionar los logins del equipo" },
+      { id: "admin.enlaces", nombre: "Accesos directos (Drive)", url: "admin/enlaces/", estado: "activo", desc: "Gestionar enlaces y quién los ve" }
     ]
   },
   {

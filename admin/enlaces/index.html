@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accesos directos (Drive) — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../assets/theme.css">
+  <style>
+    .tag{background:var(--azul-l);color:var(--azul-d);font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap}
+    .tag.todos{background:var(--verde-l);color:var(--verde-d)}
+    .acts{display:flex;gap:6px;justify-content:flex-end;white-space:nowrap}
+    .lnk{color:var(--azul);font-weight:600;font-size:.82rem;text-decoration:underline;word-break:break-all}
+    .imp-bar{display:flex;align-items:center;gap:10px;background:var(--verde-l);border:1px solid rgba(26,107,60,.25);border-radius:12px;padding:12px 14px;margin-bottom:16px}
+    .imp-bar .t{flex:1;font-size:.86rem;color:var(--verde-d)}
+  </style>
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Accesos directos</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+
+  <div class="container">
+    <div class="page-head">
+      <div><h1>Accesos directos (Drive)</h1><div class="page-sub" id="sub">Cargando…</div></div>
+      <button class="btn btn-primary" id="btnNuevo">+ Nuevo enlace</button>
+    </div>
+
+    <div class="imp-bar hidden" id="impBar">
+      <div class="t">La lista está vacía. ¿Cargar los 53 enlaces del Excel?</div>
+      <button class="btn btn-primary btn-sm" id="btnImportar">Importar los 53</button>
+    </div>
+
+    <div class="toolbar"><input type="search" id="buscar" placeholder="Buscar por nombre, área…"></div>
+    <div class="table-wrap">
+      <table id="tabla"><thead><tr>
+        <th>Nombre</th><th>Quién lo ve (área)</th><th>Tipo</th><th>Enlace</th><th></th>
+      </tr></thead><tbody></tbody></table>
+    </div>
+    <p class="side-note" style="margin-top:14px">El “área” decide quién ve el enlace en su portal. Usa <strong>Todos</strong> para que lo vea cualquiera con sesión. Tú (admin) siempre ves todos.</p>
+  </div>
+
+  <div id="modal" class="modal-overlay hidden">
+    <div class="modal-box" style="max-width:520px">
+      <div class="modal-head"><h3 id="modalTit">Nuevo enlace</h3><button class="modal-x" id="modalX">✕</button></div>
+      <form id="form">
+        <div class="field"><label>Nombre *</label><input name="nombre" required placeholder="Ej. Documentos RRHH"></div>
+        <div class="field"><label>URL *</label><input name="url" type="url" required placeholder="https://drive.google.com/..."></div>
+        <div class="field"><label>Quién lo ve (área) *</label><select name="area" required></select></div>
+        <div class="field"><label>Descripción (opcional)</label><input name="desc" placeholder="Ej. Carpeta de Drive"></div>
+        <div id="formErr" class="msg-alert error hidden"></div>
+        <div style="display:flex;gap:10px;justify-content:space-between;margin-top:6px">
+          <button type="button" class="btn btn-danger hidden" id="btnBorrar">Borrar</button>
+          <div style="display:flex;gap:10px;margin-left:auto">
+            <button type="button" class="btn btn-ghost" id="cancelar">Cancelar</button>
+            <button type="submit" class="btn btn-primary" id="btnGuardar">Guardar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../../assets/firebase-config.js"></script>
+  <script src="../../assets/auth.js"></script>
+  <script src="../../assets/seed-enlaces.js"></script>
+  <script>
+    var db=function(){return firebase.firestore();};
+    var ENL=[], sesion=null;
+    function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+    function areaLabel(a){ if(a==="todos") return "Todos"; return (MISAGI.AREAS[a]&&MISAGI.AREAS[a].label)||a; }
+
+    function opcionesArea(sel){
+      var ops='<option value="todos">Todos (cualquiera con sesión)</option>';
+      Object.keys(MISAGI.AREAS).forEach(function(k){ ops+='<option value="'+k+'"'+(sel===k?" selected":"")+'>'+esc(MISAGI.AREAS[k].label)+'</option>'; });
+      document.querySelector('#form select[name=area]').innerHTML=ops;
+      if(sel) document.querySelector('#form select[name=area]').value=sel;
+    }
+
+    function filtradas(){
+      var q=(document.getElementById("buscar").value||"").toLowerCase().trim();
+      var arr=ENL.slice().sort(function(a,b){return (a.area+a.nombre).localeCompare(b.area+b.nombre);});
+      if(!q) return arr;
+      return arr.filter(function(d){return (String(d.nombre||"")+" "+areaLabel(d.area)).toLowerCase().indexOf(q)>=0;});
+    }
+    function pintar(){
+      var tb=document.querySelector("#tabla tbody"); var f=filtradas();
+      document.getElementById("sub").textContent=ENL.length+" enlace(s)";
+      document.getElementById("impBar").classList.toggle("hidden", ENL.length>0);
+      if(!f.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px">Sin enlaces. Usa “+ Nuevo enlace” o importa los 53.</td></tr>';return;}
+      tb.innerHTML=f.map(function(d){
+        var cl=d.area==="todos"?"tag todos":"tag";
+        return '<tr><td><strong>'+esc(d.nombre)+'</strong></td><td><span class="'+cl+'">'+esc(areaLabel(d.area))+'</span></td><td>'+esc(d.desc||"")+'</td>'+
+          '<td><a class="lnk" href="'+esc(d.url)+'" target="_blank" rel="noopener noreferrer">abrir ↗</a></td>'+
+          '<td><div class="acts"><button class="btn btn-ghost btn-sm" data-e="'+d._id+'">Editar</button></div></td></tr>';
+      }).join("");
+      tb.querySelectorAll("[data-e]").forEach(function(b){b.onclick=function(){abrir(ENL.filter(function(x){return x._id===b.dataset.e;})[0]);};});
+    }
+    function cargar(){
+      db().collection("enlaces").get().then(function(snap){
+        ENL=snap.docs.map(function(doc){var o=doc.data();o._id=doc.id;return o;});
+        pintar();
+      }).catch(function(e){ document.getElementById("sub").textContent="Error: "+e.message; });
+    }
+
+    function abrir(reg){
+      var f=document.getElementById("form"); f.reset();
+      document.getElementById("formErr").classList.add("hidden");
+      var editar=!!reg; f.dataset.id=editar?reg._id:"";
+      document.getElementById("modalTit").textContent=editar?"Editar enlace":"Nuevo enlace";
+      document.getElementById("btnBorrar").classList.toggle("hidden", !editar);
+      opcionesArea(editar?reg.area:"todos");
+      if(editar){ f.nombre.value=reg.nombre||""; f.url.value=reg.url||""; f.desc.value=reg.desc||""; }
+      document.getElementById("modal").classList.remove("hidden");
+    }
+    function cerrar(){document.getElementById("modal").classList.add("hidden");}
+
+    document.getElementById("form").addEventListener("submit",function(e){
+      e.preventDefault();
+      var f=e.target, err=document.getElementById("formErr"); err.classList.add("hidden");
+      var reg={ nombre:f.nombre.value.trim(), url:f.url.value.trim(), area:f.area.value, desc:f.desc.value.trim() };
+      if(!/^https?:\/\//i.test(reg.url)){ err.textContent="La URL debe empezar con http:// o https://"; err.classList.remove("hidden"); return; }
+      var btn=document.getElementById("btnGuardar"); btn.disabled=true; btn.textContent="Guardando…";
+      var op = f.dataset.id ? db().collection("enlaces").doc(f.dataset.id).set(reg,{merge:true}) : db().collection("enlaces").add(reg);
+      op.then(function(){ btn.disabled=false; btn.textContent="Guardar"; cerrar(); cargar(); })
+        .catch(function(e){ err.textContent=e.message; err.classList.remove("hidden"); btn.disabled=false; btn.textContent="Guardar"; });
+    });
+
+    document.getElementById("btnBorrar").onclick=function(){
+      var id=document.getElementById("form").dataset.id; if(!id) return;
+      if(!confirm("¿Borrar este enlace?")) return;
+      db().collection("enlaces").doc(id).delete().then(function(){ cerrar(); cargar(); });
+    };
+
+    document.getElementById("btnImportar").onclick=function(){
+      if(!window.MISAGI_SEED_ENLACES){ alert("No se encontró el catálogo inicial."); return; }
+      if(!confirm("Se cargarán "+MISAGI_SEED_ENLACES.length+" enlaces. ¿Continuar?")) return;
+      var btn=this; btn.disabled=true; btn.textContent="Importando…";
+      var batch=db().batch();
+      MISAGI_SEED_ENLACES.forEach(function(r){ batch.set(db().collection("enlaces").doc(), {nombre:r.nombre,url:r.url,area:r.area,desc:r.desc||""}); });
+      batch.commit().then(function(){ btn.textContent="✓ Importado"; cargar(); })
+        .catch(function(e){ alert("Error: "+e.message); btn.disabled=false; btn.textContent="Importar los 53"; });
+    };
+
+    document.getElementById("btnNuevo").onclick=function(){abrir(null);};
+    document.getElementById("buscar").oninput=pintar;
+    document.getElementById("modalX").onclick=cerrar;
+    document.getElementById("cancelar").onclick=cerrar;
+
+    MISAGI.requireAccess("admin").then(function(s){
+      sesion=s;
+      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+      cargar();
+    });
+  </script>
+</body>
+</html>

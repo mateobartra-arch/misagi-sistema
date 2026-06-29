@@ -36,6 +36,13 @@ service cloud.firestore {
       allow update, delete: if esAdmin();
     }
 
+    // ---- Accesos directos (enlaces de Drive): todos los logueados leen;
+    // solo el admin agrega/edita/borra. El filtro por área es en el cliente. ----
+    match /enlaces/{doc} {
+      allow read:  if logueado();
+      allow write: if esAdmin();
+    }
+
     // ---- Colecciones por área (módulos futuros) ----
     match /operaciones/{doc}    { allow read, write: if tieneArea('operaciones'); }
     match /mantenimiento/{doc}  { allow read, write: if tieneArea('mantenimiento'); }
