@@ -162,7 +162,7 @@
 
 
   <!-- ===================== LOGIN ===================== -->
-  <div id="login" class="stage">
+  <div id="login" class="stage hidden">
     <div class="bg" aria-hidden="true"></div>
     <div class="scrim" aria-hidden="true"></div>
     
@@ -230,6 +230,10 @@
         </div>
       </header>
       <main class="content" id="top">
+        <div id="verComoBanner" style="display:none;align-items:center;gap:12px;background:#fff7e6;border:1px solid #f0d089;color:#8a5310;padding:11px 16px;border-radius:12px;margin-bottom:18px;font-size:.9rem;font-weight:600">
+          <span>👁 Vista previa: estás viendo el portal como otro usuario.</span>
+          <a href="index.html" style="margin-left:auto;background:#8a5310;color:#fff;padding:7px 13px;border-radius:8px;font-size:.85rem;text-decoration:none">Volver a mi vista</a>
+        </div>
         <section class="hero-greet">
           <div class="eyb">Portal de gestión · MISAGI S.A.C.</div>
           <h1 id="helloName">Hola</h1>
@@ -376,22 +380,31 @@
     document.getElementById("logoutBtn").addEventListener("click", function () { MISAGI.logout(); });
 
     /* ---- estado de sesión ---- */
+    function pintarPortalCon(perfil, preview, nombrePreview){
+      var primer=((perfil && perfil.nombre) || "Usuario").split(" ")[0];
+      document.getElementById("helloName").textContent = preview ? ("Vista de " + nombrePreview) : ("Hola, " + primer + " 👋");
+      var banner=document.getElementById("verComoBanner"); if(banner) banner.style.display = preview ? "flex" : "none";
+      renderMenu(perfil); renderSidebar(perfil); renderSideLinks(perfil); renderDrive(perfil);
+    }
     MISAGI.onUser(function (sesion) {
       var bt=document.getElementById("booting"); if(bt) bt.style.display="none";
       if (sesion && sesion.perfil) {
         var nombre = sesion.perfil.nombre || sesion.user.email;
-        var primer = (nombre || "").split(" ")[0];
         document.getElementById("userName").textContent = nombre;
         document.getElementById("userAvatar").textContent = initials(nombre);
-        document.getElementById("helloName").textContent = "Hola, " + primer + " 👋";
         var esAdmin = MISAGI.esAdmin(sesion.perfil);
         document.getElementById("userRole").textContent = esAdmin ? "Administrador" : (sesion.perfil.tipo || "Usuario");
-        renderMenu(sesion.perfil);
-        renderSidebar(sesion.perfil);
-        renderSideLinks(sesion.perfil);
-        renderDrive(sesion.perfil);
         tick(); if(!window.__msgClock){ window.__msgClock=setInterval(tick,30000); }
         $login.classList.add("hidden"); $portal.classList.remove("hidden");
+        var verUid = esAdmin ? new URLSearchParams(location.search).get("vercomo") : null;
+        if (verUid) {
+          MISAGI.fetchPerfil(verUid).then(function(p){
+            if(p){ pintarPortalCon(p, true, p.nombre || verUid); }
+            else { pintarPortalCon(sesion.perfil, false, null); }
+          }).catch(function(){ pintarPortalCon(sesion.perfil, false, null); });
+        } else {
+          pintarPortalCon(sesion.perfil, false, null);
+        }
       } else {
         $portal.classList.add("hidden"); $login.classList.remove("hidden");
       }

@@ -156,7 +156,7 @@
       tb.innerHTML=f.map(function(d){
         var est=d.activo===false?'<span class="st off">Inactiva</span>':'<span class="st on">Activa</span>';
         return '<tr><td><strong>'+esc(d.nombre)+'</strong></td><td>'+esc(d.dni||"—")+'</td><td>'+esc(d.email)+'</td><td>'+esc(d.tipo||"")+'</td><td>'+resumenAcceso(d)+'</td><td>'+est+'</td>'+
-          '<td><div class="acts"><button class="btn btn-ghost btn-sm" data-e="'+d._id+'">Editar</button>'+
+          '<td><div class="acts"><a class="btn btn-ghost btn-sm" href="../../index.html?vercomo='+d._id+'">Ver portal</a><button class="btn btn-ghost btn-sm" data-e="'+d._id+'">Editar</button>'+
           '<button class="btn btn-ghost btn-sm" data-t="'+d._id+'">'+(d.activo===false?"Activar":"Desactivar")+'</button>'+
           '<button class="btn btn-ghost btn-sm" data-r="'+esc(d.email)+'">Reset clave</button></div></td></tr>';
       }).join("");
