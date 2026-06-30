@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GNL · Meta y Bono — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../../assets/theme.css">
+  <style>
+    .topbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+    .topbar select{padding:9px 12px;border:1px solid var(--border-strong);border-radius:10px;font-family:inherit;font-size:.95rem}
+    .metanote{font-size:.85rem;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:8px 13px}
+    .metanote b{color:var(--azul-d)}
+    .kpis-reg{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px}
+    .units{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:20px}
+    .ucard{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:18px}
+    .ucard .pl{font-family:'Space Grotesk';font-weight:700;font-size:1.1rem;color:var(--azul-d)}
+    .ucard .kg{font-size:.85rem;color:var(--text-secondary);margin:2px 0 12px}
+    .bar{height:12px;border-radius:8px;background:#eef1ee;overflow:hidden}
+    .bar>span{display:block;height:100%;background:var(--verde);transition:width .4s}
+    .bar.r>span{background:var(--amber)} .bar.bad>span{background:var(--danger)}
+    .ucard .foot{display:flex;justify-content:space-between;align-items:center;margin-top:9px;font-size:.82rem}
+    .badge{font-size:.72rem;font-weight:800;padding:4px 11px;border-radius:20px}
+    .badge.ok{background:var(--verde-l);color:var(--verde-d)} .badge.no{background:var(--amber-l);color:var(--amber)}
+    canvas{max-height:300px}
+  </style>
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · GNL Meta</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../gnl/">+ Registrar GNL</a>
+    <a class="btn btn-ghost btn-sm" href="../../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" id="app" style="display:none">
+    <div class="page-head"><div><h1>GNL · Meta y Bono</h1><div class="page-sub" id="sub">Cargando…</div></div></div>
+    <div class="topbar">
+      <select id="mes"></select>
+      <span class="metanote">Meta: <b id="metaTxt">2 000 kg</b> por unidad al mes</span>
+    </div>
+    <div class="kpis-reg">
+      <div class="kpi-card"><div class="kpi-v" id="kKg">—</div><div class="kpi-l">Kg del mes (total)</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kCumplen" style="color:var(--verde-d)">—</div><div class="kpi-l">Unidades que cumplen</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kFalta" style="color:var(--amber)">—</div><div class="kpi-l">Kg faltantes (total)</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kCosto">—</div><div class="kpi-l">Costo del mes</div></div>
+    </div>
+    <div class="units" id="units"></div>
+    <div class="card"><h3 style="margin-bottom:12px;color:var(--azul-d)">Kg por unidad vs meta</h3><canvas id="chart"></canvas></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="../../../assets/firebase-config.js"></script>
+  <script src="../../../assets/auth.js"></script>
+  <script>
+    var db=function(){return firebase.firestore();};
+    var META=2000, DATA=[], chart=null;
+    function num(v){var n=parseFloat(v);return isNaN(n)?0:n;}
+    function money(n){return "S/ "+(Number(n||0)).toLocaleString('es-PE',{maximumFractionDigits:2});}
+    function fmt(n){return (Number(n||0)).toLocaleString('es-PE',{maximumFractionDigits:0});}
+
+    function meses(){ var m={}; DATA.forEach(function(r){var k=(r.fecha||"").slice(0,7); if(k)m[k]=1;}); return Object.keys(m).sort().reverse(); }
+    function render(){
+      var mes=document.getElementById("mes").value;
+      var f=DATA.filter(function(r){return (r.fecha||"").slice(0,7)===mes;});
+      var byP={}; f.forEach(function(r){ var p=r.placa||"(s/placa)"; var o=byP[p]||(byP[p]={kg:0,cos:0}); o.kg+=num(r.kg); o.cos+=num(r.costo); });
+      var placas=Object.keys(byP).sort();
+      var totalKg=0,totalCos=0,cumplen=0,falta=0;
+      placas.forEach(function(p){ var o=byP[p]; totalKg+=o.kg; totalCos+=o.cos; if(o.kg>=META) cumplen++; else falta+=(META-o.kg); });
+      document.getElementById("kKg").textContent=fmt(totalKg)+" kg";
+      document.getElementById("kCumplen").textContent=cumplen+" / "+placas.length;
+      document.getElementById("kFalta").textContent=fmt(falta)+" kg";
+      document.getElementById("kCosto").textContent=money(totalCos);
+      document.getElementById("sub").textContent=placas.length+" unidad(es) GNL · "+mes;
+      // tarjetas por unidad
+      document.getElementById("units").innerHTML = placas.length ? placas.map(function(p){ var o=byP[p]; var pct=Math.min(100,Math.round(o.kg/META*100)); var ok=o.kg>=META; var cls=ok?"":(pct>=60?"r":"bad");
+        return '<div class="ucard"><div class="pl">'+p+'</div><div class="kg">'+fmt(o.kg)+' kg de '+fmt(META)+' kg</div>'+
+          '<div class="bar '+cls+'"><span style="width:'+pct+'%"></span></div>'+
+          '<div class="foot"><span>'+pct+'%</span><span class="badge '+(ok?'ok':'no')+'">'+(ok?'✓ Bono':'Faltan '+fmt(META-o.kg)+' kg')+'</span></div></div>';
+      }).join("") : '<p class="side-note">Sin registros GNL en '+mes+'.</p>';
+      // gráfico
+      var datos=placas.map(function(p){return Math.round(byP[p].kg);});
+      var colores=placas.map(function(p){return byP[p].kg>=META?'#1A6B3C':'#a96416';});
+      if(chart) chart.destroy();
+      chart=new Chart(document.getElementById("chart"),{ type:'bar',
+        data:{labels:placas, datasets:[
+          {label:'Kg', data:datos, backgroundColor:colores, order:2},
+          {label:'Meta', type:'line', data:placas.map(function(){return META;}), borderColor:'#b02531', borderDash:[6,4], pointRadius:0, order:1}
+        ]},
+        options:{plugins:{legend:{display:true}}, scales:{y:{beginAtZero:true}}}
+      });
+    }
+    function cargar(){
+      db().collection("operaciones").where("modulo","==","gnl").get().then(function(snap){
+        DATA=snap.docs.map(function(d){return d.data();});
+        var ms=meses(); if(!ms.length){ ms=[new Date().toISOString().slice(0,7)]; }
+        document.getElementById("mes").innerHTML=ms.map(function(m){return '<option>'+m+'</option>';}).join("");
+        render();
+      }).catch(function(e){ document.getElementById("sub").textContent="Error: "+e.message; });
+    }
+    document.getElementById("mes").addEventListener("change",render);
+    MISAGI.requireAccess("operaciones").then(function(s){
+      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+      document.getElementById("app").style.display="";
+      cargar();
+    });
+  </script>
+</body>
+</html>

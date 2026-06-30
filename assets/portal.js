@@ -49,6 +49,8 @@ const MISAGI_MODULOS = [
       { id: "operaciones.roster",       nombre: "Roster",       url: "flota/operaciones/roster/",       estado: "activo", desc: "Días trabajados por conductor" },
       { id: "operaciones.combustible",  nombre: "Combustible",  url: "flota/operaciones/combustible/",  estado: "activo", desc: "Control de combustible por unidad" },
       { id: "operaciones.combustible_dash", nombre: "Consumo combustible", url: "flota/operaciones/combustible-consumo/", estado: "activo", desc: "Dashboard de consumo con filtros" },
+      { id: "operaciones.gnl",          nombre: "GNL (gas)",    url: "flota/operaciones/gnl/",          estado: "activo", desc: "Abastecimiento de gas natural (GNL)" },
+      { id: "operaciones.gnl_meta",     nombre: "GNL · Meta/Bono", url: "flota/operaciones/gnl-meta/",   estado: "activo", desc: "Meta mensual de gas (2000 kg) y bono" },
       { id: "operaciones.lavado",       nombre: "Lavado y engrase", url: "flota/operaciones/lavado/",    estado: "activo", desc: "Registro de lavado y engrase" },
       { id: "operaciones.checklist",    nombre: "Check list",   url: "flota/operaciones/checklist/",    estado: "activo", desc: "Check list de conductores por cliente" },
       { id: "operaciones.documentos",   nombre: "Gestión documentaria", url: "documentos/", estado: "activo", desc: "Documentos y vencimientos de unidades/conductores" },

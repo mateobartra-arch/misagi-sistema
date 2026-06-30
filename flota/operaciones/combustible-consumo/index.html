@@ -8,12 +8,23 @@
   <link rel="stylesheet" href="../../../assets/theme.css">
   <style>
     .filtros{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:18px}
-    .filtros .f label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);margin-bottom:5px}
+    .filtros .f label{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);margin-bottom:5px}
     .filtros input,.filtros select{padding:8px 11px;border:1px solid var(--border-strong);border-radius:9px;font-family:inherit;font-size:.9rem}
     .chips{display:flex;gap:6px;flex-wrap:wrap}
     .chip{border:1px solid var(--border-strong);background:#fff;border-radius:999px;padding:5px 12px;font-size:.8rem;font-weight:600;color:var(--text-muted);cursor:pointer}
     .chip.on{background:var(--azul-d);color:#fff;border-color:var(--azul-d)}
-    canvas{max-height:300px}
+    .kpis6{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:14px;margin-bottom:20px}
+    .kpi-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:16px 18px}
+    .kpi-v{font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:var(--azul-d);line-height:1}
+    .kpi-l{font-size:.74rem;color:var(--text-muted);margin-top:7px;text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+    .charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+    @media(max-width:820px){.charts{grid-template-columns:1fr}}
+    .cbox{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:18px}
+    .cbox h3{font-size:.92rem;color:var(--azul-d);margin-bottom:12px}
+    canvas{max-height:280px}
+    .cols2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media(max-width:820px){.cols2{grid-template-columns:1fr}}
+    h2.sec{font-size:1rem;color:var(--azul-d);margin:6px 0 10px}
   </style>
 </head>
 <body>
@@ -21,6 +32,7 @@
     <a class="brand" href="../../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Consumo</a>
     <div class="spacer"></div>
     <a class="btn btn-ghost btn-sm" href="../combustible/">+ Registrar carga</a>
+    <button class="btn btn-ghost btn-sm" id="btnExp">⬇ Excel</button>
     <a class="btn btn-ghost btn-sm" href="../../../index.html">← Portal</a>
     <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
   </header>
@@ -30,24 +42,34 @@
     <div class="filtros">
       <div class="f"><label>Desde</label><input type="date" id="fDesde"></div>
       <div class="f"><label>Hasta</label><input type="date" id="fHasta"></div>
-      <div class="f"><label>Placa</label><select id="fPlaca"><option value="">Todas</option></select></div>
+      <div class="f"><label>Unidad</label><select id="fPlaca"><option value="">Todas</option></select></div>
+      <div class="f"><label>Conductor</label><select id="fCond"><option value="">Todos</option></select></div>
+      <div class="f"><label>Producto</label><select id="fProd"><option value="todos">Todos</option><option value="diesel">Solo diésel</option><option value="urea">Solo urea</option></select></div>
       <div class="f"><label>Rango rápido</label><div class="chips" id="rangos">
-        <span class="chip" data-r="30">30 días</span><span class="chip" data-r="90">90 días</span><span class="chip" data-r="mes">Este mes</span><span class="chip on" data-r="todo">Todo</span>
+        <span class="chip" data-r="30">30 d</span><span class="chip" data-r="90">90 d</span><span class="chip" data-r="mes">Este mes</span><span class="chip on" data-r="todo">Todo</span>
       </div></div>
     </div>
 
-    <div class="kpis-reg">
+    <div class="kpis6">
       <div class="kpi-card"><div class="kpi-v" id="kGal">—</div><div class="kpi-l">Galones</div></div>
       <div class="kpi-card"><div class="kpi-v" id="kCosto">—</div><div class="kpi-l">Costo total</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kPrecio">—</div><div class="kpi-l">Precio prom. S//gal</div></div>
       <div class="kpi-card"><div class="kpi-v" id="kCargas">—</div><div class="kpi-l">N° de cargas</div></div>
-      <div class="kpi-card"><div class="kpi-v" id="kRend">—</div><div class="kpi-l">Rendimiento km/gal</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kGalCarga">—</div><div class="kpi-l">Galones / carga</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kCostoCarga">—</div><div class="kpi-l">Costo / carga</div></div>
     </div>
 
-    <div class="card" style="margin-bottom:18px"><h3 style="margin-bottom:12px;color:var(--azul-d)">Galones por mes</h3><canvas id="chart"></canvas></div>
+    <div class="charts">
+      <div class="cbox"><h3>Galones y costo por mes</h3><canvas id="cMes"></canvas></div>
+      <div class="cbox"><h3>Top unidades por galones</h3><canvas id="cPlaca"></canvas></div>
+      <div class="cbox"><h3>Precio promedio del diésel por mes (S//gal)</h3><canvas id="cPrecio"></canvas></div>
+      <div class="cbox"><h3>Distribución de galones por unidad</h3><canvas id="cDist"></canvas></div>
+    </div>
 
-    <div class="table-wrap"><table id="tabla"><thead><tr>
-      <th>Placa</th><th>Cargas</th><th>Galones</th><th>Costo (S/)</th><th>Km recorridos</th><th>Rend. km/gal</th><th>Costo/km</th>
-    </tr></thead><tbody></tbody></table></div>
+    <div class="cols2">
+      <div><h2 class="sec">Por unidad</h2><div class="table-wrap"><table id="tPlaca"><thead><tr><th>Unidad</th><th>Cargas</th><th>Galones</th><th>% gal</th><th>Costo</th><th>S//gal</th></tr></thead><tbody></tbody></table></div></div>
+      <div><h2 class="sec">Por conductor</h2><div class="table-wrap"><table id="tCond"><thead><tr><th>Conductor</th><th>Cargas</th><th>Galones</th><th>Costo</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -58,45 +80,86 @@
   <script src="../../../assets/auth.js"></script>
   <script>
     var db=function(){return firebase.firestore();};
-    var DATA=[], chart=null;
+    var DATA=[], CH={};
+    var PAL=['#1f5fa8','#1A6B3C','#a96416','#6a3fa0','#b02531','#0e6b87','#8a5310','#2f8052','#c5362f','#356bb0'];
     function num(v){var n=parseFloat(v);return isNaN(n)?0:n;}
     function money(n){return "S/ "+(Number(n||0)).toLocaleString('es-PE',{maximumFractionDigits:2});}
     function fmt(n,d){return (Number(n||0)).toLocaleString('es-PE',{maximumFractionDigits:d==null?1:d});}
+    function esDiesel(r){ return r.galones!=="" && r.galones!=null && num(r.galones)>0; }
 
-    function aplicaFiltros(){
-      var d=document.getElementById("fDesde").value, h=document.getElementById("fHasta").value, pl=document.getElementById("fPlaca").value;
+    function aplica(){
+      var d=document.getElementById("fDesde").value, h=document.getElementById("fHasta").value,
+          pl=document.getElementById("fPlaca").value, co=document.getElementById("fCond").value, pr=document.getElementById("fProd").value;
       return DATA.filter(function(r){
         if(pl && r.placa!==pl) return false;
+        if(co && r.conductor!==co) return false;
+        if(pr==="diesel" && !esDiesel(r)) return false;
+        if(pr==="urea" && esDiesel(r)) return false;
         if(d && String(r.fecha||"")<d) return false;
         if(h && String(r.fecha||"")>h) return false;
         return true;
       });
     }
+    function chart(id,cfg){ if(CH[id]) CH[id].destroy(); CH[id]=new Chart(document.getElementById(id),cfg); }
+
     function render(){
-      var f=aplicaFiltros();
-      var gal=0,cos=0; f.forEach(function(r){gal+=num(r.galones);cos+=num(r.costo);});
-      // por placa
-      var byP={};
-      f.forEach(function(r){ var p=r.placa||"(sin placa)"; var o=byP[p]||(byP[p]={cargas:0,gal:0,cos:0,kms:[]}); o.cargas++; o.gal+=num(r.galones); o.cos+=num(r.costo); var k=num(r.km); if(k>0)o.kms.push(k); });
-      var kmTot=0, galConKm=0;
-      Object.keys(byP).forEach(function(p){ var o=byP[p]; if(o.kms.length>=2){ var rec=Math.max.apply(null,o.kms)-Math.min.apply(null,o.kms); o.rec=rec; kmTot+=rec; galConKm+=o.gal; } else o.rec=0; });
+      var f=aplica();
+      var gal=0,cos=0,dieselCargas=0,dieselGal=0,dieselCos=0;
+      f.forEach(function(r){ gal+=num(r.galones); cos+=num(r.costo); if(esDiesel(r)){dieselCargas++;dieselGal+=num(r.galones);dieselCos+=num(r.costo);} });
       document.getElementById("kGal").textContent=fmt(gal,0);
       document.getElementById("kCosto").textContent=money(cos);
+      document.getElementById("kPrecio").textContent= dieselGal>0 ? fmt(dieselCos/dieselGal,2) : "—";
       document.getElementById("kCargas").textContent=f.length;
-      document.getElementById("kRend").textContent= galConKm>0 ? fmt(kmTot/galConKm,2) : "—";
-      document.getElementById("sub").textContent=f.length+" carga(s) en el filtro";
-      // tabla
-      var tb=document.querySelector("#tabla tbody");
-      var keys=Object.keys(byP).sort(function(a,b){return byP[b].cos-byP[a].cos;});
-      tb.innerHTML = keys.length ? keys.map(function(p){ var o=byP[p]; var rend=o.rec>0&&o.gal>0?(o.rec/o.gal):null; var cpk=o.rec>0?(o.cos/o.rec):null;
-        return '<tr><td><strong>'+p+'</strong></td><td>'+o.cargas+'</td><td>'+fmt(o.gal,0)+'</td><td>'+money(o.cos)+'</td><td>'+(o.rec?fmt(o.rec,0):'—')+'</td><td>'+(rend!=null?fmt(rend,2):'—')+'</td><td>'+(cpk!=null?money(cpk):'—')+'</td></tr>';
-      }).join("") : '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">Sin datos en el filtro.</td></tr>';
-      // gráfico galones por mes
-      var byM={};
-      f.forEach(function(r){ var m=(r.fecha||"").slice(0,7); if(m) byM[m]=(byM[m]||0)+num(r.galones); });
-      var labels=Object.keys(byM).sort(); var vals=labels.map(function(m){return byM[m];});
-      if(chart) chart.destroy();
-      chart=new Chart(document.getElementById("chart"),{ type:'bar', data:{labels:labels, datasets:[{label:'Galones', data:vals, backgroundColor:'#1f5fa8'}]}, options:{plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}}} });
+      document.getElementById("kGalCarga").textContent= dieselCargas>0 ? fmt(dieselGal/dieselCargas,1) : "—";
+      document.getElementById("kCostoCarga").textContent= f.length>0 ? money(cos/f.length) : "—";
+      document.getElementById("sub").textContent=f.length+" carga(s) · "+fmt(gal,0)+" galones · "+money(cos);
+
+      // agregados
+      var byM={}, byMcos={}, byMprecioG={}, byMprecioC={}, byP={}, byC={};
+      f.forEach(function(r){
+        var m=(r.fecha||"").slice(0,7);
+        if(m){ byM[m]=(byM[m]||0)+num(r.galones); byMcos[m]=(byMcos[m]||0)+num(r.costo); if(esDiesel(r)){ byMprecioG[m]=(byMprecioG[m]||0)+num(r.galones); byMprecioC[m]=(byMprecioC[m]||0)+num(r.costo); } }
+        var p=r.placa||"(s/placa)"; var op=byP[p]||(byP[p]={cargas:0,gal:0,cos:0}); op.cargas++; op.gal+=num(r.galones); op.cos+=num(r.costo);
+        var c=r.conductor||"(s/conductor)"; var oc=byC[c]||(byC[c]={cargas:0,gal:0,cos:0}); oc.cargas++; oc.gal+=num(r.galones); oc.cos+=num(r.costo);
+      });
+      var meses=Object.keys(byM).sort();
+
+      // 1) galones (barras) + costo (línea) por mes
+      chart("cMes",{ type:'bar',
+        data:{labels:meses, datasets:[
+          {label:'Galones', data:meses.map(function(m){return byM[m];}), backgroundColor:'#1f5fa8', yAxisID:'y', order:2},
+          {label:'Costo S/', data:meses.map(function(m){return Math.round(byMcos[m]);}), type:'line', borderColor:'#a96416', backgroundColor:'#a96416', yAxisID:'y1', tension:.3, order:1}
+        ]},
+        options:{interaction:{mode:'index',intersect:false}, scales:{ y:{position:'left',beginAtZero:true,title:{display:true,text:'Galones'}}, y1:{position:'right',beginAtZero:true,grid:{drawOnChartArea:false},title:{display:true,text:'Costo S/'}} } }
+      });
+
+      // 2) top unidades por galones (horizontal)
+      var topP=Object.keys(byP).sort(function(a,b){return byP[b].gal-byP[a].gal;}).slice(0,8);
+      chart("cPlaca",{ type:'bar',
+        data:{labels:topP, datasets:[{label:'Galones', data:topP.map(function(p){return Math.round(byP[p].gal);}), backgroundColor:'#1A6B3C'}]},
+        options:{indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true}}}
+      });
+
+      // 3) precio promedio diésel por mes
+      var precios=meses.map(function(m){ return byMprecioG[m]>0 ? +(byMprecioC[m]/byMprecioG[m]).toFixed(2) : null; });
+      chart("cPrecio",{ type:'line',
+        data:{labels:meses, datasets:[{label:'S//gal', data:precios, borderColor:'#b02531', backgroundColor:'rgba(176,37,49,.1)', fill:true, tension:.3, spanGaps:true}]},
+        options:{plugins:{legend:{display:false}}, scales:{y:{beginAtZero:false}}}
+      });
+
+      // 4) distribución de galones por unidad (doughnut top 6 + otros)
+      var ordP=Object.keys(byP).sort(function(a,b){return byP[b].gal-byP[a].gal;});
+      var labs=ordP.slice(0,6), datos=labs.map(function(p){return Math.round(byP[p].gal);});
+      var otros=ordP.slice(6).reduce(function(a,p){return a+byP[p].gal;},0); if(otros>0){ labs.push("Otros"); datos.push(Math.round(otros)); }
+      chart("cDist",{ type:'doughnut', data:{labels:labs, datasets:[{data:datos, backgroundColor:PAL}]}, options:{plugins:{legend:{position:'right'}}} });
+
+      // tablas
+      var tP=document.querySelector("#tPlaca tbody"); var keysP=Object.keys(byP).sort(function(a,b){return byP[b].gal-byP[a].gal;});
+      tP.innerHTML = keysP.length ? keysP.map(function(p){var o=byP[p]; var pct=gal>0?(o.gal/gal*100):0; var pg=o.gal>0?o.cos/o.gal:0;
+        return '<tr><td><strong>'+p+'</strong></td><td>'+o.cargas+'</td><td>'+fmt(o.gal,0)+'</td><td>'+fmt(pct,1)+'%</td><td>'+money(o.cos)+'</td><td>'+(o.gal>0?fmt(pg,2):'—')+'</td></tr>';
+      }).join("") : '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">Sin datos</td></tr>';
+      var tC=document.querySelector("#tCond tbody"); var keysC=Object.keys(byC).sort(function(a,b){return byC[b].gal-byC[a].gal;});
+      tC.innerHTML = keysC.length ? keysC.map(function(c){var o=byC[c]; return '<tr><td>'+c+'</td><td>'+o.cargas+'</td><td>'+fmt(o.gal,0)+'</td><td>'+money(o.cos)+'</td></tr>';}).join("") : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px">Sin datos</td></tr>';
     }
 
     function rango(r){
@@ -108,13 +171,19 @@
       render();
     }
     document.getElementById("rangos").addEventListener("click",function(e){ if(!e.target.classList.contains("chip"))return; document.querySelectorAll("#rangos .chip").forEach(function(c){c.classList.remove("on");}); e.target.classList.add("on"); rango(e.target.dataset.r); });
-    ["fDesde","fHasta","fPlaca"].forEach(function(id){ document.getElementById(id).addEventListener("change",render); });
+    ["fDesde","fHasta","fPlaca","fCond","fProd"].forEach(function(id){ document.getElementById(id).addEventListener("change",render); });
+    document.getElementById("btnExp").onclick=function(){
+      var f=aplica(); var head=["Fecha","Unidad","Conductor","Producto","Galones","Costo","Grifo"].join(";");
+      var rows=f.map(function(r){return ['"'+(r.fecha||"")+'"','"'+(r.placa||"")+'"','"'+(r.conductor||"")+'"','"'+(r.obs||"")+'"','"'+(r.galones||"")+'"','"'+(r.costo||"")+'"','"'+(r.grifo||"")+'"'].join(";");});
+      var csv="﻿"+head+"\n"+rows.join("\n"); var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"})); a.download="consumo-combustible.csv"; a.click();
+    };
 
     function cargar(){
       db().collection("operaciones").where("modulo","==","combustible").get().then(function(snap){
         DATA=snap.docs.map(function(d){return d.data();});
-        var placas={}; DATA.forEach(function(r){if(r.placa)placas[r.placa]=1;});
-        document.getElementById("fPlaca").innerHTML='<option value="">Todas</option>'+Object.keys(placas).sort().map(function(p){return '<option>'+p+'</option>';}).join("");
+        var pl={},co={}; DATA.forEach(function(r){if(r.placa)pl[r.placa]=1; if(r.conductor)co[r.conductor]=1;});
+        document.getElementById("fPlaca").innerHTML='<option value="">Todas</option>'+Object.keys(pl).sort().map(function(p){return '<option>'+p+'</option>';}).join("");
+        document.getElementById("fCond").innerHTML='<option value="">Todos</option>'+Object.keys(co).sort().map(function(c){return '<option>'+c+'</option>';}).join("");
         render();
       }).catch(function(e){ document.getElementById("sub").textContent="Error: "+e.message; });
     }
