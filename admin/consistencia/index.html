@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consistencia de maestros — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../assets/theme.css">
+  <style>
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px}
+    .kpi{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px}
+    .kpi .n{font-size:1.8rem;font-weight:800} .kpi .l{font-size:.78rem;color:var(--text-muted)}
+    .kpi.bad .n{color:var(--danger)} .kpi.ok .n{color:var(--verde-d)}
+    .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px}
+    .card h3{margin:0 0 4px;font-size:1rem}
+    .bad-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--danger-light);background:var(--danger-light);border-radius:9px;margin-top:7px;font-size:.85rem}
+    .bad-row code{background:#fff;padding:1px 7px;border-radius:6px;font-weight:700}
+    .ok-msg{color:var(--verde-d);font-weight:600;font-size:.88rem}
+    .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:14px;background:#eef;color:#446}
+  </style>
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Consistencia</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" id="app" style="display:none">
+    <div class="page-head">
+      <div><h1>Consistencia de maestros</h1><div class="page-sub" id="sub">Revisando…</div></div>
+      <button class="btn btn-ghost" id="btnRe">↻ Revisar</button>
+    </div>
+    <p class="side-note">Regla del sistema: <strong>si una placa o un conductor no está en su maestro, no debería figurar</strong> en ningún registro. Aquí se listan los casos a corregir (en el maestro de Unidades/Personas, o en el registro).</p>
+    <div class="grid" id="kpis"></div>
+    <div id="detalle"></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../../assets/firebase-config.js"></script>
+  <script src="../../assets/auth.js"></script>
+  <script src="../../assets/maestros.js"></script>
+  <script>
+    var db=function(){return firebase.firestore();};
+    function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+
+    // Qué módulos revisar y en qué colección / con qué campos clave
+    var FUENTES=[
+      {col:"operaciones",   modulo:"combustible", label:"Combustible",  placa:"placa", cond:"conductor"},
+      {col:"operaciones",   modulo:"gnl",         label:"GNL",          placa:"placa", cond:"conductor"},
+      {col:"operaciones",   modulo:"lavado",      label:"Lavado",       placa:"placa", cond:null},
+      {col:"operaciones",   modulo:"checklist",   label:"Check list",   placa:"unidad",cond:"conductor"},
+      {col:"mantenimiento", modulo:"correctivo",  label:"Correctivos",  placa:"placa", cond:null},
+      {col:"mantenimiento", modulo:"preventivo",  label:"Preventivos",  placa:"placa", cond:null},
+      {col:"roster",        modulo:null,          label:"Roster",       placa:null,    cond:null, dni:"dni"},
+      {col:"documentos",    modulo:null,          label:"Documentos",   placa:"placa", cond:null}
+    ];
+
+    function revisar(){
+      document.getElementById("sub").textContent="Cargando maestros…";
+      Promise.all([
+        MISAGI_MAESTROS.mapaUnidades(),
+        MISAGI_MAESTROS.personas()
+      ]).then(function(res){
+        var mapU=res[0], personas=res[1];
+        var placasOK={}; Object.keys(mapU).forEach(function(k){placasOK[k]=true;});
+        var nombresOK={}, dnisOK={};
+        personas.forEach(function(p){ if(p.nombre) nombresOK[String(p.nombre).trim().toUpperCase()]=true; if(p.dni) dnisOK[String(p.dni)]=true; });
+
+        // leer cada colección una sola vez
+        var cols={}; FUENTES.forEach(function(f){cols[f.col]=true;});
+        var lecturas=Object.keys(cols).map(function(c){ return db().collection(c).get().then(function(s){ return {c:c, docs:s.docs.map(function(d){return d.data();})}; }).catch(function(){return {c:c,docs:[]};}); });
+
+        Promise.all(lecturas).then(function(datos){
+          var porCol={}; datos.forEach(function(d){porCol[d.c]=d.docs;});
+          var bloques=[], totalHU=0, totalReg=0;
+
+          FUENTES.forEach(function(f){
+            var docs=(porCol[f.col]||[]).filter(function(r){ return f.modulo? String(r.modulo||"")===f.modulo : true; });
+            // para documentos: solo los de tipo unidad
+            if(f.col==="documentos") docs=docs.filter(function(r){ return (r.entidad||r.tipo_entidad||"")==="unidad" || r.placa; });
+            totalReg+=docs.length;
+            var huP={}, huC={};
+            docs.forEach(function(r){
+              if(f.placa && r[f.placa]){ var pk=MISAGI_MAESTROS.normPlaca(r[f.placa]); if(pk && !placasOK[pk]) huP[r[f.placa]]=(huP[r[f.placa]]||0)+1; }
+              if(f.cond && r[f.cond]){ var ck=String(r[f.cond]).trim().toUpperCase(); if(ck && !nombresOK[ck]) huC[r[f.cond]]=(huC[r[f.cond]]||0)+1; }
+              if(f.dni && r[f.dni]){ if(!dnisOK[String(r[f.dni])]) huC["DNI "+r[f.dni]]=(huC["DNI "+r[f.dni]]||0)+1; }
+            });
+            var rows="";
+            Object.keys(huP).forEach(function(v){ rows+='<div class="bad-row"><span>🚛 Placa fuera del maestro: <code>'+esc(v)+'</code></span><span class="tag">'+huP[v]+' registro(s)</span></div>'; });
+            Object.keys(huC).forEach(function(v){ rows+='<div class="bad-row"><span>👤 Persona fuera del maestro: <code>'+esc(v)+'</code></span><span class="tag">'+huC[v]+' registro(s)</span></div>'; });
+            var nHU=Object.keys(huP).length+Object.keys(huC).length; totalHU+=nHU;
+            bloques.push({label:f.label, n:docs.length, nHU:nHU, rows:rows});
+          });
+
+          document.getElementById("sub").textContent="Revisado: "+totalReg+" registros en "+FUENTES.length+" módulos";
+          var kpis=document.getElementById("kpis");
+          kpis.innerHTML=
+            '<div class="kpi"><div class="n">'+Object.keys(placasOK).length+'</div><div class="l">Placas en maestro</div></div>'+
+            '<div class="kpi"><div class="n">'+personas.length+'</div><div class="l">Personas en maestro</div></div>'+
+            '<div class="kpi"><div class="n">'+totalReg+'</div><div class="l">Registros revisados</div></div>'+
+            '<div class="kpi '+(totalHU?"bad":"ok")+'"><div class="n">'+totalHU+'</div><div class="l">Inconsistencias</div></div>';
+
+          var det=document.getElementById("detalle");
+          det.innerHTML=bloques.map(function(b){
+            return '<div class="card"><h3>'+esc(b.label)+' <span class="tag">'+b.n+' registros</span></h3>'+
+              (b.nHU? b.rows : '<div class="ok-msg">✓ Todo cuadra con el maestro</div>')+'</div>';
+          }).join("");
+        });
+      });
+    }
+
+    document.getElementById("btnRe").onclick=function(){ MISAGI_MAESTROS.limpiarCache(); revisar(); };
+
+    MISAGI.requireLogin().then(function(s){
+      if(!MISAGI.esAdmin(s.perfil)){ alert("Solo el administrador puede ver la consistencia."); location.href="../../index.html"; return; }
+      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+      document.getElementById("app").style.display="";
+      revisar();
+    });
+  </script>
+</body>
+</html>

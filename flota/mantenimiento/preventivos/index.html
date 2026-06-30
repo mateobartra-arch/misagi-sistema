@@ -17,6 +17,7 @@
   <div class="container" style="padding-bottom:0"><div class="subtabs"><a class="subtab" href="../correctivos/">🔧 Correctivos</a><a class="subtab on" href="../preventivos/">📅 Preventivos</a><a class="subtab" href="../analisis/">📊 Análisis</a></div></div>
   <div class="container" id="reg"></div>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="../../../assets/firebase-config.js"></script>
@@ -27,7 +28,7 @@
   <script>
     MISAGI_REGISTRO.init({
   area:"mantenimiento", coleccion:"mantenimiento", modulo:"preventivo", titulo:"Mantenimiento preventivo (plan)",
-  campos:[{k:"placa",label:"Unidad/Placa",tipo:"select",fuente:"unidades"},{k:"tipo_unidad",label:"Tipo"},{k:"km_actual",label:"KM actual",tipo:"number"},{k:"ultimo_mantto",label:"Último mantto (km)",tipo:"number"},{k:"km_proximo",label:"KM próximo mantto",tipo:"number"},{k:"km_dia",label:"Km/día",tipo:"number"},{k:"fecha_estimada",label:"Fecha estimada",tipo:"date"},{k:"dias_faltantes",label:"Días faltantes",tipo:"number"},{k:"observaciones",label:"Observaciones",tipo:"textarea"},{k:"responsable",label:"Responsable/Taller"}],
+  campos:[{k:"placa",label:"Unidad/Placa",tipo:"select",fuente:"unidades"},{k:"tipo_unidad",label:"Tipo (del maestro)",auto:{padre:"placa",campo:"tipo"}},{k:"km_actual",label:"KM actual",tipo:"number"},{k:"ultimo_mantto",label:"Último mantto (km)",tipo:"number"},{k:"km_proximo",label:"KM próximo mantto",tipo:"number"},{k:"km_dia",label:"Km/día",tipo:"number"},{k:"fecha_estimada",label:"Fecha estimada",tipo:"date"},{k:"dias_faltantes",label:"Días faltantes",tipo:"number"},{k:"observaciones",label:"Observaciones",tipo:"textarea"},{k:"responsable",label:"Responsable/Taller"}],
   columnas:["placa","km_actual","km_proximo","fecha_estimada","dias_faltantes"],
   resumen:[{label:"Unidades en plan",op:"count"}]
 });

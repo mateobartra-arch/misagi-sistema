@@ -39,6 +39,7 @@ const MISAGI_MODULOS = [
       { id: "admin.enlaces", nombre: "Accesos directos (Drive)", url: "admin/enlaces/", estado: "activo", desc: "Gestionar enlaces y quién los ve" },
       { id: "admin.alertas", nombre: "Alertas / Vencimientos", url: "alertas/", estado: "activo", desc: "Documentos, EMO, mantenimiento y correctivos por vencer" },
       { id: "admin.solicitudes", nombre: "Solicitudes", url: "admin/solicitudes/", estado: "activo", desc: "Aprobar vacaciones y cambios del personal" },
+      { id: "admin.consistencia", nombre: "Consistencia de maestros", url: "admin/consistencia/", estado: "activo", desc: "Detecta placas/personas registradas fuera del maestro" },
       { id: "admin.respaldo", nombre: "Respaldo de la base", url: "admin/respaldo/", estado: "activo", desc: "Descargar toda la información del sistema" }
     ]
   },
@@ -66,10 +67,10 @@ const MISAGI_MODULOS = [
     ]
   },
   {
-    area: "operaciones", grupo: "Maestros · Flota", ik: "factory",
+    area: "operaciones", grupo: "Maestros", ik: "factory",
     apps: [
       { id: "operaciones.unidades",    nombre: "Unidades (flota)", url: "flota/operaciones/unidades/",    estado: "activo", desc: "Tractos y tolvas (maestro)" },
-      { id: "operaciones.conductores", nombre: "Conductores",      url: "flota/operaciones/conductores/", estado: "activo", desc: "Maestro de conductores" },
+      { id: "operaciones.personas",    nombre: "Personas",         url: "flota/operaciones/personas/",    estado: "activo", desc: "Directorio único: conductores y administrativos" },
       { id: "operaciones.rutas",       nombre: "Rutas",            url: "flota/operaciones/rutas/",       estado: "activo", desc: "Rutas y distancias" }
     ]
   },

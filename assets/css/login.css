@@ -1,0 +1,41 @@
+/* ==========================================================================
+   MISAGI — Estilos del acceso / login (viewport no autenticado)
+   Generado al modularizar index.html (separación de responsabilidades).
+   ========================================================================== */
+/* ===================== LOGIN ===================== */
+  .stage{position:relative;min-height:100dvh;display:flex;align-items:center;justify-content:flex-end;padding:28px 0}
+  .stage .bg{position:fixed;inset:0;z-index:0;background-color:#0a1a33;background-image:url('assets/login-bg.jpg');background-position:center;background-size:cover;background-repeat:no-repeat}
+  .stage .scrim{position:fixed;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(6,16,30,0) 30%,rgba(6,16,30,.42) 58%,rgba(6,16,30,.74) 80%,rgba(5,13,26,.9) 100%),linear-gradient(0deg,rgba(5,13,26,.5) 0%,rgba(5,13,26,0) 40%)}
+  .access{position:relative;z-index:3;width:min(390px,92vw);margin-right:clamp(20px,6vw,92px);padding:40px 38px 34px;border-radius:24px;background:var(--glass);border:1px solid var(--glass-line);box-shadow:0 30px 80px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(22px) saturate(120%);backdrop-filter:blur(22px) saturate(120%);color:#fff;animation:rise .7s cubic-bezier(.2,.7,.3,1) both}
+  @keyframes rise{from{transform:translateY(18px)}to{transform:none}}
+  @media (prefers-reduced-motion:reduce){.access{animation:none}}
+  .brand-mk{position:absolute;z-index:2;top:clamp(22px,4vw,48px);left:clamp(22px,4vw,56px);width:clamp(168px,19vw,260px);height:auto;display:block;filter:drop-shadow(0 2px 6px rgba(0,0,0,.30)) drop-shadow(0 10px 22px rgba(0,0,0,.28));pointer-events:none;user-select:none}
+  .eyebrow{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#7fe0a6;margin-bottom:14px}
+  .access h1{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:27px;letter-spacing:-.01em;line-height:1.12;margin-bottom:7px}
+  .access .sub{font-size:13.5px;font-weight:300;color:rgba(255,255,255,.66);margin-bottom:30px}
+  .lfield{position:relative;margin-bottom:18px}
+  .lfield label{position:absolute;left:0;top:-9px;font-size:10.5px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.5)}
+  .lfield .row{position:relative;display:flex;align-items:center}
+  .lfield .ic{position:absolute;left:0;width:18px;height:18px;color:rgba(255,255,255,.5);pointer-events:none}
+  .lfield input{width:100%;height:46px;padding:0 38px 0 28px;background:transparent;border:none;border-bottom:1.5px solid var(--field-line);color:#fff;font-family:inherit;font-size:15px;letter-spacing:.2px;transition:border-color .2s}
+  .lfield input::placeholder{color:rgba(255,255,255,.34)}
+  .lfield input:focus{outline:none;border-bottom-color:var(--brand)}
+  .lfield .toggle{position:absolute;right:0;background:none;border:none;cursor:pointer;color:rgba(255,255,255,.5);width:34px;height:34px;display:grid;place-items:center}
+  .lfield .toggle:hover{color:#fff}
+  .lfield .toggle svg{width:18px;height:18px}
+  .forgot{display:inline-block;font-size:12.5px;font-weight:500;color:rgba(255,255,255,.62);text-decoration:none;margin:2px 0 24px;background:none;border:none;cursor:pointer;padding:0}
+  .forgot:hover{color:#fff}
+  .lbtn{width:100%;height:50px;border:none;border-radius:13px;cursor:pointer;font-family:inherit;font-weight:600;font-size:14.5px;letter-spacing:.2px;display:flex;align-items:center;justify-content:center;gap:9px;transition:transform .15s,background .2s,box-shadow .2s}
+  .lbtn-primary{background:linear-gradient(180deg,var(--brand),var(--brand-d));color:#fff;box-shadow:0 12px 28px rgba(31,158,87,.34)}
+  .lbtn-primary:hover{transform:translateY(-1px);box-shadow:0 16px 34px rgba(31,158,87,.42)}
+  .lbtn-primary:active{transform:translateY(0)}
+  .lbtn-primary:disabled{opacity:.7;cursor:default;transform:none}
+  .lerr{background:rgba(224,72,58,.18);border:1px solid rgba(224,72,58,.4);color:#ffd9d4;font-size:13px;padding:10px 13px;border-radius:11px;margin-bottom:16px}
+  .legal{font-size:10.5px;color:rgba(255,255,255,.42);margin-top:24px;line-height:1.6;text-align:center;letter-spacing:.2px}
+  @media(max-width:760px){
+    .stage{align-items:flex-end;justify-content:center}
+    .stage .bg{background-position:center 40%}
+    .stage .scrim{background:linear-gradient(180deg,rgba(6,16,30,0) 24%,rgba(6,16,30,.55) 52%,rgba(5,13,26,.92) 82%)}
+    .access{margin:0 0 max(18px,env(safe-area-inset-bottom));width:min(420px,94vw);padding:32px 28px 28px}
+    .brand-mk{width:clamp(132px,42vw,180px);top:24px;left:22px}
+  }

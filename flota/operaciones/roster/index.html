@@ -55,6 +55,7 @@
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="../../../assets/firebase-config.js"></script>
@@ -168,23 +169,24 @@
       return seedConductores().map(function(c,i){return {dni:c.dni,nombre:c.nombre,orden:i};});
     }
     function cargarConductores(cb){
-      db().collection("roster_conductores").get().then(function(snap){
-        if(snap.empty){
-          CONDUCTORES=condInicial();
-          var batch=db().batch();
-          CONDUCTORES.forEach(function(c){ batch.set(db().collection("roster_conductores").doc(c.dni),{dni:c.dni,nombre:c.nombre,orden:c.orden}); });
-          batch.commit().catch(function(){});
-        } else {
-          CONDUCTORES=ordenarCond(snap.docs.map(function(d){var o=d.data();return {dni:String(o.dni),nombre:o.nombre,orden:o.orden};}));
+      // Fuente única: maestro Personas (tipo conductor). Respaldo: lista vieja o semilla.
+      db().collection("personas").get().then(function(snap){
+        var arr=snap.docs.map(function(d){return d.data();}).filter(function(p){return String(p.tipo||"conductor").toLowerCase()==="conductor";});
+        if(arr.length){
+          CONDUCTORES=ordenarCond(arr.map(function(o){return {dni:String(o.dni),nombre:o.nombre,orden:ordenRef(o.dni)};}));
+          cb(); return;
         }
-        cb();
+        db().collection("roster_conductores").get().then(function(s2){
+          CONDUCTORES = s2.empty ? condInicial() : ordenarCond(s2.docs.map(function(d){var o=d.data();return {dni:String(o.dni),nombre:o.nombre,orden:o.orden};}));
+          cb();
+        }).catch(function(){ CONDUCTORES=condInicial(); cb(); });
       }).catch(function(){ CONDUCTORES=condInicial(); cb(); });
     }
 
     document.getElementById("btnAdd").onclick=function(){
       var nom=prompt("Nombre del conductor (Apellidos, Nombres):"); if(!nom||!nom.trim()) return;
       var dni=prompt("DNI del conductor:"); if(!dni||!dni.trim()) return; dni=dni.trim();
-      db().collection("roster_conductores").doc(dni).set({dni:dni,nombre:nom.trim(),orden:CONDUCTORES.length}).then(function(){
+      db().collection("personas").doc(dni).set({dni:dni,nombre:nom.trim(),tipo:"conductor",cargo:"Conductor",activo:true,orden:CONDUCTORES.length},{merge:true}).then(function(){
         cargarConductores(function(){ cargar(); });
       }).catch(function(e){ alert("No se pudo agregar (¿reglas publicadas?): "+e.message); });
     };
@@ -193,7 +195,7 @@
       if(!confirm("Se cargarán "+MISAGI_SEED_ROSTER.length+" registros (ene–jun 2026) y "+MISAGI_SEED_ROSTER_COND.length+" conductores. ¿Continuar?")) return;
       var btn=this; btn.disabled=true; btn.textContent="Importando…";
       var cb=db().batch();
-      MISAGI_SEED_ROSTER_COND.forEach(function(c,i){ cb.set(db().collection("roster_conductores").doc(c.dni),{dni:c.dni,nombre:c.nombre,orden:i}); });
+      MISAGI_SEED_ROSTER_COND.forEach(function(c,i){ cb.set(db().collection("personas").doc(String(c.dni)),{dni:String(c.dni),nombre:c.nombre,tipo:"conductor",cargo:"Conductor",activo:true,orden:i},{merge:true}); });
       cb.commit().then(function(){
         var recs=MISAGI_SEED_ROSTER.slice();
         (function lote(){

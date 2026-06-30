@@ -106,6 +106,20 @@
         }).catch(function(){}).then(function(){ if(--pend===0 && cb) cb(); });
       });
     }
+    // Autocompletar campos DERIVADOS del maestro (ej. tipo desde la placa).
+    function wireAuto(f){
+      var autos=cfg.campos.filter(function(c){return c.auto;});
+      if(!autos.length || typeof MISAGI_MAESTROS==="undefined") return;
+      autos.forEach(function(c){
+        var padre=f[c.auto.padre]; if(!padre || f[c.k]===undefined) return;
+        var fill=function(){
+          var val=padre.value; if(!val){ return; }
+          MISAGI_MAESTROS.infoUnidad(val).then(function(u){ if(u && u[c.auto.campo]!=null){ f[c.k].value=u[c.auto.campo]; } });
+        };
+        if(!padre._autoWired){ padre.addEventListener("change",fill); padre._autoWired=true; }
+        if(f[c.k].tagName==="INPUT") f[c.k].readOnly=true;
+      });
+    }
     function abrir(reg){
       modal();
       var f=document.getElementById("regForm"); f.reset();
@@ -114,6 +128,7 @@
       document.getElementById("regTit").textContent=reg?"Editar registro":"Nuevo registro";
       document.getElementById("regModal").classList.remove("hidden");
       populateFuentes(function(){
+        wireAuto(f);
         if(reg){ cfg.campos.forEach(function(c){ if(f[c.k]!==undefined && reg[c.k]!=null) f[c.k].value=reg[c.k]; }); }
         else if(idCampoFecha && f[idCampoFecha]){ f[idCampoFecha].value=new Date().toISOString().slice(0,10); }
       });
