@@ -52,7 +52,7 @@
     function pintar(){
       var tb=document.querySelector("#tabla tbody"); var f=filtradas();
       document.getElementById("sub").textContent=DATA.length+" registro(s)";
-      var _bi=document.getElementById("btnImp"); if(_bi) _bi.style.display = DATA.length ? "none" : "";
+      var _bi=document.getElementById("btnImp"); if(_bi){ _bi.style.display=""; _bi.textContent = DATA.length ? "↻ Re-importar" : ("⬆ Importar histórico ("+(((window.REGISTRO_SEED||{})[cfg.modulo]||[]).length)+")"); }
       // resumen
       (cfg.resumen||[]).forEach(function(r,i){
         var el=document.getElementById("kpi_"+i); if(!el) return; var val;
@@ -133,16 +133,20 @@
 
     function importarSeed(){
       var seed=(window.REGISTRO_SEED||{})[cfg.modulo]||[]; if(!seed.length) return;
-      if(DATA.length && !confirm("Ya hay "+DATA.length+" registros. ¿Importar igual "+seed.length+" del histórico?")) return;
-      if(!confirm("Se importarán "+seed.length+" registros. ¿Continuar?")) return;
-      var btn=document.getElementById("btnImp"); btn.disabled=true; btn.textContent="Importando…";
-      var recs=seed.slice();
-      (function lote(){
-        if(!recs.length){ btn.textContent="✓ Importado"; cargar(); return; }
-        var chunk=recs.splice(0,450), b=db().batch();
-        chunk.forEach(function(r){ b.set(db().collection(cfg.coleccion).doc(), Object.assign({modulo:cfg.modulo},r)); });
-        b.commit().then(function(){ btn.textContent="Importando… ("+recs.length+")"; lote(); }).catch(function(e){ alert("Error: "+e.message); btn.disabled=false; btn.textContent="Importar histórico"; });
-      })();
+      var re=DATA.length>0;
+      var msg=re?("Ya hay "+DATA.length+" registros. Se BORRARÁN los actuales y se cargarán "+seed.length+" limpios. ¿Continuar?"):("Se importarán "+seed.length+" registros. ¿Continuar?");
+      if(!confirm(msg)) return;
+      var btn=document.getElementById("btnImp"); btn.disabled=true; btn.textContent="Procesando…";
+      function doImport(){
+        var recs=seed.slice();
+        (function lote(){ if(!recs.length){ btn.textContent="✓ Importado"; cargar(); return; } var chunk=recs.splice(0,400), b=db().batch(); chunk.forEach(function(r){ b.set(db().collection(cfg.coleccion).doc(), Object.assign({modulo:cfg.modulo},r)); }); b.commit().then(function(){ btn.textContent="Cargando… ("+recs.length+")"; lote(); }).catch(function(e){ alert("Error: "+e.message); btn.disabled=false; }); })();
+      }
+      if(re){
+        db().collection(cfg.coleccion).where("modulo","==",cfg.modulo).get().then(function(snap){
+          var docs=snap.docs.slice();
+          (function del(){ if(!docs.length){ doImport(); return; } var chunk=docs.splice(0,400), b=db().batch(); chunk.forEach(function(d){ b.delete(d.ref); }); b.commit().then(function(){ btn.textContent="Limpiando… ("+docs.length+")"; del(); }).catch(function(e){ alert("Error al limpiar: "+e.message); btn.disabled=false; }); })();
+        }).catch(function(e){ alert("Error: "+e.message); btn.disabled=false; });
+      } else doImport();
     }
     function ensureXLSX(cb){ if(window.XLSX) return cb(); var sc=document.createElement("script"); sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; sc.onload=cb; sc.onerror=function(){alert("No se pudo cargar el lector de Excel.");}; document.head.appendChild(sc); }
     function importExcel(file){
