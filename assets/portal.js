@@ -50,8 +50,6 @@ const MISAGI_MODULOS = [
       { id: "operaciones.combustible",  nombre: "Combustible",  url: "flota/operaciones/combustible/",  estado: "activo", desc: "Control de combustible por unidad" },
       { id: "operaciones.lavado",       nombre: "Lavado y engrase", url: "flota/operaciones/lavado/",    estado: "activo", desc: "Registro de lavado y engrase" },
       { id: "operaciones.checklist",    nombre: "Check list",   url: "flota/operaciones/checklist/",    estado: "activo", desc: "Check list de conductores por cliente" },
-      { id: "operaciones.unidades",     nombre: "Unidades (flota)", url: "flota/operaciones/unidades/", estado: "activo", desc: "Tractos y tolvas" },
-      { id: "operaciones.rutas",        nombre: "Rutas",        url: "flota/operaciones/rutas/",        estado: "activo", desc: "Rutas y distancias" },
       { id: "operaciones.documentos",   nombre: "Gestión documentaria", url: "documentos/", estado: "activo", desc: "Documentos y vencimientos de unidades/conductores" },
       { id: "operaciones.ficha",        nombre: "Ficha 360°",   url: "ficha/",                          estado: "activo", desc: "Todo de una unidad o conductor en un lugar" }
     ]
@@ -62,6 +60,14 @@ const MISAGI_MODULOS = [
       { id: "mantenimiento.estatus", nombre: "Estatus de flota", url: "flota/mantenimiento/estatus/", estado: "activo", desc: "Estado, llantas y mantenimiento de la flota" },
       { id: "mantenimiento.correctivos", nombre: "Correctivos", url: "flota/mantenimiento/correctivos/", estado: "activo", desc: "Reporte de fallas y reparaciones" },
       { id: "mantenimiento.preventivos", nombre: "Preventivos", url: "flota/mantenimiento/preventivos/", estado: "activo", desc: "Plan preventivo por unidad (km)" }
+    ]
+  },
+  {
+    area: "operaciones", grupo: "Maestros · Flota", ik: "factory",
+    apps: [
+      { id: "operaciones.unidades",    nombre: "Unidades (flota)", url: "flota/operaciones/unidades/",    estado: "activo", desc: "Tractos y tolvas (maestro)" },
+      { id: "operaciones.conductores", nombre: "Conductores",      url: "flota/operaciones/conductores/", estado: "activo", desc: "Maestro de conductores" },
+      { id: "operaciones.rutas",       nombre: "Rutas",            url: "flota/operaciones/rutas/",       estado: "activo", desc: "Rutas y distancias" }
     ]
   },
   {
