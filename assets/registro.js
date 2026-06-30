@@ -29,13 +29,15 @@
       }).join("");
       root.innerHTML =
         '<div class="page-head"><div><h1>'+esc(cfg.titulo)+'</h1><div class="page-sub" id="sub">Cargando…</div></div>'+
-          '<div style="display:flex;gap:10px">'+((window.REGISTRO_SEED||{})[cfg.modulo]&&(window.REGISTRO_SEED||{})[cfg.modulo].length?'<button class="btn btn-ghost" id="btnImp">Importar histórico ('+(window.REGISTRO_SEED[cfg.modulo].length)+')</button>':'')+'<button class="btn btn-ghost" id="btnExp">⬇ Excel</button><button class="btn btn-primary" id="btnNew">+ Nuevo</button></div></div>'+
+          '<div style="display:flex;gap:10px">'+((window.REGISTRO_SEED||{})[cfg.modulo]&&(window.REGISTRO_SEED||{})[cfg.modulo].length?'<button class="btn btn-ghost" id="btnImp">Importar histórico ('+(window.REGISTRO_SEED[cfg.modulo].length)+')</button>':'')+'<input type="file" id="impXfile" accept=".xlsx,.xls,.csv" style="display:none"><button class="btn btn-ghost" id="btnImpX">⬆ Importar Excel</button><button class="btn btn-ghost" id="btnExp">⬇ Excel</button><button class="btn btn-primary" id="btnNew">+ Nuevo</button></div></div>'+
         (resumenHtml?('<div class="kpis-reg">'+resumenHtml+'</div>'):'')+
         '<div class="toolbar"><input type="search" id="buscar" placeholder="Buscar…"></div>'+
         '<div class="table-wrap"><table id="tabla"><thead><tr>'+
           cfg.columnas.map(function(k){return '<th>'+esc(label(k))+'</th>';}).join("")+'<th></th></tr></thead><tbody></tbody></table></div>';
       document.getElementById("btnNew").onclick=function(){abrir(null);};
       var bi=document.getElementById("btnImp"); if(bi) bi.onclick=importarSeed;
+      var bx=document.getElementById("btnImpX"), bxf=document.getElementById("impXfile");
+      if(bx&&bxf){ bx.onclick=function(){bxf.click();}; bxf.onchange=function(){ if(bxf.files[0]) importExcel(bxf.files[0]); bxf.value=""; }; }
       document.getElementById("btnExp").onclick=exportar;
       document.getElementById("buscar").oninput=pintar;
     }
@@ -141,6 +143,31 @@
         chunk.forEach(function(r){ b.set(db().collection(cfg.coleccion).doc(), Object.assign({modulo:cfg.modulo},r)); });
         b.commit().then(function(){ btn.textContent="Importando… ("+recs.length+")"; lote(); }).catch(function(e){ alert("Error: "+e.message); btn.disabled=false; btn.textContent="Importar histórico"; });
       })();
+    }
+    function ensureXLSX(cb){ if(window.XLSX) return cb(); var sc=document.createElement("script"); sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; sc.onload=cb; sc.onerror=function(){alert("No se pudo cargar el lector de Excel.");}; document.head.appendChild(sc); }
+    function importExcel(file){
+      ensureXLSX(function(){
+        var rd=new FileReader();
+        rd.onload=function(e){
+          try{
+            var wb=XLSX.read(new Uint8Array(e.target.result),{type:"array",cellDates:true});
+            var ws=wb.Sheets[wb.SheetNames[0]];
+            var rows=XLSX.utils.sheet_to_json(ws,{defval:"",raw:true});
+            if(!rows.length){ alert("El Excel está vacío."); return; }
+            function norm(x){ return String(x).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,""); }
+            var headers=Object.keys(rows[0]); var map={};
+            cfg.campos.forEach(function(c){ var h=headers.filter(function(H){return norm(H)===norm(c.label)||norm(H)===norm(c.k);})[0]; if(h) map[c.k]=h; });
+            if(!Object.keys(map).length){ alert("No reconocí las columnas. Usa los mismos títulos del formulario:\n"+cfg.campos.map(function(c){return c.label;}).join(", ")); return; }
+            var regs=rows.map(function(r){ var o={modulo:cfg.modulo}; cfg.campos.forEach(function(c){ if(map[c.k]!==undefined){ var v=r[map[c.k]]; if(v instanceof Date){ v=v.toISOString().slice(0,10); } o[c.k]=(v==null?"":String(v).trim()); } }); return o; })
+                         .filter(function(o){ return cfg.campos.some(function(c){return o[c.k];}); });
+            if(!regs.length){ alert("No se encontraron filas con datos."); return; }
+            if(!confirm("Se importarán "+regs.length+" filas a \""+cfg.titulo+"\". ¿Continuar?")) return;
+            var rest=regs.slice();
+            (function lote(){ if(!rest.length){ alert("✓ Importado: "+regs.length+" filas"); cargar(); return; } var chunk=rest.splice(0,400); var b=db().batch(); chunk.forEach(function(o){ b.set(db().collection(cfg.coleccion).doc(), o); }); b.commit().then(lote).catch(function(err){ alert("Error al importar: "+err.message); }); })();
+          }catch(ex){ alert("No se pudo leer el Excel: "+ex.message); }
+        };
+        rd.readAsArrayBuffer(file);
+      });
     }
     function exportar(){
       var cols=cfg.campos.map(function(c){return c.k;});

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consumo de combustible — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../../assets/theme.css">
+  <style>
+    .filtros{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:18px}
+    .filtros .f label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);margin-bottom:5px}
+    .filtros input,.filtros select{padding:8px 11px;border:1px solid var(--border-strong);border-radius:9px;font-family:inherit;font-size:.9rem}
+    .chips{display:flex;gap:6px;flex-wrap:wrap}
+    .chip{border:1px solid var(--border-strong);background:#fff;border-radius:999px;padding:5px 12px;font-size:.8rem;font-weight:600;color:var(--text-muted);cursor:pointer}
+    .chip.on{background:var(--azul-d);color:#fff;border-color:var(--azul-d)}
+    canvas{max-height:300px}
+  </style>
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Consumo</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../combustible/">+ Registrar carga</a>
+    <a class="btn btn-ghost btn-sm" href="../../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" id="app" style="display:none">
+    <div class="page-head"><div><h1>Consumo de combustible</h1><div class="page-sub" id="sub">Cargando…</div></div></div>
+
+    <div class="filtros">
+      <div class="f"><label>Desde</label><input type="date" id="fDesde"></div>
+      <div class="f"><label>Hasta</label><input type="date" id="fHasta"></div>
+      <div class="f"><label>Placa</label><select id="fPlaca"><option value="">Todas</option></select></div>
+      <div class="f"><label>Rango rápido</label><div class="chips" id="rangos">
+        <span class="chip" data-r="30">30 días</span><span class="chip" data-r="90">90 días</span><span class="chip" data-r="mes">Este mes</span><span class="chip on" data-r="todo">Todo</span>
+      </div></div>
+    </div>
+
+    <div class="kpis-reg">
+      <div class="kpi-card"><div class="kpi-v" id="kGal">—</div><div class="kpi-l">Galones</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kCosto">—</div><div class="kpi-l">Costo total</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kCargas">—</div><div class="kpi-l">N° de cargas</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kRend">—</div><div class="kpi-l">Rendimiento km/gal</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px"><h3 style="margin-bottom:12px;color:var(--azul-d)">Galones por mes</h3><canvas id="chart"></canvas></div>
+
+    <div class="table-wrap"><table id="tabla"><thead><tr>
+      <th>Placa</th><th>Cargas</th><th>Galones</th><th>Costo (S/)</th><th>Km recorridos</th><th>Rend. km/gal</th><th>Costo/km</th>
+    </tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="../../../assets/firebase-config.js"></script>
+  <script src="../../../assets/auth.js"></script>
+  <script>
+    var db=function(){return firebase.firestore();};
+    var DATA=[], chart=null;
+    function num(v){var n=parseFloat(v);return isNaN(n)?0:n;}
+    function money(n){return "S/ "+(Number(n||0)).toLocaleString('es-PE',{maximumFractionDigits:2});}
+    function fmt(n,d){return (Number(n||0)).toLocaleString('es-PE',{maximumFractionDigits:d==null?1:d});}
+
+    function aplicaFiltros(){
+      var d=document.getElementById("fDesde").value, h=document.getElementById("fHasta").value, pl=document.getElementById("fPlaca").value;
+      return DATA.filter(function(r){
+        if(pl && r.placa!==pl) return false;
+        if(d && String(r.fecha||"")<d) return false;
+        if(h && String(r.fecha||"")>h) return false;
+        return true;
+      });
+    }
+    function render(){
+      var f=aplicaFiltros();
+      var gal=0,cos=0; f.forEach(function(r){gal+=num(r.galones);cos+=num(r.costo);});
+      // por placa
+      var byP={};
+      f.forEach(function(r){ var p=r.placa||"(sin placa)"; var o=byP[p]||(byP[p]={cargas:0,gal:0,cos:0,kms:[]}); o.cargas++; o.gal+=num(r.galones); o.cos+=num(r.costo); var k=num(r.km); if(k>0)o.kms.push(k); });
+      var kmTot=0, galConKm=0;
+      Object.keys(byP).forEach(function(p){ var o=byP[p]; if(o.kms.length>=2){ var rec=Math.max.apply(null,o.kms)-Math.min.apply(null,o.kms); o.rec=rec; kmTot+=rec; galConKm+=o.gal; } else o.rec=0; });
+      document.getElementById("kGal").textContent=fmt(gal,0);
+      document.getElementById("kCosto").textContent=money(cos);
+      document.getElementById("kCargas").textContent=f.length;
+      document.getElementById("kRend").textContent= galConKm>0 ? fmt(kmTot/galConKm,2) : "—";
+      document.getElementById("sub").textContent=f.length+" carga(s) en el filtro";
+      // tabla
+      var tb=document.querySelector("#tabla tbody");
+      var keys=Object.keys(byP).sort(function(a,b){return byP[b].cos-byP[a].cos;});
+      tb.innerHTML = keys.length ? keys.map(function(p){ var o=byP[p]; var rend=o.rec>0&&o.gal>0?(o.rec/o.gal):null; var cpk=o.rec>0?(o.cos/o.rec):null;
+        return '<tr><td><strong>'+p+'</strong></td><td>'+o.cargas+'</td><td>'+fmt(o.gal,0)+'</td><td>'+money(o.cos)+'</td><td>'+(o.rec?fmt(o.rec,0):'—')+'</td><td>'+(rend!=null?fmt(rend,2):'—')+'</td><td>'+(cpk!=null?money(cpk):'—')+'</td></tr>';
+      }).join("") : '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">Sin datos en el filtro.</td></tr>';
+      // gráfico galones por mes
+      var byM={};
+      f.forEach(function(r){ var m=(r.fecha||"").slice(0,7); if(m) byM[m]=(byM[m]||0)+num(r.galones); });
+      var labels=Object.keys(byM).sort(); var vals=labels.map(function(m){return byM[m];});
+      if(chart) chart.destroy();
+      chart=new Chart(document.getElementById("chart"),{ type:'bar', data:{labels:labels, datasets:[{label:'Galones', data:vals, backgroundColor:'#1f5fa8'}]}, options:{plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}}} });
+    }
+
+    function rango(r){
+      var hoy=new Date(); var d=document.getElementById("fDesde"), h=document.getElementById("fHasta");
+      function iso(x){return x.toISOString().slice(0,10);}
+      if(r==="todo"){ d.value=""; h.value=""; }
+      else if(r==="mes"){ d.value=iso(new Date(hoy.getFullYear(),hoy.getMonth(),1)); h.value=iso(hoy); }
+      else { var dd=new Date(hoy); dd.setDate(dd.getDate()-parseInt(r,10)); d.value=iso(dd); h.value=iso(hoy); }
+      render();
+    }
+    document.getElementById("rangos").addEventListener("click",function(e){ if(!e.target.classList.contains("chip"))return; document.querySelectorAll("#rangos .chip").forEach(function(c){c.classList.remove("on");}); e.target.classList.add("on"); rango(e.target.dataset.r); });
+    ["fDesde","fHasta","fPlaca"].forEach(function(id){ document.getElementById(id).addEventListener("change",render); });
+
+    function cargar(){
+      db().collection("operaciones").where("modulo","==","combustible").get().then(function(snap){
+        DATA=snap.docs.map(function(d){return d.data();});
+        var placas={}; DATA.forEach(function(r){if(r.placa)placas[r.placa]=1;});
+        document.getElementById("fPlaca").innerHTML='<option value="">Todas</option>'+Object.keys(placas).sort().map(function(p){return '<option>'+p+'</option>';}).join("");
+        render();
+      }).catch(function(e){ document.getElementById("sub").textContent="Error: "+e.message; });
+    }
+    MISAGI.requireAccess("operaciones").then(function(s){
+      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+      document.getElementById("app").style.display="";
+      cargar();
+    });
+  </script>
+</body>
+</html>

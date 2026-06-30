@@ -48,6 +48,7 @@ const MISAGI_MODULOS = [
       { id: "operaciones.tracker",      nombre: "Tracker",      url: "flota/operaciones/tracker/",      estado: "activo", desc: "Seguimiento de conductores" },
       { id: "operaciones.roster",       nombre: "Roster",       url: "flota/operaciones/roster/",       estado: "activo", desc: "Días trabajados por conductor" },
       { id: "operaciones.combustible",  nombre: "Combustible",  url: "flota/operaciones/combustible/",  estado: "activo", desc: "Control de combustible por unidad" },
+      { id: "operaciones.combustible_dash", nombre: "Consumo combustible", url: "flota/operaciones/combustible-consumo/", estado: "activo", desc: "Dashboard de consumo con filtros" },
       { id: "operaciones.lavado",       nombre: "Lavado y engrase", url: "flota/operaciones/lavado/",    estado: "activo", desc: "Registro de lavado y engrase" },
       { id: "operaciones.checklist",    nombre: "Check list",   url: "flota/operaciones/checklist/",    estado: "activo", desc: "Check list de conductores por cliente" },
       { id: "operaciones.documentos",   nombre: "Gestión documentaria", url: "documentos/", estado: "activo", desc: "Documentos y vencimientos de unidades/conductores" },
