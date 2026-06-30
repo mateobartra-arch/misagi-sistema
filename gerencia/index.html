@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tablero gerencial — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../assets/theme.css">
+  <style>
+    .filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+    .filters select{padding:8px 12px;border:1px solid var(--border);border-radius:9px;font-family:inherit}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px}
+    .kpi{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;position:relative}
+    .kpi .n{font-size:1.7rem;font-weight:800;line-height:1.1} .kpi .l{font-size:.76rem;color:var(--text-muted);margin-top:3px}
+    .kpi .s{font-size:.72rem;margin-top:5px;font-weight:600}
+    .kpi.good .n{color:var(--verde-d)} .kpi.bad .n{color:var(--danger)} .kpi.warn .n{color:#b45309}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+    @media(max-width:820px){.row2{grid-template-columns:1fr}}
+    .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px}
+    .card h3{margin:0 0 12px;font-size:.95rem}
+    canvas{max-height:260px}
+    table{width:100%;border-collapse:collapse;font-size:.85rem}
+    th,td{padding:7px 9px;border-bottom:1px solid var(--border);text-align:left}
+    th{font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted)}
+    .st{font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px}
+    .st.bad{background:var(--danger-light);color:var(--danger)} .st.warn{background:#fef3c7;color:#b45309}
+    .note{font-size:.78rem;color:var(--text-muted);background:#f8fafc;border:1px dashed var(--border);border-radius:9px;padding:9px 12px;margin-top:8px}
+  </style>
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Gerencia</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" id="app" style="display:none">
+    <div class="page-head">
+      <div><h1>Tablero gerencial</h1><div class="page-sub" id="sub">Cargando…</div></div>
+      <div style="display:flex;gap:8px"><button class="btn btn-ghost" id="btnEstados">⟳ Recalcular estados</button><button class="btn btn-ghost" id="btnRe">↻ Actualizar</button></div>
+    </div>
+    <div class="filters">
+      <label style="font-size:.85rem;color:var(--text-muted)">Mes:</label>
+      <select id="mes"></select>
+    </div>
+    <div class="grid" id="kpis"></div>
+    <div class="row2">
+      <div class="card"><h3>Costo de operación por unidad (mes)</h3><canvas id="chCosto"></canvas></div>
+      <div class="card"><h3>Estado de la flota</h3><canvas id="chFlota"></canvas></div>
+    </div>
+    <div class="row2">
+      <div class="card"><h3>Costo de operación por mes (S/)</h3><canvas id="chMes"></canvas></div>
+      <div class="card">
+        <h3>Correctivos abiertos</h3>
+        <div id="tCorr"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:18px">
+      <h3>Avance meta GNL del mes (2000 kg/unidad)</h3>
+      <div id="tGnl"></div>
+    </div>
+    <div class="note" id="notaKm">ℹ️ El <strong>costo por km</strong> y el <strong>rendimiento (km/galón)</strong> se activan cuando se capture el kilometraje en cada carga de combustible. Hoy el histórico no lo trae.</div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="../assets/firebase-config.js"></script>
+  <script src="../assets/auth.js"></script>
+  <script src="../assets/estado-unidad.js"></script>
+  <script>
+    var db=function(){return firebase.firestore();};
+    function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+    function num(x){var n=parseFloat(String(x==null?"":x).replace(",",".").replace(/[^0-9.\-]/g,""));return isNaN(n)?0:n;}
+    function soles(n){return "S/ "+n.toLocaleString("es-PE",{minimumFractionDigits:0,maximumFractionDigits:0});}
+    function mesDe(f){return String(f||"").slice(0,7);}
+    var DATA={}, charts={}, GNL_META=2000;
+
+    function cargarTodo(cb){
+      Promise.all([
+        db().collection("operaciones").get(),
+        db().collection("mantenimiento").get(),
+        db().collection("documentos").get(),
+        db().collection("personas").get()
+      ]).then(function(r){
+        var op=r[0].docs.map(function(d){return d.data();});
+        DATA.unidades=op.filter(function(o){return o.modulo==="unidades";});
+        DATA.combustible=op.filter(function(o){return o.modulo==="combustible";});
+        DATA.gnl=op.filter(function(o){return o.modulo==="gnl";});
+        DATA.lavado=op.filter(function(o){return o.modulo==="lavado";});
+        DATA.mant=r[1].docs.map(function(d){return d.data();});
+        DATA.docs=r[2].docs.map(function(d){return d.data();});
+        DATA.personas=r[3].docs.map(function(d){return d.data();});
+        cb();
+      }).catch(function(e){ document.getElementById("sub").textContent="Error: "+e.message; });
+    }
+
+    function mesesDisponibles(){
+      var set={};
+      ["combustible","gnl","lavado"].forEach(function(k){ DATA[k].forEach(function(r){ var m=mesDe(r.fecha); if(m) set[m]=true; }); });
+      DATA.mant.forEach(function(r){ var m=mesDe(r.fecha); if(m) set[m]=true; });
+      var arr=Object.keys(set).sort(); return arr.length?arr:[new Date().toISOString().slice(0,7)];
+    }
+
+    function costoMes(m){
+      var porUnidad={}, total=0;
+      function add(arr){ arr.forEach(function(r){ if(mesDe(r.fecha)===m){ var c=num(r.costo); total+=c; var p=r.placa||"(sin placa)"; porUnidad[p]=(porUnidad[p]||0)+c; } }); }
+      add(DATA.combustible); add(DATA.gnl); add(DATA.lavado);
+      DATA.mant.forEach(function(r){ if(r.modulo==="correctivo" && mesDe(r.fecha)===m){ var c=num(r.costo); total+=c; var p=r.placa||"(sin placa)"; porUnidad[p]=(porUnidad[p]||0)+c; } });
+      return {total:total, porUnidad:porUnidad};
+    }
+
+    function diasA(v){ if(!v) return null; var h=new Date(); h.setHours(0,0,0,0); var d=new Date(v+"T00:00:00"); if(isNaN(d)) return null; return Math.round((d-h)/86400000); }
+
+    function pintar(){
+      var m=document.getElementById("mes").value;
+      // Flota
+      var U=DATA.unidades, total=U.length;
+      var oper=U.filter(function(u){return String(u.estado||"Operativo").toLowerCase()==="operativo";}).length;
+      var enM=U.filter(function(u){return String(u.estado||"").toLowerCase()==="en mantenimiento";}).length;
+      var baja=U.filter(function(u){return String(u.estado||"").toLowerCase()==="baja";}).length;
+      var disp= total? Math.round(oper/total*100):0;
+      // Costos
+      var cm=costoMes(m);
+      // Correctivos abiertos
+      var corrAb=DATA.mant.filter(function(r){return r.modulo==="correctivo" && String(r.estado||"").toLowerCase()!=="cerrado";});
+      var graves=corrAb.filter(function(r){return /GRAVE/i.test(r.gravedad||"");}).length;
+      // Documentos
+      var docVenc=DATA.docs.filter(function(d){var x=diasA(d.vencimiento);return x!=null&&x<0;}).length;
+      var docWarn=DATA.docs.filter(function(d){var x=diasA(d.vencimiento);return x!=null&&x>=0&&x<=30;}).length;
+      // GNL meta del mes
+      var gnlPorU={}; DATA.gnl.forEach(function(r){ if(mesDe(r.fecha)===m){ var p=r.placa||"?"; gnlPorU[p]=(gnlPorU[p]||0)+num(r.kg); } });
+      var unidGnl=Object.keys(gnlPorU).length;
+      var conBono=Object.keys(gnlPorU).filter(function(p){return gnlPorU[p]>=GNL_META;}).length;
+      // Personas
+      var conduct=DATA.personas.filter(function(p){return String(p.tipo||"conductor").toLowerCase()==="conductor" && p.activo!==false;}).length;
+
+      document.getElementById("sub").textContent="Mes "+m+" · "+total+" unidades · "+DATA.personas.length+" personas";
+      var K=document.getElementById("kpis");
+      K.innerHTML=
+        kpi(disp+"%", "Disponibilidad de flota", oper+"/"+total+" operativas", disp>=80?"good":(disp>=60?"warn":"bad"))+
+        kpi(soles(cm.total), "Costo de operación (mes)", "combustible+GNL+lavado+mantto", "")+
+        kpi(corrAb.length, "Correctivos abiertos", graves+" graves", corrAb.length?"warn":"good")+
+        kpi(enM, "En mantenimiento", baja+" de baja", enM?"warn":"good")+
+        kpi(docVenc, "Documentos vencidos", docWarn+" por vencer (≤30d)", docVenc?"bad":"good")+
+        kpi(conduct, "Conductores activos", DATA.personas.length+" personas en total", "")+
+        kpi(unidGnl?Math.round(conBono/unidGnl*100)+"%":"—", "Meta GNL (bono)", conBono+"/"+unidGnl+" unidades", conBono?"good":"")+
+        kpi(cm.total&&total?soles(Math.round(cm.total/total)):"—", "Costo prom. por unidad", "del mes", "");
+
+      // Chart costo por unidad
+      var pu=Object.keys(cm.porUnidad).map(function(p){return [p,cm.porUnidad[p]];}).sort(function(a,b){return b[1]-a[1];}).slice(0,10);
+      chart("chCosto","bar",{labels:pu.map(function(x){return x[0];}),datasets:[{label:"S/ (mes)",data:pu.map(function(x){return Math.round(x[1]);}),backgroundColor:"#1a6b3c"}]});
+      // Chart flota
+      chart("chFlota","doughnut",{labels:["Operativo","En mantenimiento","Baja"],datasets:[{data:[oper,enM,baja],backgroundColor:["#1a6b3c","#f59e0b","#9ca3af"]}]});
+      // Chart costo por mes
+      var meses=mesesDisponibles(); var serie=meses.map(function(mm){return costoMes(mm).total;});
+      chart("chMes","line",{labels:meses,datasets:[{label:"S/",data:serie.map(function(v){return Math.round(v);}),borderColor:"#1a6b3c",backgroundColor:"rgba(26,107,60,.12)",fill:true,tension:.3}]});
+
+      // Tabla correctivos abiertos
+      var tc=document.getElementById("tCorr");
+      tc.innerHTML = corrAb.length ? '<table><thead><tr><th>Unidad</th><th>Falla</th><th>Gravedad</th><th>Estado</th></tr></thead><tbody>'+
+        corrAb.slice(0,12).map(function(r){var g=/MUY GRAVE/i.test(r.gravedad||"")?"bad":(/GRAVE/i.test(r.gravedad||"")?"warn":"");return '<tr><td><strong>'+esc(r.placa)+'</strong></td><td>'+esc((r.descripcion||"").slice(0,40))+'</td><td>'+(g?'<span class="st '+g+'">'+esc(r.gravedad)+'</span>':esc(r.gravedad||""))+'</td><td>'+esc(r.estado||"")+'</td></tr>';}).join("")+
+        '</tbody></table>'+(corrAb.length>12?'<div class="note">+ '+(corrAb.length-12)+' más</div>':'') : '<div class="note">Sin correctivos abiertos 🎉</div>';
+
+      // Meta GNL por unidad
+      var tg=document.getElementById("tGnl");
+      var keys=Object.keys(gnlPorU).sort(function(a,b){return gnlPorU[b]-gnlPorU[a];});
+      tg.innerHTML = keys.length ? '<table><thead><tr><th>Unidad</th><th>kg del mes</th><th>Meta</th><th></th></tr></thead><tbody>'+
+        keys.map(function(p){var kg=Math.round(gnlPorU[p]);var ok=kg>=GNL_META;var pct=Math.min(100,Math.round(kg/GNL_META*100));return '<tr><td><strong>'+esc(p)+'</strong></td><td>'+kg+'</td><td>'+GNL_META+'</td><td style="width:42%"><div style="background:#eef;border-radius:8px;height:14px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+(ok?"#1a6b3c":"#f59e0b")+'"></div></div><span style="font-size:.72rem">'+(ok?"✓ Bono":"Faltan "+(GNL_META-kg)+" kg")+'</span></td></tr>';}).join("")+
+        '</tbody></table>' : '<div class="note">Sin registros de GNL en el mes.</div>';
+    }
+
+    function kpi(n,l,s,cls){ return '<div class="kpi '+(cls||"")+'"><div class="n">'+n+'</div><div class="l">'+l+'</div>'+(s?'<div class="s" style="color:var(--text-muted)">'+s+'</div>':'')+'</div>'; }
+    function chart(id,type,data){ if(charts[id]) charts[id].destroy(); var ctx=document.getElementById(id); charts[id]=new Chart(ctx,{type:type,data:data,options:{responsive:true,plugins:{legend:{display:type!=="bar"}}}}); }
+
+    function init(){
+      var sel=document.getElementById("mes"); var meses=mesesDisponibles();
+      sel.innerHTML=meses.map(function(m){return '<option>'+m+'</option>';}).join("");
+      sel.value=meses[meses.length-1];
+      sel.onchange=pintar;
+      pintar();
+    }
+    document.getElementById("btnRe").onclick=function(){ cargarTodo(init); };
+    document.getElementById("btnEstados").onclick=function(){
+      var b=this; b.disabled=true; b.textContent="Recalculando…";
+      MISAGI_ESTADO_UNIDAD.recomputarFlota(function(e,c){
+        b.disabled=false; b.textContent="⟳ Recalcular estados";
+        if(e){ alert("Error: "+e.message); return; }
+        alert(c.length? (c.length+" unidad(es) actualizada(s):\n"+c.map(function(x){return "• "+x.placa+": "+x.de+" → "+x.a+" ("+x.motivo+")";}).join("\n")) : "Todo en orden, ningún estado cambió.");
+        cargarTodo(init);
+      });
+    };
+
+    MISAGI.requireLogin().then(function(s){
+      if(!MISAGI.esAdmin(s.perfil)){ alert("Solo gerencia/admin puede ver el tablero."); location.href="../index.html"; return; }
+      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+      document.getElementById("app").style.display="";
+      MISAGI_ESTADO_UNIDAD.recomputarFlota(function(){ cargarTodo(init); });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Combustible · Rendimiento — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../../assets/theme.css">
+  <style>
+    .subtabs{display:flex;gap:6px;margin:10px 0 4px;flex-wrap:wrap}
+    .subtab{padding:8px 16px;border-radius:10px 10px 0 0;text-decoration:none;color:var(--text-muted);font-weight:600;font-size:.88rem;border:1px solid transparent}
+    .subtab.on{background:#fff;border-color:var(--border);border-bottom-color:#fff;color:var(--verde-d)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:18px 0}
+    .kpi{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px}
+    .kpi .n{font-size:1.6rem;font-weight:800} .kpi .l{font-size:.76rem;color:var(--text-muted);margin-top:3px}
+    .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px}
+    .card h3{margin:0 0 10px;font-size:.95rem}
+    table{width:100%;border-collapse:collapse;font-size:.85rem}
+    th,td{padding:7px 9px;border-bottom:1px solid var(--border);text-align:left}
+    th{font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted)}
+    .bad-row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 11px;border:1px solid #fde2e1;background:#fef2f2;border-radius:9px;margin-top:7px;font-size:.85rem}
+    .bad-row code{background:#fff;padding:1px 7px;border-radius:6px;font-weight:700}
+    .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;background:#fee2e2;color:#b91c1c}
+    .ok-msg{color:var(--verde-d);font-weight:600;font-size:.88rem}
+    .note{font-size:.78rem;color:var(--text-muted);background:#f8fafc;border:1px dashed var(--border);border-radius:9px;padding:10px 12px;margin-top:8px}
+  </style>
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Combustible</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" style="padding-bottom:0">
+    <div class="subtabs">
+      <a class="subtab" href="../combustible/">📋 Registros</a>
+      <a class="subtab" href="../combustible-consumo/">📊 Reporte / Análisis</a>
+      <a class="subtab on" href="../combustible-rendimiento/">🔎 Rendimiento</a>
+    </div>
+  </div>
+  <div class="container" id="app" style="display:none">
+    <div class="page-head">
+      <div><h1>Rendimiento y anomalías</h1><div class="page-sub" id="sub">Calculando…</div></div>
+      <button class="btn btn-ghost" id="btnRe">↻ Actualizar</button>
+    </div>
+    <div class="grid" id="kpis"></div>
+
+    <div class="card">
+      <h3>⛽ Rendimiento (km/galón)</h3>
+      <div id="rend"></div>
+    </div>
+    <div class="card">
+      <h3>💰 Precios atípicos (S/ por galón fuera de lo normal)</h3>
+      <div id="precio"></div>
+    </div>
+    <div class="card">
+      <h3>📈 Cargas fuera del promedio de la unidad</h3>
+      <div id="spikes"></div>
+    </div>
+    <div class="card">
+      <h3>🧪 Proporción de urea vs diésel por unidad</h3>
+      <div id="urea"></div>
+      <div class="note">Referencia habitual: la urea suele ser ~3–8 % de los galones de diésel. Muy por debajo puede indicar que no se está reponiendo urea; muy por encima, una carga mal registrada.</div>
+    </div>
+    <div class="card">
+      <h3>🔁 Posibles cargas duplicadas (misma placa y fecha)</h3>
+      <div id="dup"></div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../../../assets/firebase-config.js"></script>
+  <script src="../../../assets/auth.js"></script>
+  <script>
+    var db=function(){return firebase.firestore();};
+    function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+    function num(x){var n=parseFloat(String(x==null?"":x).replace(",",".").replace(/[^0-9.\-]/g,""));return isNaN(n)?0:n;}
+    function r1(n){return Math.round(n*10)/10;}
+    function mediana(a){ if(!a.length) return 0; var s=a.slice().sort(function(x,y){return x-y;}); var i=Math.floor(s.length/2); return s.length%2?s[i]:(s[i-1]+s[i])/2; }
+
+    function cargar(){
+      db().collection("operaciones").where("modulo","==","combustible").get().then(function(snap){
+        var R=snap.docs.map(function(d){return d.data();});
+        analizar(R);
+      }).catch(function(e){ document.getElementById("sub").textContent="Error: "+e.message; });
+    }
+
+    function analizar(R){
+      var diesel=R.filter(function(r){return num(r.galones)>0;});
+      var urea=R.filter(function(r){return num(r.litros)>0;});
+      var conKm=R.filter(function(r){return num(r.km)>0;});
+      document.getElementById("sub").textContent=R.length+" cargas · "+diesel.length+" de diésel · "+urea.length+" de urea";
+
+      // KPIs
+      var totGal=diesel.reduce(function(s,r){return s+num(r.galones);},0);
+      var totCosto=R.reduce(function(s,r){return s+num(r.costo);},0);
+      var precios=diesel.map(function(r){return num(r.costo)/num(r.galones);}).filter(function(p){return p>0&&isFinite(p);});
+      var precioMed=mediana(precios);
+      document.getElementById("kpis").innerHTML=
+        '<div class="kpi"><div class="n">'+r1(totGal).toLocaleString("es-PE")+'</div><div class="l">Galones diésel</div></div>'+
+        '<div class="kpi"><div class="n">S/ '+Math.round(totCosto).toLocaleString("es-PE")+'</div><div class="l">Costo total</div></div>'+
+        '<div class="kpi"><div class="n">S/ '+r1(precioMed)+'</div><div class="l">Precio mediano / galón</div></div>'+
+        '<div class="kpi"><div class="n">'+conKm.length+'</div><div class="l">Cargas con km</div></div>';
+
+      // Rendimiento km/galón (necesita km en orden por unidad)
+      var rend=document.getElementById("rend");
+      if(conKm.length<2){
+        rend.innerHTML='<div class="note">Aún no se puede calcular: hace falta el <strong>kilometraje en cada carga</strong>. El formulario de combustible ya tiene el campo «Kilometraje» — al capturarlo, aquí aparecerá el rendimiento km/galón por unidad y se detectarán caídas (posible fuga o robo).</div>';
+      } else {
+        var porU={}; conKm.forEach(function(r){ var p=r.placa||"?"; (porU[p]=porU[p]||[]).push({km:num(r.km),gal:num(r.galones),f:r.fecha}); });
+        var filas="";
+        Object.keys(porU).sort().forEach(function(p){
+          var arr=porU[p].sort(function(a,b){return String(a.f).localeCompare(String(b.f));});
+          var kmRec=0,galRec=0;
+          for(var i=1;i<arr.length;i++){ var dk=arr[i].km-arr[i-1].km; if(dk>0&&arr[i-1].gal>0){ kmRec+=dk; galRec+=arr[i-1].gal; } }
+          if(galRec>0){ filas+='<tr><td><strong>'+esc(p)+'</strong></td><td>'+r1(kmRec/galRec)+' km/gal</td><td>'+r1(kmRec)+' km</td></tr>'; }
+        });
+        rend.innerHTML= filas? '<table><thead><tr><th>Unidad</th><th>Rendimiento</th><th>Km recorridos</th></tr></thead><tbody>'+filas+'</tbody></table>' : '<div class="note">Datos de km insuficientes para calcular.</div>';
+      }
+
+      // Precios atípicos
+      var pre=document.getElementById("precio"); var pr="";
+      if(precioMed>0){
+        diesel.forEach(function(r){ var p=num(r.costo)/num(r.galones); if(p>0&&isFinite(p)){ var dif=(p-precioMed)/precioMed; if(Math.abs(dif)>0.3){ pr+='<div class="bad-row"><span>🚛 <code>'+esc(r.placa)+'</code> · '+esc(r.fecha)+' · '+esc(r.grifo||"")+'</span><span class="tag">S/ '+r1(p)+'/gal ('+(dif>0?"+":"")+Math.round(dif*100)+'%)</span></div>'; } } });
+      }
+      pre.innerHTML= pr || '<div class="ok-msg">✓ Sin precios atípicos (todo cerca de S/ '+r1(precioMed)+'/gal).</div>';
+
+      // Cargas fuera del promedio por unidad
+      var sp=document.getElementById("spikes"); var spk="";
+      var galPorU={}; diesel.forEach(function(r){ var p=r.placa||"?"; (galPorU[p]=galPorU[p]||[]).push(r); });
+      Object.keys(galPorU).forEach(function(p){
+        var arr=galPorU[p]; if(arr.length<3) return;
+        var vals=arr.map(function(r){return num(r.galones);}); var prom=vals.reduce(function(s,v){return s+v;},0)/vals.length;
+        arr.forEach(function(r){ var g=num(r.galones); if(g>prom*1.8){ spk+='<div class="bad-row"><span>🚛 <code>'+esc(p)+'</code> · '+esc(r.fecha)+'</span><span class="tag">'+r1(g)+' gal (prom '+r1(prom)+')</span></div>'; } });
+      });
+      sp.innerHTML= spk || '<div class="ok-msg">✓ Ninguna carga se dispara sobre el promedio de su unidad.</div>';
+
+      // Urea vs diésel
+      var ur=document.getElementById("urea");
+      var dPorU={}, uPorU={};
+      diesel.forEach(function(r){ var p=r.placa||"?"; dPorU[p]=(dPorU[p]||0)+num(r.galones); });
+      urea.forEach(function(r){ var p=r.placa||"?"; uPorU[p]=(uPorU[p]||0)+num(r.litros); });
+      var keys=Object.keys(dPorU).sort(); var uf="";
+      keys.forEach(function(p){ var d=dPorU[p], u=uPorU[p]||0; var ratio=d>0?(u/d*100):0; var flag=(ratio<1||ratio>12); uf+='<tr><td><strong>'+esc(p)+'</strong></td><td>'+r1(d)+' gal</td><td>'+r1(u)+' L</td><td>'+(flag?'<span class="tag">'+r1(ratio)+'%</span>':r1(ratio)+'%')+'</td></tr>'; });
+      ur.innerHTML= keys.length? '<table><thead><tr><th>Unidad</th><th>Diésel</th><th>Urea</th><th>Urea/Diésel</th></tr></thead><tbody>'+uf+'</tbody></table>' : '<div class="note">Sin datos.</div>';
+
+      // Duplicados
+      var dp=document.getElementById("dup"); var seen={}, dpr="";
+      diesel.forEach(function(r){ var k=(r.placa||"?")+"|"+(r.fecha||""); seen[k]=(seen[k]||0)+1; });
+      Object.keys(seen).forEach(function(k){ if(seen[k]>1){ var pp=k.split("|"); dpr+='<div class="bad-row"><span>🚛 <code>'+esc(pp[0])+'</code> · '+esc(pp[1])+'</span><span class="tag">'+seen[k]+' cargas el mismo día</span></div>'; } });
+      dp.innerHTML= dpr || '<div class="ok-msg">✓ Sin cargas duplicadas el mismo día.</div>';
+    }
+
+    document.getElementById("btnRe").onclick=cargar;
+    MISAGI.requireAccess("operaciones").then(function(s){
+      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+      document.getElementById("app").style.display="";
+      cargar();
+    });
+  </script>
+</body>
+</html>
