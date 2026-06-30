@@ -211,17 +211,30 @@ function renderSidebar(perfil) {
   const nav = document.getElementById("nav");
   if (!nav) return;
   nav.innerHTML = '<a class="nav-link active" href="#top">' + msgIcon('home') + '<span>Inicio</span></a>';
+  let abiertos = {};
+  try { abiertos = JSON.parse(localStorage.getItem('msg_nav_open') || '{}'); } catch (e) {}
   gruposVisibles(perfil).forEach(function (g) {
-    let html = '<div class="nav-group"><div class="gl">' + msgIcon(g.ik, 'gico') + g.grupo + '</div>';
-    appsVisibles(g, perfil).forEach(function (app) {
+    const apps = appsVisibles(g, perfil);
+    const open = abiertos[g.grupo] ? ' open' : '';
+    let sub = apps.map(function (app) {
       const activo = app.estado === "activo";
-      if (activo) {
-        html += '<a class="nav-link" href="' + MISAGI.ROOT + app.url + '">' + msgIcon(g.ik) + '<span>' + app.nombre + '</span></a>';
-      } else {
-        html += '<span class="nav-link disabled">' + msgIcon(g.ik) + '<span>' + app.nombre + '</span></span>';
-      }
-    });
-    html += '</div>';
+      return activo
+        ? '<a class="nav-link" href="' + MISAGI.ROOT + app.url + '">' + msgIcon(g.ik) + '<span>' + app.nombre + '</span></a>'
+        : '<span class="nav-link disabled">' + msgIcon(g.ik) + '<span>' + app.nombre + '</span></span>';
+    }).join("");
+    let html = '<div class="nav-group' + open + '" data-g="' + g.grupo + '">' +
+      '<button class="gl" type="button">' + msgIcon(g.ik, 'gico') +
+        '<span class="glname">' + g.grupo + '</span>' +
+        '<span class="gcount">' + apps.length + '</span>' + msgIcon('chev', 'gchev') +
+      '</button><div class="nav-sub">' + sub + '</div></div>';
     nav.insertAdjacentHTML('beforeend', html);
+  });
+  nav.querySelectorAll('.nav-group .gl').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const grp = btn.parentNode; grp.classList.toggle('open');
+      let ab = {}; try { ab = JSON.parse(localStorage.getItem('msg_nav_open') || '{}'); } catch (e) {}
+      ab[grp.getAttribute('data-g')] = grp.classList.contains('open');
+      try { localStorage.setItem('msg_nav_open', JSON.stringify(ab)); } catch (e) {}
+    });
   });
 }

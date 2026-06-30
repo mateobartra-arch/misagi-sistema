@@ -50,6 +50,7 @@
     function pintar(){
       var tb=document.querySelector("#tabla tbody"); var f=filtradas();
       document.getElementById("sub").textContent=DATA.length+" registro(s)";
+      var _bi=document.getElementById("btnImp"); if(_bi) _bi.style.display = DATA.length ? "none" : "";
       // resumen
       (cfg.resumen||[]).forEach(function(r,i){
         var el=document.getElementById("kpi_"+i); if(!el) return; var val;

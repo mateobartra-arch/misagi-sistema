@@ -80,9 +80,17 @@
   .side-scroll{flex:1;overflow-y:auto;padding:6px 12px 14px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}
   .side-scroll::-webkit-scrollbar{width:8px}
   .side-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:8px}
-  .nav-group{margin-top:14px}
-  .nav-group>.gl{font-size:10px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:rgba(255,255,255,.36);padding:6px 12px 8px;display:flex;align-items:center;gap:8px}
-  .nav-group>.gl .gico{width:14px;height:14px;opacity:.5}
+  .nav-group{margin-top:6px}
+  .nav-group>.gl{display:flex;align-items:center;gap:9px;width:100%;border:none;background:none;cursor:pointer;color:rgba(255,255,255,.66);font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:9px 12px;border-radius:9px;font-family:inherit}
+  .nav-group>.gl:hover{background:rgba(255,255,255,.05);color:#fff}
+  .nav-group>.gl .gico{width:15px;height:15px;opacity:.7;flex-shrink:0}
+  .nav-group>.gl .glname{flex:1;text-align:left}
+  .nav-group>.gl .gcount{font-size:9.5px;letter-spacing:0;background:rgba(255,255,255,.12);border-radius:10px;padding:1px 7px;flex-shrink:0}
+  .nav-group>.gl .gchev{width:14px;height:14px;opacity:.55;transition:transform .2s;flex-shrink:0}
+  .nav-group.open>.gl{color:#fff}
+  .nav-group.open>.gl .gchev{transform:rotate(90deg)}
+  .nav-group>.nav-sub{display:none;margin:2px 0 4px;padding-left:4px}
+  .nav-group.open>.nav-sub{display:block}
   .nav-link{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:11px;border:none;background:none;cursor:pointer;color:rgba(255,255,255,.74);font-size:14px;font-weight:500;text-align:left;transition:background var(--ease),color var(--ease);text-decoration:none}
   .nav-link .ico{width:19px;height:19px;color:rgba(255,255,255,.55);transition:color var(--ease)}
   .nav-link:hover{background:rgba(255,255,255,.06);color:#fff}
