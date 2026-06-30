@@ -52,7 +52,8 @@ const MISAGI_MODULOS = [
       { id: "operaciones.checklist",    nombre: "Check list",   url: "flota/operaciones/checklist/",    estado: "activo", desc: "Check list de conductores por cliente" },
       { id: "operaciones.unidades",     nombre: "Unidades (flota)", url: "flota/operaciones/unidades/", estado: "activo", desc: "Tractos y tolvas" },
       { id: "operaciones.rutas",        nombre: "Rutas",        url: "flota/operaciones/rutas/",        estado: "activo", desc: "Rutas y distancias" },
-      { id: "operaciones.documentos",   nombre: "Gestión documentaria", url: "documentos/", estado: "activo", desc: "Documentos y vencimientos de unidades/conductores" }
+      { id: "operaciones.documentos",   nombre: "Gestión documentaria", url: "documentos/", estado: "activo", desc: "Documentos y vencimientos de unidades/conductores" },
+      { id: "operaciones.ficha",        nombre: "Ficha 360°",   url: "ficha/",                          estado: "activo", desc: "Todo de una unidad o conductor en un lugar" }
     ]
   },
   {

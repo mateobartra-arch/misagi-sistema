@@ -20,12 +20,13 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="../../../assets/firebase-config.js"></script>
   <script src="../../../assets/auth.js"></script>
+  <script src="../../../assets/maestros.js"></script>
   <script src="../../../assets/registro.js"></script>
   <script>
     MISAGI_REGISTRO.init({
       area:"operaciones", coleccion:"operaciones", modulo:"checklist",
       titulo:"Check list de conductores",
-      campos:[{k:"fecha",label:"Fecha",tipo:"date"},{k:"conductor",label:"Conductor"},{k:"unidad",label:"Unidad/Placa"},{k:"cliente",label:"Cliente",tipo:"select",opciones:["Hudbay","Raciemsa","Mepsa","Otro"]},{k:"estado",label:"Estado",tipo:"select",opciones:["Conforme","Observado","No conforme"]},{k:"observaciones",label:"Observaciones",tipo:"textarea"}],
+      campos:[{k:"fecha",label:"Fecha",tipo:"date"},{k:"conductor",label:"Conductor",tipo:"select",fuente:"conductores"},{k:"unidad",label:"Unidad/Placa",tipo:"select",fuente:"unidades"},{k:"cliente",label:"Cliente",tipo:"select",opciones:["Hudbay","Raciemsa","Mepsa","Otro"]},{k:"estado",label:"Estado",tipo:"select",opciones:["Conforme","Observado","No conforme"]},{k:"observaciones",label:"Observaciones",tipo:"textarea"}],
       columnas:["fecha","conductor","unidad","cliente","estado"],
       resumen:[{label:"Registros",op:"count"}]
     });

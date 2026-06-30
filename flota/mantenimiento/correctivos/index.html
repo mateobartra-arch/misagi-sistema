@@ -21,11 +21,12 @@
   <script src="../../../assets/firebase-config.js"></script>
   <script src="../../../assets/auth.js"></script>
   <script src="../../../assets/seed-flota-mant.js"></script>
+  <script src="../../../assets/maestros.js"></script>
   <script src="../../../assets/registro.js"></script>
   <script>
     MISAGI_REGISTRO.init({
   area:"mantenimiento", coleccion:"mantenimiento", modulo:"correctivo", titulo:"Mantenimiento correctivo",
-  campos:[{k:"fecha",label:"Fecha reporte",tipo:"date"},{k:"placa",label:"Unidad/Placa"},{k:"tipo_unidad",label:"Tipo",tipo:"select",opciones:["Tracto","Tolva"]},{k:"descripcion",label:"Descripción de falla",tipo:"textarea"},{k:"gravedad",label:"Gravedad",tipo:"select",opciones:["LEVE","GRAVE","MUY GRAVE"]},{k:"estado",label:"Estado",tipo:"select",opciones:["Abierto","En proceso","Cerrado"]},{k:"accion",label:"Acción correctiva",tipo:"textarea"},{k:"taller",label:"Técnico/Taller"},{k:"fecha_solucion",label:"Fecha solución",tipo:"date"},{k:"costo",label:"Costo (S/)",tipo:"number"}],
+  campos:[{k:"fecha",label:"Fecha reporte",tipo:"date"},{k:"placa",label:"Unidad/Placa",tipo:"select",fuente:"unidades"},{k:"tipo_unidad",label:"Tipo",tipo:"select",opciones:["Tracto","Tolva"]},{k:"descripcion",label:"Descripción de falla",tipo:"textarea"},{k:"gravedad",label:"Gravedad",tipo:"select",opciones:["LEVE","GRAVE","MUY GRAVE"]},{k:"estado",label:"Estado",tipo:"select",opciones:["Abierto","En proceso","Cerrado"]},{k:"accion",label:"Acción correctiva",tipo:"textarea"},{k:"taller",label:"Técnico/Taller"},{k:"fecha_solucion",label:"Fecha solución",tipo:"date"},{k:"costo",label:"Costo (S/)",tipo:"number"}],
   columnas:["fecha","placa","descripcion","estado","costo"],
   resumen:[{label:"Reportes",op:"count"},{label:"Costo (S/)",campo:"costo",op:"sum",money:true}]
 });

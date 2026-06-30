@@ -21,12 +21,13 @@
   <script src="../../../assets/firebase-config.js"></script>
   <script src="../../../assets/auth.js"></script>
   <script src="../../../assets/seed-lavado.js"></script>
+  <script src="../../../assets/maestros.js"></script>
   <script src="../../../assets/registro.js"></script>
   <script>
     MISAGI_REGISTRO.init({
       area:"operaciones", coleccion:"operaciones", modulo:"lavado",
       titulo:"Lavado y engrase",
-      campos:[{k:"fecha",label:"Fecha",tipo:"date"},{k:"placa",label:"Unidad/Placa"},{k:"tipo",label:"Tipo",tipo:"select",opciones:["Lavado","Engrase","Lavado y engrase"]},{k:"costo",label:"Costo (S/)",tipo:"number"},{k:"proveedor",label:"Proveedor"},{k:"obs",label:"Observación",tipo:"textarea"}],
+      campos:[{k:"fecha",label:"Fecha",tipo:"date"},{k:"placa",label:"Unidad/Placa",tipo:"select",fuente:"unidades"},{k:"tipo",label:"Tipo",tipo:"select",opciones:["Lavado","Engrase","Lavado y engrase"]},{k:"costo",label:"Costo (S/)",tipo:"number"},{k:"proveedor",label:"Proveedor"},{k:"obs",label:"Observación",tipo:"textarea"}],
       columnas:["fecha","placa","tipo","costo","proveedor"],
       resumen:[{label:"Costo (S/)",campo:"costo",op:"sum",money:true},{label:"Servicios",op:"count"}]
     });

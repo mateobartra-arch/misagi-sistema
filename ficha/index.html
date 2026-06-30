@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ficha 360° — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../assets/theme.css">
+  <style>
+    .kpis-reg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px}
+    .hbadge{font-size:.8rem;font-weight:800;padding:5px 14px;border-radius:20px;letter-spacing:.5px}
+    .hbadge.ok{background:var(--verde-l);color:var(--verde-d)} .hbadge.no{background:var(--danger-light);color:var(--danger)}
+    .pick{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+    .pick select{padding:9px 12px;border:1px solid var(--border-strong);border-radius:10px;font-family:inherit;font-size:.92rem;min-width:220px}
+    .seg{display:inline-flex;background:#fff;border:1px solid var(--border-strong);border-radius:10px;padding:3px;gap:2px}
+    .seg button{border:none;background:none;cursor:pointer;padding:8px 14px;border-radius:7px;font-size:.85rem;font-weight:600;color:var(--text-muted)}
+    .seg button.on{background:var(--azul-d);color:#fff}
+    .head360{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:linear-gradient(120deg,#0c2138,#0a1626);color:#fff;border-radius:18px;padding:22px 26px;margin-bottom:18px}
+    .head360 .av{width:54px;height:54px;border-radius:14px;background:rgba(255,255,255,.12);display:grid;place-items:center;font-family:'Space Grotesk';font-weight:700;font-size:1.1rem}
+    .head360 h1{font-size:1.5rem}
+    .head360 .meta{color:rgba(255,255,255,.7);font-size:.85rem;margin-top:2px}
+    .panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px;margin-bottom:16px}
+    .panel h2{font-size:1rem;color:var(--azul-d);margin-bottom:14px}
+    .st{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+    .st.ok{background:var(--verde-l);color:var(--verde-d)} .st.warn{background:var(--amber-l);color:var(--amber)} .st.bad{background:var(--danger-light);color:var(--danger)} .st.none{background:#eef2f0;color:var(--text-muted)}
+    .lnk{color:var(--azul);font-weight:600;font-size:.85rem;text-decoration:underline}
+    .dg{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+    .dg .k{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted)}
+    .dg .v{font-weight:600}
+    .muted{color:var(--text-muted)}
+  </style>
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Ficha 360°</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" id="app" style="display:none">
+    <div class="page-head"><div><h1>Ficha 360°</h1><div class="page-sub">Todo de una unidad o conductor en un solo lugar.</div></div></div>
+    <div class="pick">
+      <div class="seg" id="seg"><button class="on" data-t="unidad">Unidad</button><button data-t="conductor">Conductor</button></div>
+      <select id="sel"><option value="">Cargando…</option></select>
+    </div>
+    <div id="cont"></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../assets/firebase-config.js"></script>
+  <script src="../assets/auth.js"></script>
+  <script src="../assets/maestros.js"></script>
+  <script>
+    var db=function(){return firebase.firestore();};
+    var tipo="unidad";
+    var REQ={ conductor:["Licencia","DNI","EMO / Examen médico","SCTR","Contrato"], unidad:["SOAT","Revisión Técnica","Tarjeta de propiedad","Habilitación MTC"] };
+    function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+    function money(n){return "S/ "+(Number(n||0)).toLocaleString('es-PE',{maximumFractionDigits:2});}
+    function estadoVenc(v){ if(!v) return {cls:"none",txt:"—",dias:null}; var h=new Date();h.setHours(0,0,0,0); var d=new Date(v+"T00:00:00"); if(isNaN(d)) return {cls:"none",txt:esc(v)}; var dd=Math.round((d-h)/86400000); if(dd<0) return {cls:"bad",txt:"Vencido"}; if(dd<=30) return {cls:"warn",txt:"Vence "+dd+" d"}; return {cls:"ok",txt:"Vigente"}; }
+    function num(v){var n=parseFloat(v);return isNaN(n)?0:n;}
+
+    function llenarSelector(){
+      var sel=document.getElementById("sel");
+      var p = tipo==="unidad" ? MISAGI_MAESTROS.opciones("unidades") : MISAGI_MAESTROS.opciones("conductores");
+      p.then(function(ops){
+        sel.innerHTML='<option value="">— Elige '+(tipo==="unidad"?"una unidad":"un conductor")+" —</option>"+ops.map(function(o){return '<option>'+esc(o)+'</option>';}).join("");
+        var q=new URLSearchParams(location.search); if(q.get("tipo")===tipo && q.get("id")){ sel.value=q.get("id"); cargar(q.get("id")); }
+      });
+    }
+
+    function tablaDocs(docs){
+      if(!docs.length) return '<p class="muted">Sin documentos registrados.</p>';
+      return '<div class="table-wrap"><table><thead><tr><th>Documento</th><th>N°</th><th>Vigencia</th><th>Archivo</th></tr></thead><tbody>'+
+        docs.sort(function(a,b){return String(a.vencimiento||"9999").localeCompare(String(b.vencimiento||"9999"));}).map(function(d){var e=estadoVenc(d.vencimiento);
+          return '<tr><td>'+esc(d.tipo)+'</td><td>'+esc(d.numero||"")+'</td><td>'+(d.vencimiento?esc(d.vencimiento)+' ':'')+'<span class="st '+e.cls+'">'+e.txt+'</span></td><td>'+(d.archivo_url?'<a class="lnk" href="'+esc(d.archivo_url)+'" target="_blank" rel="noopener noreferrer">ver ↗</a>':'—')+'</td></tr>';
+        }).join("")+'</tbody></table></div>';
+    }
+    function habilitado(cat,docs){
+      var req=REQ[cat]||[]; var vig={}; docs.forEach(function(d){ if(estadoVenc(d.vencimiento).cls!=="bad") vig[d.tipo]=true; });
+      var ok=req.filter(function(t){return vig[t];}).length; var faltan=req.filter(function(t){return !vig[t];});
+      return {hab: ok===req.length, faltan:faltan};
+    }
+
+    function cargar(id){
+      var cont=document.getElementById("cont"); if(!id){ cont.innerHTML=""; return; }
+      cont.innerHTML='<p class="muted">Cargando ficha…</p>';
+      if(tipo==="unidad") fichaUnidad(id); else fichaConductor(id);
+    }
+
+    function fichaUnidad(placa){
+      var cont=document.getElementById("cont");
+      Promise.all([
+        MISAGI_MAESTROS.unidades(),
+        db().collection("documentos").get().catch(function(){return {docs:[]};}),
+        db().collection("operaciones").where("modulo","==","combustible").get().catch(function(){return {forEach:function(){}};}),
+        db().collection("operaciones").where("modulo","==","lavado").get().catch(function(){return {forEach:function(){}};}),
+        db().collection("mantenimiento").where("modulo","==","correctivo").get().catch(function(){return {forEach:function(){}};}),
+        db().collection("mantenimiento").where("modulo","==","preventivo").get().catch(function(){return {forEach:function(){}};})
+      ]).then(function(r){
+        var uni=(r[0]||[]).filter(function(u){return u.placa===placa;})[0]||{};
+        var docs=(r[1].docs||[]).map(function(d){return d.data();}).filter(function(d){return d.categoria==="Unidad" && d.entidad===placa;});
+        var galones=0, cComb=0, cLav=0, cCorr=0, corrAbiertos=0, prev=null;
+        r[2].forEach(function(d){var o=d.data(); if(o.placa===placa){galones+=num(o.galones); cComb+=num(o.costo);}});
+        r[3].forEach(function(d){var o=d.data(); if(o.placa===placa){cLav+=num(o.costo);}});
+        r[4].forEach(function(d){var o=d.data(); if(o.placa===placa){cCorr+=num(o.costo); if((o.estado||"").toLowerCase()!=="cerrado") corrAbiertos++;}});
+        r[5].forEach(function(d){var o=d.data(); if(o.placa===placa) prev=o;});
+        var h=habilitado("unidad",docs); var total=cComb+cLav+cCorr;
+        cont.innerHTML=
+          '<div class="head360"><span class="av">🚛</span><div style="flex:1"><h1>'+esc(placa)+'</h1><div class="meta">'+esc(uni.marca||"")+' '+esc(uni.anio||"")+(uni.mtc?' · MTC '+esc(uni.mtc):'')+' · '+esc(uni.empresa||"")+'</div></div><span class="hbadge '+(h.hab?'ok':'no')+'">'+(h.hab?'OPERATIVA':'DOCS PENDIENTES')+'</span></div>'+
+          '<div class="kpis-reg">'+
+            '<div class="kpi-card"><div class="kpi-v">'+money(total)+'</div><div class="kpi-l">Costo acumulado</div></div>'+
+            '<div class="kpi-card"><div class="kpi-v">'+galones.toLocaleString('es-PE')+'</div><div class="kpi-l">Galones combustible</div></div>'+
+            '<div class="kpi-card"><div class="kpi-v" style="color:var(--amber)">'+(prev&&prev.dias_faltantes!=null?prev.dias_faltantes:'—')+'</div><div class="kpi-l">Días a próximo mantto</div></div>'+
+            '<div class="kpi-card"><div class="kpi-v" style="color:var(--danger)">'+corrAbiertos+'</div><div class="kpi-l">Correctivos abiertos</div></div>'+
+          '</div>'+
+          '<div class="panel"><h2>Costos por concepto</h2><div class="dg"><div><div class="k">Combustible</div><div class="v">'+money(cComb)+'</div></div><div><div class="k">Lavado/engrase</div><div class="v">'+money(cLav)+'</div></div><div><div class="k">Mantenimiento correctivo</div><div class="v">'+money(cCorr)+'</div></div><div><div class="k">Total</div><div class="v">'+money(total)+'</div></div></div></div>'+
+          (prev?'<div class="panel"><h2>Mantenimiento preventivo</h2><div class="dg"><div><div class="k">KM actual</div><div class="v">'+esc(prev.km_actual||"—")+'</div></div><div><div class="k">Próximo a los</div><div class="v">'+esc(prev.km_proximo||"—")+' km</div></div><div><div class="k">Fecha estimada</div><div class="v">'+esc(prev.fecha_estimada||"—")+'</div></div></div></div>':'')+
+          '<div class="panel"><h2>Documentos '+(h.faltan.length?'<span class="st bad" style="margin-left:6px">Faltan: '+h.faltan.map(esc).join(", ")+'</span>':'<span class="st ok">Completos</span>')+'</h2>'+tablaDocs(docs)+'<div style="margin-top:10px"><a class="btn btn-ghost btn-sm" href="../documentos/">Gestionar documentos →</a></div></div>';
+      });
+    }
+
+    function fichaConductor(nombre){
+      var cont=document.getElementById("cont");
+      Promise.all([
+        MISAGI_MAESTROS.conductores(),
+        db().collection("documentos").get().catch(function(){return {docs:[]};}),
+        db().collection("roster").get().catch(function(){return {forEach:function(){}};})
+      ]).then(function(r){
+        var c=(r[0]||[]).filter(function(x){return x.nombre===nombre;})[0]||{};
+        var docs=(r[1].docs||[]).map(function(d){return d.data();}).filter(function(d){return d.categoria==="Conductor" && d.entidad===nombre;});
+        var mes=new Date().toISOString().slice(0,7), dias=0;
+        r[2].forEach(function(d){var o=d.data(); if(String(o.dni)===String(c.dni) && o.fecha && o.fecha.slice(0,7)===mes && o.estado && o.estado!=="D") dias++;});
+        var h=habilitado("conductor",docs);
+        var ini=(nombre||"?").split(/[ ,]+/).slice(0,2).map(function(w){return w.charAt(0).toUpperCase();}).join("");
+        cont.innerHTML=
+          '<div class="head360"><span class="av">'+esc(ini)+'</span><div style="flex:1"><h1>'+esc(nombre)+'</h1><div class="meta">Conductor'+(c.dni?' · DNI '+esc(c.dni):'')+'</div></div><span class="hbadge '+(h.hab?'ok':'no')+'">'+(h.hab?'HABILITADO':'NO HABILITADO')+'</span></div>'+
+          '<div class="kpis-reg">'+
+            '<div class="kpi-card"><div class="kpi-v" style="color:var(--verde-d)">'+dias+'</div><div class="kpi-l">Días trabajados (mes)</div></div>'+
+            '<div class="kpi-card"><div class="kpi-v">'+docs.length+'</div><div class="kpi-l">Documentos</div></div>'+
+            '<div class="kpi-card"><div class="kpi-v" style="color:'+(h.faltan.length?'var(--danger)':'var(--verde-d)')+'">'+(REQ.conductor.length-h.faltan.length)+'/'+REQ.conductor.length+'</div><div class="kpi-l">Requeridos vigentes</div></div>'+
+          '</div>'+
+          '<div class="panel"><h2>Documentos '+(h.faltan.length?'<span class="st bad" style="margin-left:6px">Faltan: '+h.faltan.map(esc).join(", ")+'</span>':'<span class="st ok">Completos</span>')+'</h2>'+tablaDocs(docs)+'<div style="margin-top:10px"><a class="btn btn-ghost btn-sm" href="../documentos/">Gestionar documentos →</a></div></div>';
+      });
+    }
+
+    document.getElementById("seg").addEventListener("click",function(e){
+      if(e.target.tagName!=="BUTTON") return;
+      document.querySelectorAll("#seg button").forEach(function(b){b.classList.remove("on");});
+      e.target.classList.add("on"); tipo=e.target.dataset.t; document.getElementById("cont").innerHTML=""; llenarSelector();
+    });
+    document.getElementById("sel").addEventListener("change",function(){ cargar(this.value); });
+
+    MISAGI.requireLogin().then(function(s){
+      var p=s.perfil;
+      if(!(MISAGI.esAdmin(p)||MISAGI.puedeVer(p,"operaciones")||MISAGI.puedeVer(p,"rrhh"))){ alert("No tienes acceso."); location.href="../index.html"; return; }
+      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+      document.getElementById("app").style.display="";
+      var q=new URLSearchParams(location.search); if(q.get("tipo")==="conductor"){ tipo="conductor"; document.querySelectorAll("#seg button").forEach(function(b){b.classList.toggle("on",b.dataset.t==="conductor");}); }
+      llenarSelector();
+    });
+  </script>
+</body>
+</html>
