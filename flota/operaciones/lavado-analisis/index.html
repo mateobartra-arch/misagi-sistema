@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lavado · Análisis — MISAGI</title>
+  <link rel="icon" type="image/png" href="../../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../../assets/theme.css">
+  <style>
+    .filtros{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:18px}
+    .filtros .f label{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);margin-bottom:5px}
+    .filtros input,.filtros select{padding:8px 11px;border:1px solid var(--border-strong);border-radius:9px;font-family:inherit;font-size:.9rem}
+    .kpis-reg{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:14px;margin-bottom:20px}
+    .cbox{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:18px;margin-bottom:18px}
+    .cbox h3{font-size:.92rem;color:var(--azul-d);margin-bottom:12px}
+    canvas{max-height:280px}
+    .cols2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:820px){.cols2{grid-template-columns:1fr}}
+    h2.sec{font-size:1rem;color:var(--azul-d);margin:6px 0 10px}
+  </style>
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Lavado</a>
+    <div class="spacer"></div>
+    <button class="btn btn-ghost btn-sm" id="btnExp">⬇ Excel</button>
+    <a class="btn btn-ghost btn-sm" href="../../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" style="padding-bottom:0"><div class="subtabs"><a class="subtab" href="../lavado/">📋 Registros</a><a class="subtab on" href="../lavado-analisis/">📊 Análisis</a></div></div>
+  <div class="container" id="app" style="display:none">
+    <div class="page-head"><div><h1>Lavado y engrase · Análisis</h1><div class="page-sub" id="sub">Cargando…</div></div></div>
+    <div class="filtros">
+      <div class="f"><label>Desde</label><input type="date" id="fD"></div>
+      <div class="f"><label>Hasta</label><input type="date" id="fH"></div>
+      <div class="f"><label>Unidad</label><select id="fP"><option value="">Todas</option></select></div>
+      <div class="f"><label>Tipo</label><select id="fT"><option value="">Todos</option><option>Lavado</option><option>Engrase</option><option>Lavado y engrase</option><option>No realizado</option></select></div>
+    </div>
+    <div class="kpis-reg">
+      <div class="kpi-card"><div class="kpi-v" id="kGasto">—</div><div class="kpi-l">Gasto total</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kServ">—</div><div class="kpi-l">Servicios realizados</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kProm">—</div><div class="kpi-l">Costo promedio</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kNoReal" style="color:var(--amber)">—</div><div class="kpi-l">No realizados</div></div>
+    </div>
+    <div class="cbox"><h3>Gasto por mes</h3><canvas id="cMes"></canvas></div>
+    <div class="cols2">
+      <div><h2 class="sec">Por unidad</h2><div class="table-wrap"><table id="tP"><thead><tr><th>Unidad</th><th>Servicios</th><th>Gasto</th></tr></thead><tbody></tbody></table></div></div>
+      <div><h2 class="sec">Por tipo</h2><div class="table-wrap"><table id="tT"><thead><tr><th>Tipo</th><th>Cantidad</th><th>Gasto</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="../../../assets/firebase-config.js"></script>
+  <script src="../../../assets/auth.js"></script>
+  <script>
+    var db=function(){return firebase.firestore();}, DATA=[], chart=null;
+    function num(v){var n=parseFloat(v);return isNaN(n)?0:n;}
+    function money(n){return "S/ "+(Number(n||0)).toLocaleString('es-PE',{maximumFractionDigits:2});}
+    function aplica(){
+      var d=document.getElementById("fD").value,h=document.getElementById("fH").value,p=document.getElementById("fP").value,t=document.getElementById("fT").value;
+      return DATA.filter(function(r){ if(p&&r.placa!==p)return false; if(t&&r.tipo!==t)return false; if(d&&String(r.fecha||"")<d)return false; if(h&&String(r.fecha||"")>h)return false; return true; });
+    }
+    function render(){
+      var f=aplica(); var gasto=0,real=0,noreal=0;
+      f.forEach(function(r){ gasto+=num(r.costo); if(r.tipo==="No realizado")noreal++; else real++; });
+      document.getElementById("kGasto").textContent=money(gasto);
+      document.getElementById("kServ").textContent=real;
+      document.getElementById("kProm").textContent= real>0?money(gasto/real):"—";
+      document.getElementById("kNoReal").textContent=noreal;
+      document.getElementById("sub").textContent=f.length+" registro(s) · "+money(gasto);
+      var byP={},byT={},byM={};
+      f.forEach(function(r){ var p=r.placa||"(s/u)"; var o=byP[p]||(byP[p]={s:0,g:0}); o.s++; o.g+=num(r.costo);
+        var t=r.tipo||"(s/t)"; var ot=byT[t]||(byT[t]={c:0,g:0}); ot.c++; ot.g+=num(r.costo);
+        var m=(r.fecha||"").slice(0,7); if(m)byM[m]=(byM[m]||0)+num(r.costo); });
+      var tP=document.querySelector("#tP tbody"); var kp=Object.keys(byP).sort(function(a,b){return byP[b].g-byP[a].g;});
+      tP.innerHTML=kp.length?kp.map(function(p){return '<tr><td><strong>'+p+'</strong></td><td>'+byP[p].s+'</td><td>'+money(byP[p].g)+'</td></tr>';}).join(""):'<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:18px">Sin datos</td></tr>';
+      var tT=document.querySelector("#tT tbody"); var kt=Object.keys(byT).sort(function(a,b){return byT[b].g-byT[a].g;});
+      tT.innerHTML=kt.length?kt.map(function(t){return '<tr><td>'+t+'</td><td>'+byT[t].c+'</td><td>'+money(byT[t].g)+'</td></tr>';}).join(""):'<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:18px">Sin datos</td></tr>';
+      var labels=Object.keys(byM).sort(); if(chart)chart.destroy();
+      chart=new Chart(document.getElementById("cMes"),{type:'bar',data:{labels:labels,datasets:[{label:'Gasto S/',data:labels.map(function(m){return Math.round(byM[m]);}),backgroundColor:'#1A6B3C'}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+    }
+    ["fD","fH","fP","fT"].forEach(function(id){document.getElementById(id).addEventListener("change",render);});
+    document.getElementById("btnExp").onclick=function(){ var f=aplica(); var head=["Fecha","Unidad","Tipo","Costo","Proveedor"].join(";");
+      var rows=f.map(function(r){return ['"'+(r.fecha||"")+'"','"'+(r.placa||"")+'"','"'+(r.tipo||"")+'"','"'+(r.costo||"")+'"','"'+(r.proveedor||"")+'"'].join(";");});
+      var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(["﻿"+head+"\n"+rows.join("\n")],{type:"text/csv;charset=utf-8;"})); a.download="lavado.csv"; a.click(); };
+    function cargar(){ db().collection("operaciones").where("modulo","==","lavado").get().then(function(s){ DATA=s.docs.map(function(d){return d.data();});
+      var pl={}; DATA.forEach(function(r){if(r.placa)pl[r.placa]=1;}); document.getElementById("fP").innerHTML='<option value="">Todas</option>'+Object.keys(pl).sort().map(function(p){return '<option>'+p+'</option>';}).join(""); render();
+    }).catch(function(e){document.getElementById("sub").textContent="Error: "+e.message;}); }
+    MISAGI.requireAccess("operaciones").then(function(s){ document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();}; document.getElementById("app").style.display=""; cargar(); });
+  </script>
+</body>
+</html>

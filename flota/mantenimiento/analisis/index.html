@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mantenimiento · Análisis — MISAGI</title>
+  <link rel="icon" type="image/png" href="../../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../../assets/theme.css">
+  <style>
+    .filtros{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:18px}
+    .filtros .f label{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);margin-bottom:5px}
+    .filtros input,.filtros select{padding:8px 11px;border:1px solid var(--border-strong);border-radius:9px;font-family:inherit;font-size:.9rem}
+    .kpis-reg{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:14px;margin-bottom:20px}
+    .charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}@media(max-width:820px){.charts{grid-template-columns:1fr}}
+    .cbox{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:18px}
+    .cbox h3{font-size:.92rem;color:var(--azul-d);margin-bottom:12px}
+    canvas{max-height:280px}
+    .st{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}.st.bad{background:var(--danger-light);color:var(--danger)}.st.warn{background:var(--amber-l);color:var(--amber)}.st.ok{background:var(--verde-l);color:var(--verde-d)}
+    h2.sec{font-size:1rem;color:var(--azul-d);margin:6px 0 10px}
+  </style>
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Mantenimiento</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" style="padding-bottom:0"><div class="subtabs"><a class="subtab" href="../correctivos/">🔧 Correctivos</a><a class="subtab" href="../preventivos/">📅 Preventivos</a><a class="subtab on" href="../analisis/">📊 Análisis</a></div></div>
+  <div class="container" id="app" style="display:none">
+    <div class="page-head"><div><h1>Mantenimiento · Análisis</h1><div class="page-sub" id="sub">Cargando…</div></div></div>
+    <div class="filtros">
+      <div class="f"><label>Desde</label><input type="date" id="fD"></div>
+      <div class="f"><label>Hasta</label><input type="date" id="fH"></div>
+      <div class="f"><label>Unidad</label><select id="fP"><option value="">Todas</option></select></div>
+    </div>
+    <div class="kpis-reg">
+      <div class="kpi-card"><div class="kpi-v" id="kCorr">—</div><div class="kpi-l">Correctivos</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kCosto">—</div><div class="kpi-l">Costo correctivos</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kAbiertos" style="color:var(--danger)">—</div><div class="kpi-l">Abiertos</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kProx" style="color:var(--amber)">—</div><div class="kpi-l">Preventivos próximos (≤20)</div></div>
+    </div>
+    <div class="charts">
+      <div class="cbox"><h3>Costo de correctivos por unidad</h3><canvas id="cPlaca"></canvas></div>
+      <div class="cbox"><h3>Correctivos por gravedad</h3><canvas id="cGrav"></canvas></div>
+    </div>
+    <h2 class="sec">Correctivos por unidad</h2>
+    <div class="table-wrap"><table id="tP"><thead><tr><th>Unidad</th><th>Reportes</th><th>Costo</th><th>Abiertos</th></tr></thead><tbody></tbody></table></div>
+    <h2 class="sec" style="margin-top:18px">Plan preventivo (próximos)</h2>
+    <div class="table-wrap"><table id="tPrev"><thead><tr><th>Unidad</th><th>KM actual</th><th>Próximo</th><th>Días</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="../../../assets/firebase-config.js"></script>
+  <script src="../../../assets/auth.js"></script>
+  <script>
+    var db=function(){return firebase.firestore();}, CORR=[], PREV=[], chP=null, chG=null;
+    function num(v){var n=parseFloat(v);return isNaN(n)?0:n;}
+    function money(n){return "S/ "+(Number(n||0)).toLocaleString('es-PE',{maximumFractionDigits:2});}
+    function aplicaC(){ var d=document.getElementById("fD").value,h=document.getElementById("fH").value,p=document.getElementById("fP").value;
+      return CORR.filter(function(r){ if(p&&r.placa!==p)return false; if(d&&String(r.fecha||"")<d)return false; if(h&&String(r.fecha||"")>h)return false; return true; }); }
+    function render(){
+      var f=aplicaC(); var costo=0,abiertos=0;
+      f.forEach(function(r){ costo+=num(r.costo); if((r.estado||"").toLowerCase()!=="cerrado")abiertos++; });
+      var p=document.getElementById("fP").value;
+      var prevF=PREV.filter(function(r){return !p||r.placa===p;});
+      var prox=prevF.filter(function(r){var d=parseInt(r.dias_faltantes,10);return !isNaN(d)&&d<=20;}).length;
+      document.getElementById("kCorr").textContent=f.length;
+      document.getElementById("kCosto").textContent=money(costo);
+      document.getElementById("kAbiertos").textContent=abiertos;
+      document.getElementById("kProx").textContent=prox;
+      document.getElementById("sub").textContent=f.length+" correctivos · "+money(costo);
+      var byP={},byG={};
+      f.forEach(function(r){ var pl=r.placa||"(s/u)"; var o=byP[pl]||(byP[pl]={c:0,cos:0,ab:0}); o.c++; o.cos+=num(r.costo); if((r.estado||"").toLowerCase()!=="cerrado")o.ab++;
+        var g=(r.gravedad||"S/G").toUpperCase(); byG[g]=(byG[g]||0)+1; });
+      var kp=Object.keys(byP).sort(function(a,b){return byP[b].cos-byP[a].cos;});
+      var tb=document.querySelector("#tP tbody"); tb.innerHTML=kp.length?kp.map(function(pl){var o=byP[pl];return '<tr><td><strong>'+pl+'</strong></td><td>'+o.c+'</td><td>'+money(o.cos)+'</td><td>'+(o.ab?'<span class="st bad">'+o.ab+'</span>':'0')+'</td></tr>';}).join(""):'<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:18px">Sin datos</td></tr>';
+      // preventivos tabla
+      var tpv=document.querySelector("#tPrev tbody"); prevF.sort(function(a,b){return (parseInt(a.dias_faltantes,10)||9999)-(parseInt(b.dias_faltantes,10)||9999);});
+      tpv.innerHTML=prevF.length?prevF.map(function(r){var d=parseInt(r.dias_faltantes,10); var st=isNaN(d)?'<span class="st">—</span>':(d<0?'<span class="st bad">Vencido</span>':(d<=20?'<span class="st warn">'+d+' d</span>':'<span class="st ok">'+d+' d</span>'));
+        return '<tr><td><strong>'+(r.placa||"")+'</strong></td><td>'+(r.km_actual||"—")+'</td><td>'+(r.km_proximo||"—")+'</td><td>'+(isNaN(d)?"—":d)+'</td><td>'+st+'</td></tr>';}).join(""):'<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:18px">Sin datos</td></tr>';
+      // charts
+      var topP=kp.slice(0,8); if(chP)chP.destroy();
+      chP=new Chart(document.getElementById("cPlaca"),{type:'bar',data:{labels:topP,datasets:[{label:'Costo',data:topP.map(function(pl){return Math.round(byP[pl].cos);}),backgroundColor:'#a96416'}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true}}}});
+      var gl=Object.keys(byG); if(chG)chG.destroy();
+      chG=new Chart(document.getElementById("cGrav"),{type:'doughnut',data:{labels:gl,datasets:[{data:gl.map(function(g){return byG[g];}),backgroundColor:['#b02531','#a96416','#1A6B3C','#697269']}]},options:{plugins:{legend:{position:'right'}}}});
+    }
+    ["fD","fH","fP"].forEach(function(id){document.getElementById(id).addEventListener("change",render);});
+    function cargar(){ db().collection("mantenimiento").get().then(function(s){
+      var all=s.docs.map(function(d){return d.data();});
+      CORR=all.filter(function(r){return r.modulo==="correctivo";}); PREV=all.filter(function(r){return r.modulo==="preventivo";});
+      var pl={}; CORR.concat(PREV).forEach(function(r){if(r.placa)pl[r.placa]=1;});
+      document.getElementById("fP").innerHTML='<option value="">Todas</option>'+Object.keys(pl).sort().map(function(p){return '<option>'+p+'</option>';}).join(""); render();
+    }).catch(function(e){document.getElementById("sub").textContent="Error: "+e.message;}); }
+    MISAGI.requireAccess("mantenimiento").then(function(s){ document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();}; document.getElementById("app").style.display=""; cargar(); });
+  </script>
+</body>
+</html>

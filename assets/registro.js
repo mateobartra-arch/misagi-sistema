@@ -123,6 +123,8 @@
       e.preventDefault(); var f=e.target, err=document.getElementById("regErr"); err.classList.add("hidden");
       var reg={modulo:cfg.modulo};
       cfg.campos.forEach(function(c){ if(f[c.k]!==undefined) reg[c.k]=f[c.k].value.trim(); });
+      cfg.campos.forEach(function(c){ if((c.k==="placa"||c.k==="unidad") && reg[c.k]){ var v=reg[c.k].toUpperCase().replace(/[^A-Z0-9]/g,""); if(v.length===6) v=v.slice(0,3)+"-"+v.slice(3); reg[c.k]=v; } });
+      if(cfg.unico && reg[cfg.unico]){ var dup=DATA.filter(function(d){ return d._id!==f.dataset.id && String(d[cfg.unico]||"").toLowerCase()===String(reg[cfg.unico]).toLowerCase(); }); if(dup.length){ err.textContent="Ya existe un registro con ese "+cfg.unico+" ("+reg[cfg.unico]+")."; err.classList.remove("hidden"); return; } }
       var btn=document.getElementById("regSave"); btn.disabled=true; btn.textContent="Guardando…";
       reg._ts=firebase.firestore.FieldValue.serverTimestamp();
       var op = f.dataset.id ? db().collection(cfg.coleccion).doc(f.dataset.id).set(reg,{merge:true}) : db().collection(cfg.coleccion).add(reg);
@@ -174,12 +176,11 @@
       });
     }
     function exportar(){
-      var cols=cfg.campos.map(function(c){return c.k;});
-      var head=cfg.campos.map(function(c){return c.label;}).join(";");
-      var rows=DATA.map(function(d){ return cols.map(function(k){var v=String(d[k]==null?"":d[k]).replace(/"/g,'""'); return '"'+v+'"';}).join(";"); });
-      var csv="﻿"+head+"\n"+rows.join("\n");
-      var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));
-      a.download=cfg.modulo+".csv"; a.click();
+      ensureXLSX(function(){
+        var data=DATA.map(function(d){ var o={}; cfg.campos.forEach(function(c){ o[c.label]=(d[c.k]==null?"":d[c.k]); }); return o; });
+        var ws=XLSX.utils.json_to_sheet(data); var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,(cfg.titulo||"Datos").slice(0,28));
+        XLSX.writeFile(wb, cfg.modulo+".xlsx");
+      });
     }
 
     MISAGI.requireAccess(cfg.area).then(function(s){

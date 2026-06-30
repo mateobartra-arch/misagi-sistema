@@ -37,6 +37,7 @@
     <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
   </header>
   <div class="container" id="app" style="display:none">
+    <div class="subtabs"><a class="subtab" href="../combustible/">📋 Registros</a><a class="subtab on" href="../combustible-consumo/">📊 Reporte / Análisis</a></div>
     <div class="page-head"><div><h1>Consumo de combustible</h1><div class="page-sub" id="sub">Cargando…</div></div></div>
 
     <div class="filtros">
@@ -57,6 +58,7 @@
       <div class="kpi-card"><div class="kpi-v" id="kCargas">—</div><div class="kpi-l">N° de cargas</div></div>
       <div class="kpi-card"><div class="kpi-v" id="kGalCarga">—</div><div class="kpi-l">Galones / carga</div></div>
       <div class="kpi-card"><div class="kpi-v" id="kCostoCarga">—</div><div class="kpi-l">Costo / carga</div></div>
+      <div class="kpi-card"><div class="kpi-v" id="kLitros">—</div><div class="kpi-l">Litros urea</div></div>
     </div>
 
     <div class="charts">
@@ -104,14 +106,15 @@
 
     function render(){
       var f=aplica();
-      var gal=0,cos=0,dieselCargas=0,dieselGal=0,dieselCos=0;
-      f.forEach(function(r){ gal+=num(r.galones); cos+=num(r.costo); if(esDiesel(r)){dieselCargas++;dieselGal+=num(r.galones);dieselCos+=num(r.costo);} });
+      var gal=0,cos=0,lit=0,dieselCargas=0,dieselGal=0,dieselCos=0;
+      f.forEach(function(r){ gal+=num(r.galones); lit+=num(r.litros); cos+=num(r.costo); if(esDiesel(r)){dieselCargas++;dieselGal+=num(r.galones);dieselCos+=num(r.costo);} });
       document.getElementById("kGal").textContent=fmt(gal,0);
       document.getElementById("kCosto").textContent=money(cos);
       document.getElementById("kPrecio").textContent= dieselGal>0 ? fmt(dieselCos/dieselGal,2) : "—";
       document.getElementById("kCargas").textContent=f.length;
       document.getElementById("kGalCarga").textContent= dieselCargas>0 ? fmt(dieselGal/dieselCargas,1) : "—";
       document.getElementById("kCostoCarga").textContent= f.length>0 ? money(cos/f.length) : "—";
+      document.getElementById("kLitros").textContent= fmt(lit,0)+" L";
       document.getElementById("sub").textContent=f.length+" carga(s) · "+fmt(gal,0)+" galones · "+money(cos);
 
       // agregados

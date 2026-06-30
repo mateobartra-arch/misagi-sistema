@@ -60,6 +60,7 @@
     function money(n){return "S/ "+(Number(n||0)).toLocaleString('es-PE',{maximumFractionDigits:2});}
     function estadoVenc(v){ if(!v) return {cls:"none",txt:"—",dias:null}; var h=new Date();h.setHours(0,0,0,0); var d=new Date(v+"T00:00:00"); if(isNaN(d)) return {cls:"none",txt:esc(v)}; var dd=Math.round((d-h)/86400000); if(dd<0) return {cls:"bad",txt:"Vencido"}; if(dd<=30) return {cls:"warn",txt:"Vence "+dd+" d"}; return {cls:"ok",txt:"Vigente"}; }
     function num(v){var n=parseFloat(v);return isNaN(n)?0:n;}
+    function fmt(n,d){return (Number(n||0)).toLocaleString("es-PE",{maximumFractionDigits:d==null?0:d});}
 
     function llenarSelector(){
       var sel=document.getElementById("sel");
@@ -97,7 +98,8 @@
         db().collection("operaciones").where("modulo","==","combustible").get().catch(function(){return {forEach:function(){}};}),
         db().collection("operaciones").where("modulo","==","lavado").get().catch(function(){return {forEach:function(){}};}),
         db().collection("mantenimiento").where("modulo","==","correctivo").get().catch(function(){return {forEach:function(){}};}),
-        db().collection("mantenimiento").where("modulo","==","preventivo").get().catch(function(){return {forEach:function(){}};})
+        db().collection("mantenimiento").where("modulo","==","preventivo").get().catch(function(){return {forEach:function(){}};}),
+        db().collection("operaciones").where("modulo","==","gnl").get().catch(function(){return {forEach:function(){}};})
       ]).then(function(r){
         var uni=(r[0]||[]).filter(function(u){return u.placa===placa;})[0]||{};
         var docs=(r[1].docs||[]).map(function(d){return d.data();}).filter(function(d){return d.categoria==="Unidad" && d.entidad===placa;});
@@ -106,7 +108,8 @@
         r[3].forEach(function(d){var o=d.data(); if(o.placa===placa){cLav+=num(o.costo);}});
         r[4].forEach(function(d){var o=d.data(); if(o.placa===placa){cCorr+=num(o.costo); if((o.estado||"").toLowerCase()!=="cerrado") corrAbiertos++;}});
         r[5].forEach(function(d){var o=d.data(); if(o.placa===placa) prev=o;});
-        var h=habilitado("unidad",docs); var total=cComb+cLav+cCorr;
+        var cGnl=0,kgGnl=0; r[6].forEach(function(d){var o=d.data(); if(o.placa===placa){cGnl+=num(o.costo); kgGnl+=num(o.kg);}});
+        var h=habilitado("unidad",docs); var total=cComb+cLav+cCorr+cGnl;
         cont.innerHTML=
           '<div class="head360"><span class="av">🚛</span><div style="flex:1"><h1>'+esc(placa)+'</h1><div class="meta">'+esc(uni.marca||"")+' '+esc(uni.anio||"")+(uni.mtc?' · MTC '+esc(uni.mtc):'')+' · '+esc(uni.empresa||"")+'</div></div><span class="hbadge '+(h.hab?'ok':'no')+'">'+(h.hab?'OPERATIVA':'DOCS PENDIENTES')+'</span></div>'+
           '<div class="kpis-reg">'+
@@ -115,7 +118,7 @@
             '<div class="kpi-card"><div class="kpi-v" style="color:var(--amber)">'+(prev&&prev.dias_faltantes!=null?prev.dias_faltantes:'—')+'</div><div class="kpi-l">Días a próximo mantto</div></div>'+
             '<div class="kpi-card"><div class="kpi-v" style="color:var(--danger)">'+corrAbiertos+'</div><div class="kpi-l">Correctivos abiertos</div></div>'+
           '</div>'+
-          '<div class="panel"><h2>Costos por concepto</h2><div class="dg"><div><div class="k">Combustible</div><div class="v">'+money(cComb)+'</div></div><div><div class="k">Lavado/engrase</div><div class="v">'+money(cLav)+'</div></div><div><div class="k">Mantenimiento correctivo</div><div class="v">'+money(cCorr)+'</div></div><div><div class="k">Total</div><div class="v">'+money(total)+'</div></div></div></div>'+
+          '<div class="panel"><h2>Costos por concepto</h2><div class="dg"><div><div class="k">Combustible (diésel)</div><div class="v">'+money(cComb)+'</div></div><div><div class="k">GNL (gas) · '+fmt(kgGnl,0)+' kg</div><div class="v">'+money(cGnl)+'</div></div><div><div class="k">Lavado/engrase</div><div class="v">'+money(cLav)+'</div></div><div><div class="k">Mantenimiento correctivo</div><div class="v">'+money(cCorr)+'</div></div><div><div class="k">TOTAL operación</div><div class="v" style="color:var(--azul-d);font-weight:700">'+money(total)+'</div></div></div></div>'+
           (prev?'<div class="panel"><h2>Mantenimiento preventivo</h2><div class="dg"><div><div class="k">KM actual</div><div class="v">'+esc(prev.km_actual||"—")+'</div></div><div><div class="k">Próximo a los</div><div class="v">'+esc(prev.km_proximo||"—")+' km</div></div><div><div class="k">Fecha estimada</div><div class="v">'+esc(prev.fecha_estimada||"—")+'</div></div></div></div>':'')+
           '<div class="panel"><h2>Documentos '+(h.faltan.length?'<span class="st bad" style="margin-left:6px">Faltan: '+h.faltan.map(esc).join(", ")+'</span>':'<span class="st ok">Completos</span>')+'</h2>'+tablaDocs(docs)+'<div style="margin-top:10px"><a class="btn btn-ghost btn-sm" href="../documentos/">Gestionar documentos →</a></div></div>';
       });

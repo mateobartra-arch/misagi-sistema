@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Respaldo de la base — MISAGI</title>
+  <link rel="icon" type="image/png" href="../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../assets/theme.css">
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Respaldo</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" id="app" style="display:none">
+    <div class="page-head"><div><h1>Respaldo de la base</h1><div class="page-sub">Descarga TODA la información del sistema en un Excel (una hoja por colección).</div></div></div>
+    <div class="card" style="max-width:560px">
+      <p style="margin-bottom:14px">Genera un respaldo completo de: usuarios, personal, operaciones (combustible, GNL, lavado, etc.), mantenimiento, roster, documentos, enlaces, solicitudes y más.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-primary" id="btnXlsx">⬇ Descargar respaldo (Excel)</button>
+        <button class="btn btn-ghost" id="btnJson">⬇ Descargar JSON</button>
+      </div>
+      <div id="estado" class="side-note" style="margin-top:14px"></div>
+    </div>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../../assets/firebase-config.js"></script>
+  <script src="../../assets/auth.js"></script>
+  <script>
+    var db=function(){return firebase.firestore();};
+    var COLS=["usuarios","rrhh","operaciones","mantenimiento","roster","roster_conductores","documentos","enlaces","solicitudes","asistencia","config","prefs_enlaces"];
+    function ensureXLSX(cb){ if(window.XLSX) return cb(); var sc=document.createElement("script"); sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; sc.onload=cb; sc.onerror=function(){alert("No se pudo cargar el generador de Excel.");}; document.head.appendChild(sc); }
+    function leerTodo(cb){
+      var est=document.getElementById("estado"); est.textContent="Leyendo colecciones…";
+      var data={}, pend=COLS.length;
+      COLS.forEach(function(c){
+        db().collection(c).get().then(function(snap){ data[c]=snap.docs.map(function(d){var o=d.data();o._id=d.id;return o;}); })
+          .catch(function(){ data[c]=[]; })
+          .then(function(){ if(--pend===0){ cb(data); } });
+      });
+    }
+    function fecha(){ return new Date().toISOString().slice(0,10); }
+    document.getElementById("btnXlsx").onclick=function(){
+      var b=this; b.disabled=true; b.textContent="Generando…";
+      ensureXLSX(function(){ leerTodo(function(data){
+        var wb=XLSX.utils.book_new(), total=0;
+        COLS.forEach(function(c){ var rows=data[c]||[]; total+=rows.length; var flat=rows.map(function(o){ var n={}; Object.keys(o).forEach(function(k){ var v=o[k]; n[k]=(v&&typeof v==="object")?JSON.stringify(v):v; }); return n; }); var ws=XLSX.utils.json_to_sheet(flat.length?flat:[{vacío:""}]); XLSX.utils.book_append_sheet(wb,ws,c.slice(0,28)); });
+        XLSX.writeFile(wb,"respaldo-misagi-"+fecha()+".xlsx");
+        document.getElementById("estado").textContent="✓ Respaldo generado ("+total+" registros).";
+        b.disabled=false; b.textContent="⬇ Descargar respaldo (Excel)";
+      }); });
+    };
+    document.getElementById("btnJson").onclick=function(){
+      var b=this; b.disabled=true; b.textContent="Generando…";
+      leerTodo(function(data){
+        var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json"})); a.download="respaldo-misagi-"+fecha()+".json"; a.click();
+        document.getElementById("estado").textContent="✓ JSON generado."; b.disabled=false; b.textContent="⬇ Descargar JSON";
+      });
+    };
+    MISAGI.requireAccess("admin").then(function(s){ document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();}; document.getElementById("app").style.display=""; });
+  </script>
+</body>
+</html>

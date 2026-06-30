@@ -14,6 +14,7 @@
     <a class="btn btn-ghost btn-sm" href="../../../index.html">← Portal</a>
     <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
   </header>
+  <div class="container" style="padding-bottom:0"><div class="subtabs"><a class="subtab on" href="../combustible/">📋 Registros</a><a class="subtab" href="../combustible-consumo/">📊 Reporte / Análisis</a></div></div>
   <div class="container" id="reg"></div>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -27,7 +28,7 @@
     MISAGI_REGISTRO.init({
       area:"operaciones", coleccion:"operaciones", modulo:"combustible",
       titulo:"Control de combustible",
-      campos:[{k:"fecha",label:"Fecha",tipo:"date"},{k:"placa",label:"Unidad/Placa",tipo:"select",fuente:"unidades"},{k:"conductor",label:"Conductor",tipo:"select",fuente:"conductores"},{k:"galones",label:"Galones",tipo:"number"},{k:"costo",label:"Costo (S/)",tipo:"number"},{k:"km",label:"Kilometraje",tipo:"number"},{k:"grifo",label:"Grifo"},{k:"obs",label:"Observación",tipo:"textarea"}],
+      campos:[{k:"fecha",label:"Fecha",tipo:"date"},{k:"placa",label:"Unidad/Placa",tipo:"select",fuente:"unidades"},{k:"conductor",label:"Conductor",tipo:"select",fuente:"conductores"},{k:"galones",label:"Galones (diésel)",tipo:"number"},{k:"litros",label:"Litros (urea)",tipo:"number"},{k:"costo",label:"Costo (S/)",tipo:"number"},{k:"km",label:"Kilometraje",tipo:"number"},{k:"grifo",label:"Grifo"},{k:"obs",label:"Observación",tipo:"textarea"}],
       columnas:["fecha","placa","conductor","galones","costo"],
       resumen:[{label:"Galones",campo:"galones",op:"sum"},{label:"Costo (S/)",campo:"costo",op:"sum",money:true},{label:"Registros",op:"count"}],
       onGuardado:function(reg){ if(!reg.placa||!reg.km) return; var km=parseFloat(reg.km); if(isNaN(km)) return; var fx=firebase.firestore(); fx.collection("mantenimiento").where("modulo","==","preventivo").get().then(function(s){ s.forEach(function(d){ var o=d.data(); if(o.placa===reg.placa){ var kmprox=parseFloat(o.km_proximo)||0, kmdia=parseFloat(o.km_dia)||1; var dias=kmdia>0?Math.round((kmprox-km)/kmdia):o.dias_faltantes; d.ref.set({km_actual:String(km),dias_faltantes:String(dias)},{merge:true}); } }); }).catch(function(){}); }

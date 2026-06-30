@@ -148,3 +148,9 @@ textarea:focus-visible, .app-card:focus-visible, .gps-link:focus-visible {
 .kpi-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:16px 18px}
 .kpi-v{font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:var(--azul-d);line-height:1}
 .kpi-l{font-size:.78rem;color:var(--text-muted);margin-top:6px;text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+
+/* ---- Subpestañas dentro de un módulo (Registros / Reporte) ---- */
+.subtabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:18px;flex-wrap:wrap}
+.subtab{padding:11px 18px;font-weight:600;color:var(--text-muted);border-bottom:2px solid transparent;text-decoration:none;font-size:.95rem}
+.subtab:hover{color:var(--text-primary)}
+.subtab.on{color:var(--verde-d);border-bottom-color:var(--verde)}
