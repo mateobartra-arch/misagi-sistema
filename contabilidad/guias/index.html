@@ -194,10 +194,18 @@
     // Reconstruye el texto en ORDEN DE LECTURA (arriba->abajo, izq->der) usando la posición de cada fragmento.
     function ordenarTexto(tc){
       var its=tc.items.filter(function(it){return it.str && it.str.trim();}).map(function(it){return {s:it.str, x:it.transform[4], y:it.transform[5]};});
-      its.sort(function(a,b){ var dy=b.y-a.y; if(Math.abs(dy)>3) return dy; return a.x-b.x; });
-      var out="", lastY=null;
-      its.forEach(function(it){ if(lastY!==null && Math.abs(it.y-lastY)>3) out+="\n"; else if(out!=="") out+=" "; out+=it.s; lastY=it.y; });
-      return out;
+      // Orden total y VÁLIDO (transitivo): primero por Y (arriba->abajo), luego X.
+      its.sort(function(a,b){ return (b.y-a.y) || (a.x-b.x); });
+      // Agrupa en líneas por posición Y y ordena cada línea por X (reconstruye lectura real).
+      var lines=[], cur=null;
+      its.forEach(function(it){
+        if(!cur || Math.abs(it.y-cur.y)>3){ cur={y:it.y, items:[it]}; lines.push(cur); }
+        else cur.items.push(it);
+      });
+      return lines.map(function(l){
+        l.items.sort(function(a,b){return a.x-b.x;});
+        return l.items.map(function(i){return i.s;}).join(" ");
+      }).join("\n");
     }
     function textoPDF(file){
       return new Promise(function(resolve,reject){
