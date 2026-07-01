@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roster · Dashboard — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../../assets/theme.css">
+  <style>
+    .subtabs{display:flex;gap:6px;margin:10px 0 4px;flex-wrap:wrap}
+    .subtab{padding:8px 16px;border-radius:10px 10px 0 0;text-decoration:none;color:var(--text-muted);font-weight:600;font-size:.88rem;border:1px solid transparent}
+    .subtab.on{background:#fff;border-color:var(--border);border-bottom-color:#fff;color:var(--verde-d)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+    .kpi{background:#fff;border:1px solid var(--border);border-radius:14px;padding:15px}
+    .kpi .n{font-size:1.5rem;font-weight:800;line-height:1.1} .kpi .l{font-size:.74rem;color:var(--text-muted);margin-top:3px}
+    .leg{display:flex;gap:12px;flex-wrap:wrap;margin:6px 0 14px;font-size:.8rem;color:var(--text-muted)}
+    .leg span{display:inline-flex;align-items:center;gap:5px}
+    .dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+    .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px}
+    .card .nm{font-weight:700;font-size:.95rem;margin-bottom:8px}
+    .bar{display:flex;height:12px;border-radius:6px;overflow:hidden;margin-bottom:8px;background:#eef}
+    .rw{display:flex;justify-content:space-between;font-size:.8rem;padding:2px 0;color:var(--text-muted)}
+    .rw b{color:var(--text)}
+    canvas{max-height:240px}
+  </style>
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Roster</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" style="padding-bottom:0">
+    <div class="subtabs">
+      <a class="subtab" href="../roster/">📅 Calendario</a>
+      <a class="subtab" href="../roster-analisis/">📊 Días efectivos</a>
+      <a class="subtab on" href="../roster-dashboard/">📈 Dashboard</a>
+    </div>
+  </div>
+  <div class="container" id="app" style="display:none">
+    <div class="page-head">
+      <div><h1>Dashboard de conductores</h1><div class="page-sub" id="sub">Cargando…</div></div>
+      <select id="mes" style="padding:8px 12px;border:1px solid var(--border);border-radius:9px;font-family:inherit"></select>
+    </div>
+    <div class="grid" id="kpis"></div>
+    <div class="leg" id="leg"></div>
+    <div class="card" style="margin-bottom:16px"><h3 style="margin:0 0 10px;font-size:.95rem">Días por operación</h3><canvas id="ch"></canvas></div>
+    <div class="cards" id="cards"></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="../../../assets/firebase-config.js"></script>
+  <script src="../../../assets/auth.js"></script>
+  <script>
+    var db=function(){return firebase.firestore();};
+    function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+    var CLI={H:{n:"Hudbay",c:"#c2691f"},R:{n:"Raciemsa",c:"#3aa0d6"},C:{n:"Cuajone",c:"#e2b93b"},T:{n:"Toquepala",c:"#2f9e5b"},A:{n:"Hierro",c:"#4f7fff"}};
+    var OTROS={P:{n:"Presente",c:"#f4a800"},D:{n:"Descanso",c:"#9aa3ad"},M:{n:"Medio día",c:"#c9a6ff"}};
+    var R=[], chart;
+    function clasifica(cod){var c=String(cod||"").trim().toUpperCase();if(c==="D")return{t:"D"};if(c==="P")return{t:"P"};if(c==="M/D"||c==="MD")return{t:"M"};var m=c.match(/^([HRCTA])\s*\d/);if(m)return{t:"ruta",cli:m[1]};return{t:"otro"};}
+
+    function cargar(){
+      db().collection("roster").get().then(function(snap){
+        R=snap.docs.map(function(d){return d.data();});
+        var meses={}; R.forEach(function(r){var m=String(r.fecha||"").slice(0,7);if(m)meses[m]=1;});
+        var arr=Object.keys(meses).sort();
+        var sel=document.getElementById("mes");
+        sel.innerHTML='<option value="">Todos los meses</option>'+arr.map(function(m){return '<option>'+m+'</option>';}).join("");
+        sel.onchange=pintar; pintar();
+      }).catch(function(e){document.getElementById("sub").textContent="Error: "+e.message;});
+    }
+    function pintar(){
+      var mes=document.getElementById("mes").value;
+      var del=R.filter(function(r){return !mes||String(r.fecha||"").slice(0,7)===mes;});
+      var cond={}, cliTot={H:0,R:0,C:0,T:0,A:0}, ruta=0, pres=0, desc=0, medio=0, mesesSet={};
+      del.forEach(function(r){
+        var k=String(r.dni||r.nombre||"?"); var o=cond[k]=cond[k]||{nombre:r.nombre||k,H:0,R:0,C:0,T:0,A:0,P:0,D:0,M:0,ruta:0};
+        var m=String(r.fecha||"").slice(0,7); if(m)mesesSet[m]=1;
+        var c=clasifica(r.estado);
+        if(c.t==="ruta"){ o[c.cli]++; o.ruta++; cliTot[c.cli]++; ruta++; }
+        else if(c.t==="P"){ o.P++; pres++; }
+        else if(c.t==="D"){ o.D++; desc++; }
+        else if(c.t==="M"){ o.M++; medio++; }
+      });
+      var conductores=Object.keys(cond).length;
+      var topCli=Object.keys(cliTot).sort(function(a,b){return cliTot[b]-cliTot[a];})[0];
+      document.getElementById("sub").textContent=(mes||"Todos")+" · "+del.length+" registros";
+      document.getElementById("kpis").innerHTML=
+        kpi(conductores,"Conductores")+kpi(5,"Operaciones")+kpi((ruta+pres+medio*0.5),"Días trabajados")+
+        kpi(topCli&&cliTot[topCli]?CLI[topCli].n:"—","Operación más frecuente")+kpi(desc,"Días de descanso")+kpi(Object.keys(mesesSet).length,"Meses");
+      var leg=""; Object.keys(CLI).forEach(function(k){leg+='<span><i class="dot" style="background:'+CLI[k].c+'"></i>'+CLI[k].n+'</span>';});
+      Object.keys(OTROS).forEach(function(k){leg+='<span><i class="dot" style="background:'+OTROS[k].c+'"></i>'+OTROS[k].n+'</span>';});
+      document.getElementById("leg").innerHTML=leg;
+      if(chart)chart.destroy();
+      chart=new Chart(document.getElementById("ch"),{type:"bar",data:{labels:Object.keys(CLI).map(function(k){return CLI[k].n;}),datasets:[{data:Object.keys(CLI).map(function(k){return cliTot[k];}),backgroundColor:Object.keys(CLI).map(function(k){return CLI[k].c;})}]},options:{responsive:true,plugins:{legend:{display:false}}}});
+      var keys=Object.keys(cond).sort(function(a,b){return cond[b].ruta-cond[a].ruta;});
+      document.getElementById("cards").innerHTML=keys.map(function(k){
+        var o=cond[k]; var tot=o.ruta||1;
+        var bar=Object.keys(CLI).map(function(cl){var w=o[cl]/tot*100;return w?'<div style="width:'+w+'%;background:'+CLI[cl].c+'"></div>':'';}).join("");
+        var rows=Object.keys(CLI).filter(function(cl){return o[cl];}).map(function(cl){return '<div class="rw"><span>'+CLI[cl].n+'</span><b>'+o[cl]+'</b></div>';}).join("");
+        return '<div class="card"><div class="nm">'+esc(o.nombre)+'</div><div class="bar">'+bar+'</div>'+rows+
+          '<div class="rw" style="border-top:1px solid var(--border);margin-top:4px;padding-top:4px"><span>Presente / Descanso</span><b>'+o.P+' / '+o.D+'</b></div></div>';
+      }).join("");
+    }
+    function kpi(n,l){return '<div class="kpi"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>';}
+    MISAGI.requireAccess("operaciones").then(function(){
+      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+      document.getElementById("app").style.display="";
+      cargar();
+    });
+  </script>
+</body>
+</html>

@@ -50,7 +50,7 @@ const MISAGI_MODULOS = [
     apps: [
       { id: "operaciones.programacion", nombre: "Programación", url: "flota/operaciones/programacion/", estado: "activo", desc: "Programación de vehículos" },
       { id: "operaciones.seguimiento",  nombre: "Seguimiento",  url: "flota/operaciones/seguimiento/",  estado: "activo", desc: "Seguimiento de unidades" },
-      { id: "operaciones.tracker",      nombre: "Tracker",      url: "flota/operaciones/tracker/",      estado: "activo", desc: "Seguimiento de conductores" },
+      { id: "operaciones.tracker",      nombre: "Tracker",      url: "flota/operaciones/roster-dashboard/",      estado: "activo", desc: "Dashboard de conductores por operación (nativo)" },
       { id: "operaciones.roster",       nombre: "Roster",       url: "flota/operaciones/roster/",       estado: "activo", desc: "Días trabajados por conductor" },
       { id: "operaciones.combustible",  nombre: "Combustible",  url: "flota/operaciones/combustible/",  estado: "activo", desc: "Control de combustible por unidad" },
       { id: "operaciones.gnl",          nombre: "GNL (gas)",    url: "flota/operaciones/gnl/",          estado: "activo", desc: "Abastecimiento de gas natural (GNL)" },
@@ -73,7 +73,7 @@ const MISAGI_MODULOS = [
     apps: [
       { id: "operaciones.unidades",    nombre: "Unidades (flota)", url: "flota/operaciones/unidades/",    estado: "activo", desc: "Tractos y tolvas (maestro)" },
       { id: "operaciones.personas",    nombre: "Personas",         url: "flota/operaciones/personas/",    estado: "activo", desc: "Directorio único: conductores y administrativos" },
-      { id: "operaciones.rutas",       nombre: "Rutas",            url: "flota/operaciones/rutas/",       estado: "activo", desc: "Rutas y distancias" }
+      { id: "operaciones.rutas",       nombre: "Rutas y tarifas",  url: "flota/operaciones/rutas/",       estado: "activo", desc: "Maestro único: rutas + tarifa por TNE (fletes) y moneda" }
     ]
   },
   {
@@ -102,7 +102,6 @@ const MISAGI_MODULOS = [
     area: "contabilidad", grupo: "Contabilidad", ik: "book",
     apps: [
       { id: "contabilidad.guias", nombre: "Resumen de guías", url: "contabilidad/guias/", estado: "activo", desc: "Sube la guía PDF y extrae los datos automáticamente" },
-      { id: "contabilidad.fletes", nombre: "Maestro de Fletes", url: "contabilidad/fletes/", estado: "activo", desc: "Tarifa por TNE por cliente y moneda" },
       { id: "contabilidad.general", nombre: "Contabilidad", url: "contabilidad/", estado: "proximamente", desc: "Libros, comprobantes y reportes" }
     ]
   },

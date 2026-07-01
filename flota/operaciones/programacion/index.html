@@ -7,20 +7,48 @@
   <link rel="icon" type="image/png" href="../../../assets/misagi-icon.png">
   <link rel="stylesheet" href="../../../assets/theme.css">
   <style>
-    body{margin:0;display:flex;flex-direction:column;height:100vh;overflow:hidden}
-    .app-frame{flex:1;width:100%;border:none}
-    .gate-msg{display:grid;place-items:center;height:100vh;color:var(--text-muted)}
+    .uni{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;background:#fff}
+    .uni .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:700;font-size:.85rem;color:var(--verde-d)}
+    .g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+    .f label{display:block;font-size:.72rem;color:var(--text-muted);margin-bottom:3px;font-weight:600}
+    .f input,.f select{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:.85rem}
+    .ext{font-size:.74rem;color:var(--text-muted);display:flex;align-items:center;gap:5px;margin-top:3px}
+    table{width:100%;border-collapse:collapse;font-size:.84rem}
+    th,td{padding:7px 9px;border-bottom:1px solid var(--border);text-align:left}
+    th{font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted)}
+    .tabla-wrap{overflow-x:auto;background:#fff;border:1px solid var(--border);border-radius:14px;margin-top:8px}
+    .modal-ov{position:fixed;inset:0;background:rgba(8,16,28,.5);display:none;place-items:center;z-index:50}
+    .modal-ov.on{display:grid}
+    .modal-bx{background:#fff;border-radius:14px;padding:22px;max-width:520px;width:94%;max-height:86vh;overflow:auto}
   </style>
 </head>
 <body>
   <header class="msg-header">
-    <a class="brand" href="../../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI &middot; Programaci&oacute;n</a>
+    <a class="brand" href="../../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Programación</a>
     <div class="spacer"></div>
-    <a class="btn btn-ghost btn-sm" href="../../../index.html">&larr; Portal</a>
+    <a class="btn btn-ghost btn-sm" href="../../../index.html">← Portal</a>
     <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
   </header>
-  <div id="gate" class="gate-msg">Cargando datos del maestro&hellip;</div>
-  <iframe id="appFrame" class="app-frame hidden" title="Programacion"></iframe>
+  <div class="container" id="app" style="display:none">
+    <div class="page-head">
+      <div><h1>Programación diaria</h1><div class="page-sub" id="sub">Arma la programación con datos del maestro.</div></div>
+    </div>
+    <div class="card" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px">
+      <div class="g3" style="margin-bottom:12px">
+        <div class="f"><label>Fecha *</label><input id="fecha" type="date"></div>
+        <div class="f"><label>Ruta / Operación</label><select id="ruta"></select></div>
+      </div>
+      <div id="unis"></div>
+      <div style="display:flex;gap:10px;justify-content:space-between;margin-top:6px">
+        <button class="btn btn-ghost btn-sm" id="btnAdd">+ Agregar unidad</button>
+        <button class="btn btn-primary" id="btnSave">💾 Guardar programación</button>
+      </div>
+    </div>
+    <h3 style="font-size:.95rem;margin:0 0 6px">Historial</h3>
+    <div class="tabla-wrap"><table id="tabla"><thead><tr><th>Fecha</th><th>Ruta</th><th>Conductores</th><th>Tractos</th><th>Unid.</th><th></th></tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="modal-ov" id="mv"><div class="modal-bx" id="mvBody"></div></div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
@@ -30,53 +58,86 @@
   <script src="../../../assets/auth.js"></script>
   <script src="../../../assets/maestros.js"></script>
   <script>
-    var db = function(){ return firebase.firestore(); };
-    var RUTAS_DEFAULT = [
-      {nombre:'HUDBAY', icono:'⛏️', km:'930 KM'},
-      {nombre:'AQP - ILO', icono:'⚓', km:'230 km'},
-      {nombre:'AQP - MATARANI', icono:'🏭', km:'140 km'},
-      {nombre:'AQP - CUSCO', icono:'🗻', km:'520 km'},
-      {nombre:'AQP - PUNO', icono:'🌊', km:'295 km'},
-      {nombre:'LOCAL / MINERA', icono:'🔧', km:'Variable'}
-    ];
-    function splitNombre(n){
-      var s = String(n||"").trim(); var i = s.indexOf(",");
-      if(i>=0) return { apellidos:s.slice(0,i).trim(), nombres:s.slice(i+1).trim() };
-      return { apellidos:s, nombres:"" };
-    }
-    function noBaja(u){ return String(u.estado||"Operativo").toLowerCase() !== "baja"; }
+    var db=function(){return firebase.firestore();};
+    function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+    var CONDS=[], TRACS=[], TOLVAS=[], RUTAS=[], UNIS=[], PROGS=[];
 
-    function sembrarDesdeMaestro(cb){
-      Promise.all([
+    function cargarMaestros(){
+      return Promise.all([
         MISAGI_MAESTROS.personas(),
         MISAGI_MAESTROS.unidades(),
         db().collection("operaciones").where("modulo","==","rutas").get().catch(function(){return {docs:[]};})
-      ]).then(function(res){
-        var personas = res[0]||[], unidades = res[1]||[], rutasDocs = (res[2]&&res[2].docs)||[];
-        var conductores = personas
-          .filter(function(p){ return String(p.tipo||"conductor").toLowerCase()==="conductor" && p.activo!==false; })
-          .map(function(p){ var nm=splitNombre(p.nombre); return { apellidos:nm.apellidos, nombres:nm.nombres, licencia:p.licencia||"", dni:String(p.dni||""), empresa:p.empresa||"MISAGI" }; });
-        var tractos = unidades.filter(function(u){ return String(u.tipo||"").toLowerCase()==="tracto" && noBaja(u); })
-          .map(function(u){ return { placa:u.placa, marca:u.marca||"", anio:u.anio||"", mtc:u.mtc||"", empresa:u.empresa||"MISAGI" }; });
-        var tolvas = unidades.filter(function(u){ return String(u.tipo||"").toLowerCase()==="tolva" && noBaja(u); })
-          .map(function(u){ return { placa:u.placa, anio:u.anio||"" }; });
-        var rutas = rutasDocs.map(function(d){ var r=d.data(); return { nombre:r.nombre||r.ruta||"", icono:r.icono||"🗺️", km:r.km||r.distancia||"" }; }).filter(function(r){return r.nombre;});
-        if(!rutas.length) rutas = RUTAS_DEFAULT;
-        if(conductores.length){
-          try{ localStorage.setItem("misagi_db", JSON.stringify({ conductores:conductores, tractos:tractos, tolvas:tolvas, rutas:rutas })); }catch(e){}
-        }
-        cb();
-      }).catch(function(){ cb(); });
+      ]).then(function(r){
+        CONDS=(r[0]||[]).filter(function(p){return String(p.tipo||"conductor").toLowerCase()==="conductor"&&p.activo!==false;}).map(function(p){return {nombre:p.nombre,dni:String(p.dni||""),ext:p.externo===true};});
+        var u=r[1]||[];
+        TRACS=u.filter(function(x){return String(x.tipo||"").toLowerCase()==="tracto"&&String(x.estado||"").toLowerCase()!=="baja";}).map(function(x){return x.placa;});
+        TOLVAS=u.filter(function(x){return String(x.tipo||"").toLowerCase()==="tolva"&&String(x.estado||"").toLowerCase()!=="baja";}).map(function(x){return x.placa;});
+        RUTAS=((r[2]&&r[2].docs)||[]).map(function(d){return d.data().nombre;}).filter(Boolean);
+        if(!RUTAS.length) RUTAS=["HUDBAY","AQP - ILO","AQP - MATARANI","LOCAL / MINERA"];
+        document.getElementById("ruta").innerHTML='<option value=""></option>'+RUTAS.map(function(x){return '<option>'+esc(x)+'</option>';}).join("");
+      });
+    }
+    function optSel(list,val,extra){ return '<option value=""></option>'+(extra||"")+list.map(function(x){var v=(typeof x==="object")?x.nombre:x;return '<option'+(v===val?" selected":"")+'>'+esc(v)+'</option>';}).join(""); }
+    function renderUnis(){
+      document.getElementById("unis").innerHTML=UNIS.map(function(u,i){
+        var cond = u.externo
+          ? '<div class="f"><label>Conductor externo</label><input data-i="'+i+'" data-k="conductor" value="'+esc(u.conductor)+'" placeholder="Nombre del tercero"></div><div class="f"><label>DNI</label><input data-i="'+i+'" data-k="dni" value="'+esc(u.dni)+'" placeholder="DNI"></div>'
+          : '<div class="f"><label>Conductor</label><select data-i="'+i+'" data-k="conductor">'+optSel(CONDS.map(function(c){return c.nombre;}),u.conductor)+'</select></div>';
+        return '<div class="uni"><div class="hd"><span>Unidad '+(i+1)+'</span><button class="btn btn-ghost btn-sm" data-del="'+i+'">✕ quitar</button></div>'+
+          '<div class="g3">'+cond+
+          '<div class="f"><label>Tracto</label><select data-i="'+i+'" data-k="tracto">'+optSel(TRACS,u.tracto)+'</select></div>'+
+          '<div class="f"><label>Tolva</label><select data-i="'+i+'" data-k="tolva">'+optSel(TOLVAS,u.tolva)+'</select></div></div>'+
+          '<label class="ext"><input type="checkbox" data-ext="'+i+'" '+(u.externo?"checked":"")+' style="width:auto"> Conductor externo (tercero)</label></div>';
+      }).join("");
+      document.querySelectorAll("#unis [data-k]").forEach(function(el){ el.oninput=el.onchange=function(){ UNIS[el.dataset.i][el.dataset.k]=el.value; }; });
+      document.querySelectorAll("#unis [data-ext]").forEach(function(el){ el.onchange=function(){ UNIS[el.dataset.ext].externo=el.checked; UNIS[el.dataset.ext].conductor=""; UNIS[el.dataset.ext].dni=""; renderUnis(); }; });
+      document.querySelectorAll("#unis [data-del]").forEach(function(el){ el.onclick=function(){ UNIS.splice(+el.dataset.del,1); renderUnis(); }; });
+    }
+    function addUni(){ if(UNIS.length>=6){alert("Máximo 6 unidades por programación.");return;} UNIS.push({externo:false,conductor:"",dni:"",tracto:"",tolva:""}); renderUnis(); }
+
+    function guardar(){
+      var fecha=document.getElementById("fecha").value, ruta=document.getElementById("ruta").value;
+      if(!fecha){ alert("Pon la fecha."); return; }
+      var unidades=UNIS.filter(function(u){return u.conductor||u.tracto||u.tolva;});
+      if(!unidades.length){ alert("Agrega al menos una unidad."); return; }
+      var reg={modulo:"programacion", fecha:fecha, ruta:ruta, unidades:unidades, nUnidades:unidades.length, mes:fecha.slice(0,7), _ts:firebase.firestore.FieldValue.serverTimestamp()};
+      var btn=document.getElementById("btnSave"); btn.disabled=true; btn.textContent="Guardando…";
+      db().collection("operaciones").add(reg).then(function(){ btn.disabled=false; btn.textContent="💾 Guardar programación"; UNIS=[]; addUni(); cargarHist(); alert("✓ Programación guardada."); })
+        .catch(function(e){ alert("Error: "+e.message); btn.disabled=false; btn.textContent="💾 Guardar programación"; });
     }
 
+    function cargarHist(){
+      db().collection("operaciones").where("modulo","==","programacion").get().then(function(s){
+        PROGS=s.docs.map(function(d){var o=d.data();o._id=d.id;return o;}).sort(function(a,b){return String(b.fecha).localeCompare(String(a.fecha));});
+        var tb=document.querySelector("#tabla tbody");
+        tb.innerHTML= PROGS.length? PROGS.slice(0,60).map(function(p){
+          var conds=(p.unidades||[]).map(function(u){return u.conductor;}).filter(Boolean).join(", ")||"—";
+          var tracs=(p.unidades||[]).map(function(u){return u.tracto;}).filter(Boolean).join(", ")||"—";
+          return '<tr><td><strong>'+esc(p.fecha)+'</strong></td><td>'+esc(p.ruta||"")+'</td><td>'+esc(conds.slice(0,40))+'</td><td>'+esc(tracs)+'</td><td>'+(p.nUnidades||0)+'</td><td style="text-align:right"><button class="btn btn-ghost btn-sm" data-v="'+p._id+'">Ver</button> <button class="btn btn-ghost btn-sm" data-d="'+p._id+'">✕</button></td></tr>';
+        }).join("") : '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px">Sin programaciones.</td></tr>';
+        tb.querySelectorAll("[data-v]").forEach(function(b){b.onclick=function(){ver(b.dataset.v);};});
+        tb.querySelectorAll("[data-d]").forEach(function(b){b.onclick=function(){ if(confirm("¿Borrar esta programación?")) db().collection("operaciones").doc(b.dataset.d).delete().then(cargarHist); };});
+      }).catch(function(e){document.getElementById("sub").textContent="Error: "+e.message;});
+    }
+    function ver(id){
+      var p=PROGS.filter(function(x){return x._id===id;})[0]; if(!p)return;
+      var rows=(p.unidades||[]).map(function(u,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(u.conductor||"—")+(u.externo?' <span style="color:#c2410c">(ext)</span>':'')+'</td><td>'+esc(u.tracto||"—")+'</td><td>'+esc(u.tolva||"—")+'</td></tr>';}).join("");
+      document.getElementById("mvBody").innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="margin:0">Programación '+esc(p.fecha)+'</h3><button class="btn btn-ghost btn-sm" onclick="document.getElementById(\'mv\').classList.remove(\'on\')">✕</button></div>'+
+        '<p class="side-note">Ruta: <strong>'+esc(p.ruta||"—")+'</strong> · '+(p.nUnidades||0)+' unidad(es)</p>'+
+        '<table><thead><tr><th>#</th><th>Conductor</th><th>Tracto</th><th>Tolva</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+        '<div style="text-align:right;margin-top:12px"><button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Imprimir</button></div>';
+      document.getElementById("mv").classList.add("on");
+    }
+
+    document.getElementById("btnAdd").onclick=addUni;
+    document.getElementById("btnSave").onclick=guardar;
+    document.getElementById("mv").onclick=function(e){ if(e.target===this) this.classList.remove("on"); };
+
     MISAGI.requireAccess("operaciones").then(function(){
-      document.getElementById("logoutBtn").onclick = function(){ MISAGI.logout(); };
-      sembrarDesdeMaestro(function(){
-        document.getElementById("gate").classList.add("hidden");
-        var f = document.getElementById("appFrame");
-        f.src = "app.html";
-        f.classList.remove("hidden");
-      });
+      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+      document.getElementById("app").style.display="";
+      document.getElementById("fecha").value=new Date().toISOString().slice(0,10);
+      cargarMaestros().then(function(){ addUni(); cargarHist(); });
     });
   </script>
 </body>

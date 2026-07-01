@@ -1,30 +1,20 @@
 <!DOCTYPE html>
-<html lang="es"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal de Proveedores — MISAGI S.A.C.</title>
-<link rel="icon" type="image/png" href="../assets/misagi-icon.png">
-<link rel="stylesheet" href="../assets/theme.css">
-<style>body{margin:0;display:flex;flex-direction:column;height:100vh;overflow:hidden}.app-frame{flex:1;width:100%;border:none}.gate-msg{display:grid;place-items:center;height:100vh;color:var(--text-muted)}</style>
-</head><body>
-<header class="msg-header">
-<a class="brand" href="../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Portal de Proveedores</a>
-<div class="spacer"></div>
-<a class="btn btn-ghost btn-sm" href="../index.html">← Portal</a>
-<button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
-</header>
-<div id="gate" class="gate-msg">Verificando acceso…</div>
-<iframe id="appFrame" class="app-frame hidden" title="Portal de Proveedores"></iframe>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proveedores — MISAGI S.A.C.</title>
+<link rel="icon" type="image/png" href="../assets/misagi-icon.png"><link rel="stylesheet" href="../assets/theme.css"></head>
+<body>
+<header class="msg-header"><a class="brand" href="../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Proveedores</a><div class="spacer"></div><a class="btn btn-ghost btn-sm" href="../index.html">← Portal</a><button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button></header>
+<div class="container" id="reg"></div>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="../assets/firebase-config.js"></script>
-<script src="../assets/auth.js"></script>
+<script src="../assets/firebase-config.js"></script><script src="../assets/auth.js"></script><script src="../assets/maestros.js"></script><script src="../assets/registro.js"></script>
 <script>
-MISAGI.requireAccess("proveedores").then(function(){
-  document.getElementById("gate").classList.add("hidden");
-  var f=document.getElementById("appFrame"); f.src="app/index.html"; f.classList.remove("hidden");
-  document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+MISAGI_REGISTRO.init({
+  area:"proveedores", coleccion:"proveedores", modulo:"proveedor", titulo:"Proveedores",
+  campos:[{k:"razon",label:"Razón social"},{k:"ruc",label:"RUC"},{k:"tipo",label:"Rubro",tipo:"select",opciones:["Combustible","Repuestos","Neumáticos","Servicios","Tolvas / carrocería","Talleres","Otros"]},{k:"contacto",label:"Contacto"},{k:"telefono",label:"Teléfono"},{k:"email",label:"Correo"},{k:"banco",label:"Banco"},{k:"cuenta",label:"N° de cuenta"},{k:"obs",label:"Observación",tipo:"textarea"}],
+  columnas:["razon","ruc","tipo","telefono"],
+  resumen:[{label:"Proveedores",op:"count"}], unico:"ruc"
 });
-</script>
-</body></html>
+</script></body></html>

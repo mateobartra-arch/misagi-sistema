@@ -3,116 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Maestro de Fletes — MISAGI S.A.C.</title>
+  <title>Fletes → Rutas y tarifas — MISAGI S.A.C.</title>
   <link rel="icon" type="image/png" href="../../assets/misagi-icon.png">
   <link rel="stylesheet" href="../../assets/theme.css">
-  <style>
-    table{width:100%;border-collapse:collapse;font-size:.86rem}
-    th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left}
-    th{font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted)}
-    td.r,th.r{text-align:right}
-    .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px}
-    .tag.usd{background:#dbeafe;color:#1d4ed8} .tag.pen{background:var(--verde-l);color:var(--verde-d)}
-    .field label{display:block;font-size:.74rem;color:var(--text-muted);margin-bottom:4px;font-weight:600}
-    .field input,.field select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit}
-  </style>
 </head>
 <body>
   <header class="msg-header">
     <a class="brand" href="../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Fletes</a>
     <div class="spacer"></div>
     <a class="btn btn-ghost btn-sm" href="../../index.html">← Portal</a>
-    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
   </header>
-  <div class="container" id="app" style="display:none">
-    <div class="page-head">
-      <div><h1>Maestro de Fletes</h1><div class="page-sub" id="sub">Tarifa por tonelada (TNE) que se cobra a cada cliente.</div></div>
-      <button class="btn btn-primary" id="btnNew">+ Nueva tarifa</button>
-    </div>
-    <p class="side-note">Esta es la <strong>única fuente</strong> de tarifas: el módulo de guías toma de aquí cuánto cobrar por TNE (según cliente/ruta) y en qué moneda. <strong>Precio = TNE × tarifa</strong>, + IGV.</p>
-    <div class="table-wrap" style="margin-top:14px"><table id="tabla"><thead><tr><th>Cliente</th><th>Ruta</th><th>Producto</th><th class="r">Tarifa / TNE</th><th>Moneda</th><th class="r">IGV</th><th>Estado</th><th></th></tr></thead><tbody></tbody></table></div>
-  </div>
-
-  <div id="modal" class="modal-overlay hidden">
-    <div class="modal-box" style="max-width:460px">
-      <div class="modal-head"><h3 id="mtit">Nueva tarifa de flete</h3><button class="modal-x" id="mx">✕</button></div>
-      <form id="form">
-        <div class="field" style="margin-bottom:10px"><label>Cliente *</label><input name="cliente" required placeholder="Ej. HUDBAY PERU SAC"></div>
-        <div class="field" style="margin-bottom:10px"><label>Ruta (opcional)</label><input name="ruta" placeholder="Ej. CONSTANCIA"></div>
-        <div class="field" style="margin-bottom:10px"><label>Producto (opcional)</label><input name="producto" placeholder="Ej. CONCENTRADO DE COBRE"></div>
-        <div style="display:flex;gap:10px;margin-bottom:10px">
-          <div class="field" style="flex:1"><label>Tarifa por TNE *</label><input name="tarifa" type="number" step="0.01" required placeholder="42"></div>
-          <div class="field" style="width:110px"><label>Moneda *</label><select name="moneda"><option value="USD">USD ($)</option><option value="PEN">PEN (S/)</option></select></div>
-          <div class="field" style="width:90px"><label>IGV %</label><input name="igv" type="number" step="1" value="18"></div>
-        </div>
-        <div class="field" style="margin-bottom:10px"><label style="text-transform:none;letter-spacing:0"><input type="checkbox" name="activo" checked style="width:auto;margin-right:7px">Vigente</label></div>
-        <div id="err" class="msg-alert error hidden"></div>
-        <div style="display:flex;gap:10px;justify-content:space-between;margin-top:6px">
-          <button type="button" class="btn btn-danger hidden" id="btnDel">Borrar</button>
-          <div style="display:flex;gap:10px;margin-left:auto"><button type="button" class="btn btn-ghost" id="cancel">Cancelar</button><button type="submit" class="btn btn-primary" id="save">Guardar</button></div>
-        </div>
-      </form>
+  <div class="container" style="max-width:640px;margin-top:40px">
+    <div class="card" style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:28px;text-align:center">
+      <div style="font-size:2rem;margin-bottom:8px">🔀</div>
+      <h1 style="font-size:1.3rem;margin:0 0 10px">El Maestro de Fletes se fusionó con Rutas</h1>
+      <p style="color:var(--text-muted);margin:0 0 20px">
+        Ahora hay <strong>un solo maestro</strong>: <strong>Rutas y tarifas</strong> (en Operaciones).
+        Ahí defines la ruta, el cliente, la <strong>tarifa por tonelada</strong> y la moneda; las guías toman de ahí el ingreso.
+      </p>
+      <a class="btn btn-primary" href="../../flota/operaciones/rutas/">Ir a Rutas y tarifas →</a>
     </div>
   </div>
-
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="../../assets/firebase-config.js"></script>
-  <script src="../../assets/auth.js"></script>
-  <script>
-    var db=function(){return firebase.firestore();};
-    var F=[];
-    function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
-    function slug(reg){return ("flete_"+(reg.cliente||"")+"_"+(reg.ruta||"")+"_"+(reg.producto||"")).toUpperCase().replace(/[^A-Z0-9]+/g,"_").replace(/_+$/,"");}
-    function cargar(){
-      db().collection("contabilidad").where("modulo","==","flete").get().then(function(s){
-        F=s.docs.map(function(d){var o=d.data();o._id=d.id;return o;});
-        pintar();
-      }).catch(function(e){document.getElementById("sub").textContent="Error: "+e.message;});
-    }
-    function pintar(){
-      var tb=document.querySelector("#tabla tbody");
-      document.getElementById("sub").textContent=F.length+" tarifa(s) · el módulo de guías toma de aquí";
-      if(!F.length){ tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:22px">Sin tarifas. Agrega la de HUDBAY (42 USD).</td></tr>'; return; }
-      tb.innerHTML=F.sort(function(a,b){return String(a.cliente||"").localeCompare(String(b.cliente||""));}).map(function(f){
-        var mon=String(f.moneda||"USD")==="USD"?'<span class="tag usd">USD $</span>':'<span class="tag pen">PEN S/</span>';
-        var est=f.activo===false?'<span style="color:var(--text-muted)">Inactiva</span>':'<span style="color:var(--verde-d);font-weight:600">Vigente</span>';
-        return '<tr><td><strong>'+esc(f.cliente)+'</strong></td><td>'+esc(f.ruta||"—")+'</td><td>'+esc((f.producto||"—").slice(0,22))+'</td><td class="r"><strong>'+esc(f.tarifa)+'</strong></td><td>'+mon+'</td><td class="r">'+esc(f.igv!=null?f.igv+"%":"18%")+'</td><td>'+est+'</td><td style="text-align:right"><button class="btn btn-ghost btn-sm" data-e="'+f._id+'">Editar</button></td></tr>';
-      }).join("");
-      tb.querySelectorAll("[data-e]").forEach(function(b){b.onclick=function(){abrir(F.filter(function(x){return x._id===b.dataset.e;})[0]);};});
-    }
-    function abrir(reg){
-      var f=document.getElementById("form"); f.reset(); document.getElementById("err").classList.add("hidden");
-      f.dataset.id=reg?reg._id:"";
-      document.getElementById("mtit").textContent=reg?"Editar tarifa":"Nueva tarifa de flete";
-      document.getElementById("btnDel").classList.toggle("hidden",!reg);
-      if(reg){ ["cliente","ruta","producto","tarifa","moneda"].forEach(function(k){ if(f[k]!==undefined&&reg[k]!=null) f[k].value=reg[k]; }); f.igv.value=reg.igv!=null?reg.igv:18; f.activo.checked=reg.activo!==false; }
-      document.getElementById("modal").classList.remove("hidden");
-    }
-    function cerrar(){document.getElementById("modal").classList.add("hidden");}
-    document.getElementById("form").addEventListener("submit",function(e){
-      e.preventDefault(); var f=e.target, err=document.getElementById("err"); err.classList.add("hidden");
-      var reg={modulo:"flete", cliente:f.cliente.value.trim(), ruta:f.ruta.value.trim(), producto:f.producto.value.trim(), tarifa:parseFloat(f.tarifa.value)||0, moneda:f.moneda.value, igv:parseFloat(f.igv.value)||0, activo:f.activo.checked};
-      if(!reg.cliente||!reg.tarifa){ err.textContent="Cliente y tarifa son obligatorios."; err.classList.remove("hidden"); return; }
-      var id=f.dataset.id||slug(reg);
-      var btn=document.getElementById("save"); btn.disabled=true; btn.textContent="Guardando…";
-      db().collection("contabilidad").doc(id).set(reg,{merge:true}).then(function(){ btn.disabled=false; btn.textContent="Guardar"; cerrar(); cargar(); })
-        .catch(function(e2){ err.textContent=e2.message; err.classList.remove("hidden"); btn.disabled=false; btn.textContent="Guardar"; });
-    });
-    document.getElementById("btnDel").onclick=function(){
-      var id=document.getElementById("form").dataset.id; if(!id) return;
-      if(!confirm("¿Borrar esta tarifa?")) return;
-      db().collection("contabilidad").doc(id).delete().then(function(){ cerrar(); cargar(); });
-    };
-    document.getElementById("btnNew").onclick=function(){abrir(null);};
-    document.getElementById("mx").onclick=cerrar; document.getElementById("cancel").onclick=cerrar;
-    MISAGI.requireAccess("contabilidad").then(function(){
-      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
-      document.getElementById("app").style.display="";
-      cargar();
-    });
-  </script>
 </body>
 </html>

@@ -79,12 +79,15 @@ service cloud.firestore {
     }
 
     // ---- Colecciones por área (módulos futuros) ----
-    match /operaciones/{doc}    { allow read, write: if tieneArea('operaciones'); }
+    match /operaciones/{doc}    {
+      allow read:  if tieneArea('operaciones') || (logueado() && resource.data.modulo == 'rutas'); // Rutas/tarifas es maestro compartido (contabilidad lo lee para las guías)
+      allow write: if tieneArea('operaciones');
+    }
     match /mantenimiento/{doc}  { allow read, write: if tieneArea('mantenimiento'); }
     match /rrhh/{doc}           { allow read, write: if tieneArea('rrhh'); }
     match /finanzas/{doc}       { allow read, write: if tieneArea('finanzas'); }
     match /contabilidad/{doc}   { allow read, write: if tieneArea('contabilidad'); }
-    match /proveedores/{doc}    { allow read, write: if tieneArea('proveedores'); }
+    match /proveedores/{doc}    { allow read: if logueado(); allow write: if tieneArea('proveedores'); }
     match /planificacion/{doc}  { allow read, write: if tieneArea('planificacion'); }
     match /imagen/{doc}         { allow read, write: if tieneArea('imagen'); }
     match /ssoma/{doc}          { allow read, write: if tieneArea('ssoma'); }

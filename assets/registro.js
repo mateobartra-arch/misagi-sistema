@@ -18,10 +18,26 @@
   function db(){return firebase.firestore();}
   function fmtNum(n){ n=Number(n||0); return n.toLocaleString('es-PE',{maximumFractionDigits:2}); }
 
+  // Maestros en memoria para marcar valores fuera del maestro
+  var MASTERS=null;
+  function cargarMasters(cb){
+    if(MASTERS){ if(cb)cb(); return; }
+    if(typeof MISAGI_MAESTROS==="undefined"){ MASTERS={placas:{},nombres:{}}; if(cb)cb(); return; }
+    Promise.all([MISAGI_MAESTROS.mapaUnidades(), MISAGI_MAESTROS.personas()]).then(function(r){
+      var placas={}; Object.keys(r[0]||{}).forEach(function(k){placas[k]=true;});
+      var nombres={}; (r[1]||[]).forEach(function(pp){ if(pp.nombre) nombres[String(pp.nombre).trim().toUpperCase()]=true; });
+      MASTERS={placas:placas,nombres:nombres};
+    }).catch(function(){ MASTERS={placas:{},nombres:{}}; }).then(function(){ if(cb)cb(); });
+  }
+  function normPlacaSafe(v){ return (typeof MISAGI_MAESTROS!=="undefined"&&MISAGI_MAESTROS.normPlaca)?MISAGI_MAESTROS.normPlaca(v):String(v||"").toUpperCase().replace(/[^A-Z0-9-]/g,""); }
+
   function init(cfg){
     var DATA=[], esAdmin=false;
     var root=document.getElementById("reg");
     var idCampoFecha=(cfg.campos.filter(function(c){return c.tipo==="date";})[0]||{}).k;
+    function tipoMaestro(k){ var c=cfg.campos.filter(function(x){return x.k===k;})[0]; if(!c) return null; if(c.fuente==="unidades"||k==="placa"||k==="unidad") return "placa"; if(c.fuente==="conductores"||c.fuente==="personas"||k==="conductor") return "cond"; return null; }
+    function fueraMaestro(tipo,val){ if(!val||!MASTERS) return false; if(tipo==="placa"){ var pk=normPlacaSafe(val); return !!pk && !MASTERS.placas[pk]; } if(tipo==="cond"){ return !MASTERS.nombres[String(val).trim().toUpperCase()]; } return false; }
+    function filaFuera(d){ return cfg.columnas.some(function(k){ return fueraMaestro(tipoMaestro(k), d[k]); }); }
 
     function shell(){
       var resumenHtml = (cfg.resumen||[]).map(function(r,i){
@@ -51,7 +67,8 @@
     }
     function pintar(){
       var tb=document.querySelector("#tabla tbody"); var f=filtradas();
-      document.getElementById("sub").textContent=DATA.length+" registro(s)";
+      var nfuera=DATA.filter(filaFuera).length;
+      document.getElementById("sub").innerHTML=DATA.length+" registro(s)"+(nfuera?' · <span style="color:#b45309;font-weight:700">⚠ '+nfuera+' fuera del maestro</span>':'');
       var _bi=document.getElementById("btnImp"); if(_bi){ _bi.style.display=""; _bi.textContent = DATA.length ? "↻ Re-importar" : ("⬆ Importar histórico ("+(((window.REGISTRO_SEED||{})[cfg.modulo]||[]).length)+")"); }
       // resumen
       (cfg.resumen||[]).forEach(function(r,i){
@@ -62,7 +79,10 @@
       });
       if(!f.length){ tb.innerHTML='<tr><td colspan="'+(cfg.columnas.length+1)+'" style="text-align:center;color:var(--text-muted);padding:24px">Sin registros. Usa “+ Nuevo”.</td></tr>'; return; }
       tb.innerHTML=f.map(function(d){
-        return '<tr>'+cfg.columnas.map(function(k){return '<td>'+esc(d[k])+'</td>';}).join("")+
+        return '<tr>'+cfg.columnas.map(function(k){
+            var off=fueraMaestro(tipoMaestro(k), d[k]);
+            return '<td>'+esc(d[k])+(off?' <span title="No está en el maestro" style="color:#b45309;font-weight:800;cursor:help">⚠</span>':'')+'</td>';
+          }).join("")+
           '<td style="text-align:right;white-space:nowrap"><button class="btn btn-ghost btn-sm" data-e="'+d._id+'">Editar</button> <button class="btn btn-ghost btn-sm" data-d="'+d._id+'">✕</button></td></tr>';
       }).join("");
       tb.querySelectorAll("[data-e]").forEach(function(b){b.onclick=function(){abrir(DATA.filter(function(x){return x._id===b.dataset.e;})[0]);};});
@@ -101,7 +121,8 @@
       sels.forEach(function(sel){
         var cur=sel.value;
         MISAGI_MAESTROS.opciones(sel.getAttribute("data-fuente")).then(function(ops){
-          sel.innerHTML='<option value=""></option>'+ops.map(function(o){return '<option>'+esc(o)+'</option>';}).join("");
+          var extra=""; if(cur && ops.map(String).indexOf(String(cur))<0){ extra='<option value="'+esc(cur)+'" selected>'+esc(cur)+' — ⚠ fuera de maestro</option>'; }
+          sel.innerHTML='<option value=""></option>'+extra+ops.map(function(o){return '<option>'+esc(o)+'</option>';}).join("");
           if(cur) sel.value=cur;
         }).catch(function(){}).then(function(){ if(--pend===0 && cb) cb(); });
       });
@@ -182,7 +203,10 @@
             var regs=rows.map(function(r){ var o={modulo:cfg.modulo}; cfg.campos.forEach(function(c){ if(map[c.k]!==undefined){ var v=r[map[c.k]]; if(v instanceof Date){ v=v.toISOString().slice(0,10); } o[c.k]=(v==null?"":String(v).trim()); } }); return o; })
                          .filter(function(o){ return cfg.campos.some(function(c){return o[c.k];}); });
             if(!regs.length){ alert("No se encontraron filas con datos."); return; }
-            if(!confirm("Se importarán "+regs.length+" filas a \""+cfg.titulo+"\". ¿Continuar?")) return;
+            var nfuera=regs.filter(filaFuera).length;
+            var aviso="Se importarán "+regs.length+" filas a \""+cfg.titulo+"\".";
+            if(nfuera) aviso+="\n\n⚠ "+nfuera+" fila(s) traen una placa o conductor que NO está en el maestro. Se importarán igual, pero quedarán marcadas con ⚠. Corrige el maestro o la fila.";
+            if(!confirm(aviso+"\n\n¿Continuar?")) return;
             var rest=regs.slice();
             (function lote(){ if(!rest.length){ alert("✓ Importado: "+regs.length+" filas"); cargar(); return; } var chunk=rest.splice(0,400); var b=db().batch(); chunk.forEach(function(o){ b.set(db().collection(cfg.coleccion).doc(), o); }); b.commit().then(lote).catch(function(err){ alert("Error al importar: "+err.message); }); })();
           }catch(ex){ alert("No se pudo leer el Excel: "+ex.message); }
@@ -202,6 +226,7 @@
       esAdmin=MISAGI.esAdmin(s.perfil);
       var lo=document.getElementById("logoutBtn"); if(lo) lo.onclick=function(){MISAGI.logout();};
       shell(); cargar();
+      cargarMasters(function(){ if(DATA.length) pintar(); });
     });
   }
 

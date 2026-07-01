@@ -28,12 +28,12 @@
   </header>
   <div class="container" id="app" style="display:none">
     <div class="page-head">
-      <div><h1>Rutas (maestro)</h1><div class="page-sub" id="sub">Cargando…</div></div>
+      <div><h1>Rutas y tarifas (maestro único)</h1><div class="page-sub" id="sub">Cargando…</div></div>
       <div style="display:flex;gap:10px"><button class="btn btn-ghost" id="btnExp">⬇ Excel</button><button class="btn btn-primary" id="btnNew">+ Nueva ruta</button></div>
     </div>
-    <p class="side-note">Tarifa por ruta y cliente, con su <strong>moneda</strong>. Pones la <strong>tarifa base</strong> y el sistema calcula <strong>IGV y total</strong> solo. De aquí toma la utilidad (USD se convierte a soles con el TC del mes).</p>
+    <p class="side-note"><strong>Fuente única de tarifas (fletes):</strong> pones ruta, cliente, <strong>tarifa por tonelada</strong> y moneda; el sistema calcula IGV y total. El módulo de <strong>Guías</strong> toma de aquí cuánto cobrar por TNE a cada razón social, y la Utilidad convierte USD→S/ con el TC del mes.</p>
     <div class="toolbar" style="margin:14px 0"><input type="search" id="buscar" placeholder="Buscar ruta o cliente…"></div>
-    <div class="table-wrap"><table id="tabla"><thead><tr><th>Ruta</th><th>Cliente</th><th class="r">Distancia</th><th>Moneda</th><th class="r">Tarifa base</th><th class="r">IGV</th><th class="r">Total</th><th></th></tr></thead><tbody></tbody></table></div>
+    <div class="table-wrap"><table id="tabla"><thead><tr><th>Ruta</th><th>Cliente</th><th>Producto</th><th class="r">Distancia</th><th>Moneda</th><th class="r">Tarifa base</th><th class="r">IGV</th><th class="r">Total</th><th></th></tr></thead><tbody></tbody></table></div>
   </div>
 
   <div id="modal" class="modal-overlay hidden">
@@ -45,6 +45,7 @@
           <div class="field" style="flex:1"><label>Cliente</label><input name="cliente" placeholder="Ej. HUDBAY / Raciemsa"></div>
           <div class="field" style="width:130px"><label>Distancia (km)</label><input name="distancia" type="number" step="1" placeholder="930"></div>
         </div>
+        <div class="field" style="margin-bottom:10px"><label>Producto (opcional)</label><input name="producto" placeholder="Ej. CONCENTRADO DE COBRE"></div>
         <div style="display:flex;gap:10px;margin-bottom:6px">
           <div class="field" style="width:120px"><label>Moneda *</label><select name="moneda"><option value="USD">USD ($)</option><option value="PEN">PEN (S/)</option></select></div>
           <div class="field" style="flex:1"><label>Tarifa base (sin IGV) *</label><input name="tarifa" type="number" step="0.01" required placeholder="42"></div>
@@ -55,6 +56,7 @@
           <span>Total (con IGV): <b id="cTot">—</b></span>
         </div>
         <div class="field" style="margin-bottom:10px"><label>Peaje (opcional)</label><input name="peaje" type="number" step="0.01" placeholder=""></div>
+        <div class="field" style="margin-bottom:10px"><label style="text-transform:none;letter-spacing:0"><input type="checkbox" name="activo" checked style="width:auto;margin-right:7px">Tarifa vigente</label></div>
         <div id="err" class="msg-alert error hidden"></div>
         <div style="display:flex;gap:10px;justify-content:space-between;margin-top:6px">
           <button type="button" class="btn btn-danger hidden" id="btnDel">Borrar</button>
@@ -88,12 +90,12 @@
              .sort(function(a,b){return String(a.nombre||"").localeCompare(String(b.nombre||""));});
       document.getElementById("sub").textContent=R.length+" ruta(s)";
       var tb=document.querySelector("#tabla tbody");
-      if(!f.length){ tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:22px">Sin rutas. Usa “+ Nueva ruta”.</td></tr>'; return; }
+      if(!f.length){ tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:22px">Sin rutas. Usa “+ Nueva ruta”.</td></tr>'; return; }
       tb.innerHTML=f.map(function(r){
         var mon=String(r.moneda||"PEN");
         var base=num(r.tarifa), igvp=(r.igv!=null?num(r.igv):18), igv=num(r.igv_monto||base*igvp/100), tot=num(r.total||base+igv);
         var mtag=mon==="USD"?'<span class="tag usd">USD $</span>':'<span class="tag pen">PEN S/</span>';
-        return '<tr><td><strong>'+esc(r.nombre)+'</strong></td><td>'+esc(r.cliente||"—")+'</td><td class="r">'+esc(r.distancia||r.km||"")+'</td><td>'+mtag+'</td><td class="r">'+(base?fmt(base,mon):"—")+'</td><td class="r">'+(base?fmt(igv,mon):"—")+'</td><td class="r"><strong>'+(base?fmt(tot,mon):"—")+'</strong></td><td style="text-align:right"><button class="btn btn-ghost btn-sm" data-e="'+r._id+'">Editar</button> <button class="btn btn-ghost btn-sm" data-d="'+r._id+'">✕</button></td></tr>';
+        return '<tr><td><strong>'+esc(r.nombre)+'</strong></td><td>'+esc(r.cliente||"—")+'</td><td>'+esc((r.producto||"—"))+'</td><td class="r">'+esc(r.distancia||r.km||"")+'</td><td>'+mtag+'</td><td class="r">'+(base?fmt(base,mon):"—")+'</td><td class="r">'+(base?fmt(igv,mon):"—")+'</td><td class="r"><strong>'+(base?fmt(tot,mon):"—")+'</strong></td><td style="text-align:right"><button class="btn btn-ghost btn-sm" data-e="'+r._id+'">Editar</button> <button class="btn btn-ghost btn-sm" data-d="'+r._id+'">✕</button></td></tr>';
       }).join("");
       tb.querySelectorAll("[data-e]").forEach(function(b){b.onclick=function(){abrir(R.filter(function(x){return x._id===b.dataset.e;})[0]);};});
       tb.querySelectorAll("[data-d]").forEach(function(b){b.onclick=function(){ if(confirm("¿Borrar esta ruta?")) db().collection("operaciones").doc(b.dataset.d).delete().then(cargar); };});
@@ -109,7 +111,7 @@
       f.dataset.id=reg?reg._id:"";
       document.getElementById("mtit").textContent=reg?"Editar ruta":"Nueva ruta";
       document.getElementById("btnDel").classList.toggle("hidden",!reg);
-      if(reg){ f.nombre.value=reg.nombre||""; f.cliente.value=reg.cliente||""; f.distancia.value=reg.distancia||reg.km||""; f.moneda.value=reg.moneda||"PEN"; f.tarifa.value=reg.tarifa||""; f.igv.value=(reg.igv!=null?reg.igv:18); f.peaje.value=reg.peaje||""; }
+      if(reg){ f.nombre.value=reg.nombre||""; f.cliente.value=reg.cliente||""; f.producto.value=reg.producto||""; f.distancia.value=reg.distancia||reg.km||""; f.moneda.value=reg.moneda||"PEN"; f.tarifa.value=reg.tarifa||""; f.igv.value=(reg.igv!=null?reg.igv:18); f.peaje.value=reg.peaje||""; f.activo.checked=reg.activo!==false; }
       recalc();
       document.getElementById("modal").classList.remove("hidden");
     }
@@ -117,9 +119,9 @@
     document.getElementById("form").addEventListener("submit",function(e){
       e.preventDefault(); var f=e.target, err=document.getElementById("err"); err.classList.add("hidden");
       var base=num(f.tarifa.value), igvp=num(f.igv.value);
-      var reg={ modulo:"rutas", nombre:f.nombre.value.trim(), cliente:f.cliente.value.trim(), distancia:f.distancia.value.trim(),
+      var reg={ modulo:"rutas", nombre:f.nombre.value.trim(), cliente:f.cliente.value.trim(), producto:f.producto.value.trim(), distancia:f.distancia.value.trim(),
                 moneda:f.moneda.value, tarifa:base, igv:igvp, igv_monto:+(base*igvp/100).toFixed(2), total:+(base*(1+igvp/100)).toFixed(2),
-                peaje:num(f.peaje.value)||"" };
+                peaje:num(f.peaje.value)||"", activo:f.activo.checked };
       if(!reg.nombre){ err.textContent="El nombre de la ruta es obligatorio."; err.classList.remove("hidden"); return; }
       var btn=document.getElementById("save"); btn.disabled=true; btn.textContent="Guardando…";
       var p = f.dataset.id ? db().collection("operaciones").doc(f.dataset.id).set(reg,{merge:true}) : db().collection("operaciones").add(reg);
@@ -135,7 +137,7 @@
     document.getElementById("mx").onclick=cerrar; document.getElementById("cancel").onclick=cerrar;
     document.getElementById("btnExp").onclick=function(){
       if(!R.length){alert("Nada que exportar.");return;}
-      var rows=R.map(function(r){return {Ruta:r.nombre,Cliente:r.cliente||"",Distancia:r.distancia||r.km||"",Moneda:r.moneda||"PEN",TarifaBase:num(r.tarifa),IGV:num(r.igv_monto),Total:num(r.total),Peaje:num(r.peaje)};});
+      var rows=R.map(function(r){return {Ruta:r.nombre,Cliente:r.cliente||"",Producto:r.producto||"",Distancia:r.distancia||r.km||"",Moneda:r.moneda||"PEN",TarifaBase:num(r.tarifa),IGV:num(r.igv_monto),Total:num(r.total),Peaje:num(r.peaje),Vigente:(r.activo===false?"No":"Si")};});
       var ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Rutas"); XLSX.writeFile(wb,"rutas.xlsx");
     };
     MISAGI.requireAccess("operaciones").then(function(){

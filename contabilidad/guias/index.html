@@ -48,7 +48,7 @@
   <div class="container" id="app" style="display:none">
     <div class="page-head">
       <div><h1>Resumen de guías</h1><div class="page-sub" id="sub">Sube una o varias guías PDF: se llenan los campos y se calcula el ingreso solo.</div></div>
-      <div style="display:flex;gap:8px"><button class="btn btn-ghost" id="btnXls">⬆ Importar Excel</button><button class="btn btn-ghost" id="btnTarifas">⚙ Maestro de Fletes</button><button class="btn btn-ghost" id="btnExp">⬇ Exportar Excel</button></div><input type="file" id="fileXls" accept=".xlsx,.xls" hidden>
+      <div style="display:flex;gap:8px"><button class="btn btn-ghost" id="btnXls">⬆ Importar Excel</button><button class="btn btn-ghost" id="btnTarifas">⚙ Rutas y tarifas</button><button class="btn btn-ghost" id="btnExp">⬇ Exportar Excel</button></div><input type="file" id="fileXls" accept=".xlsx,.xls" hidden>
     </div>
 
     <div class="kpis" id="kpis"></div>
@@ -72,7 +72,7 @@
           <div class="f auto"><label>Tolva <span id="bTolva"></span></label><input name="tolva"></div>
           <div class="f auto"><label>Conductor <span id="bCond"></span></label><input name="conductor"></div>
           <div class="f auto"><label>N° Licencia</label><input name="licencia"></div>
-          <div class="f auto"><label>Cliente (remitente)</label><input name="cliente"></div>
+          <div class="f auto"><label>Cliente (remitente) <span id="bCli"></span></label><input name="cliente"></div>
           <div class="f auto"><label>Ruta</label><input name="ruta"></div>
           <div class="f auto"><label>Destinatario</label><input name="destinatario"></div>
           <div class="f auto"><label>Producto</label><input name="producto"></div>
@@ -191,13 +191,21 @@
       d.mes=(d.fecha_traslado||d.fecha_emision||"").split("/").reverse().join("-").slice(0,7);
       return d;
     }
+    // Reconstruye el texto en ORDEN DE LECTURA (arriba->abajo, izq->der) usando la posición de cada fragmento.
+    function ordenarTexto(tc){
+      var its=tc.items.filter(function(it){return it.str && it.str.trim();}).map(function(it){return {s:it.str, x:it.transform[4], y:it.transform[5]};});
+      its.sort(function(a,b){ var dy=b.y-a.y; if(Math.abs(dy)>3) return dy; return a.x-b.x; });
+      var out="", lastY=null;
+      its.forEach(function(it){ if(lastY!==null && Math.abs(it.y-lastY)>3) out+="\n"; else if(out!=="") out+=" "; out+=it.s; lastY=it.y; });
+      return out;
+    }
     function textoPDF(file){
       return new Promise(function(resolve,reject){
         var reader=new FileReader();
         reader.onload=function(){
           pdfjsLib.getDocument({data:reader.result}).promise.then(function(pdf){
             var proms=[]; for(var i=1;i<=pdf.numPages;i++) proms.push(pdf.getPage(i).then(function(p){return p.getTextContent();}));
-            Promise.all(proms).then(function(pages){ resolve(pages.map(function(tc){return tc.items.map(function(it){return it.str;}).join(" ");}).join(" ")); });
+            Promise.all(proms).then(function(pages){ resolve(pages.map(ordenarTexto).join("\n")); });
           }).catch(reject);
         };
         reader.readAsArrayBuffer(file);
@@ -233,9 +241,12 @@
       Object.keys(d).forEach(function(k){ if(f[k]!==undefined && d[k]!=="" && d[k]!=null) f[k].value=d[k]; });
       f.style.display="";
       badge("bTracto",MAP_U[placaFmt(d.tracto)]); badge("bTolva",MAP_U[placaFmt(d.tolva)],true); badge("bCond",d.dni&&MAP_P[String(d.dni)],true);
-      document.getElementById("sub").textContent="✓ Extraído. Ingreso calculado ("+soles(d.precio_con_igv)+" con IGV). Revisa y guarda.";
+      var tf=tarifaDe(d.cliente); badgeCli(tf);
+      if(tf){ document.getElementById("sub").textContent="✓ Extraído. Ingreso calculado ("+soles(d.precio_con_igv)+" con IGV). Revisa y guarda."; }
+      else { document.getElementById("sub").textContent="⚠ Cliente «"+(d.cliente||"?")+"» no está en el maestro de Rutas y tarifas — agrégale su tarifa para calcular el ingreso."; alert("⚠ La razón social «"+(d.cliente||"?")+"» no tiene tarifa registrada en el maestro de Rutas y tarifas.\n\nAgrégala en Operaciones › Rutas y tarifas (ruta + cliente + tarifa por tonelada + moneda) y el ingreso se calculará solo."); }
       f.scrollIntoView({behavior:"smooth"});
     }
+    function badgeCli(t){ var e=document.getElementById("bCli"); if(!e)return; if(t){e.className="badge ok";e.setAttribute("style","");e.textContent="✓ tarifa "+t.tarifa+" "+(t.moneda||"");} else {e.className="badge warn";e.setAttribute("style","");e.textContent="⚠ sin tarifa en el maestro";} }
     function badge(id,ok,tercero){ var e=document.getElementById(id); if(!e)return; if(ok){e.className="badge ok";e.setAttribute("style","");e.textContent="✓ MISAGI";} else if(tercero){e.className="badge";e.setAttribute("style","background:#eef;color:#446");e.textContent="tercero";} else {e.className="badge warn";e.setAttribute("style","");e.textContent="⚠ revisar";} }
     function recalcForm(){
       var f=document.getElementById("form"); var tne=num(f.tne.value), flete=num(f.flete.value);
@@ -295,7 +306,7 @@
       var g=GUIAS.filter(function(x){return x._id===id;})[0]; if(!g)return;
       var f=document.getElementById("form"); f.style.display="";
       Array.prototype.forEach.call(f.elements,function(el){ if(el.name&&g[el.name]!=null) el.value=g[el.name]; });
-      badge("bTracto",MAP_U[placaFmt(g.tracto)]); badge("bTolva",MAP_U[placaFmt(g.tolva)],true); badge("bCond",g.dni&&MAP_P[String(g.dni)],true);
+      badge("bTracto",MAP_U[placaFmt(g.tracto)]); badge("bTolva",MAP_U[placaFmt(g.tolva)],true); badge("bCond",g.dni&&MAP_P[String(g.dni)],true); badgeCli(tarifaDe(g.cliente));
       f.scrollIntoView({behavior:"smooth"});
     }
 
@@ -340,7 +351,7 @@
     document.getElementById("btnCancel").onclick=function(){var f=document.getElementById("form");f.reset();f.style.display="none";};
     ["fMes","fCliente"].forEach(function(id){document.getElementById(id).onchange=pintar;});
     document.getElementById("fBuscar").oninput=pintar;
-    document.getElementById("btnTarifas").onclick=function(){ location.href="../fletes/"; };
+    document.getElementById("btnTarifas").onclick=function(){ location.href="../../flota/operaciones/rutas/"; };
     document.getElementById("tarAdd").onclick=function(){addTarRow("","");};
     document.getElementById("tarCancel").onclick=function(){document.getElementById("mTar").classList.remove("on");};
     document.getElementById("tarSave").onclick=guardarTarifas;
@@ -410,7 +421,9 @@
       document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
       document.getElementById("app").style.display="";
       Promise.all([MISAGI_MAESTROS.mapaUnidades(),MISAGI_MAESTROS.mapaPersonas()]).then(function(r){ MAP_U=r[0]||{}; MAP_P=r[1]||{}; });
-      db().collection("contabilidad").where("modulo","==","flete").get().then(function(s){ s.docs.forEach(function(dd){ var f=dd.data(); if(f.cliente) TARIFAS[String(f.cliente).toUpperCase()]={tarifa:num(f.tarifa),moneda:f.moneda||"USD",igv:(f.igv!=null?f.igv:18)}; }); }).catch(function(){});
+      MISAGI_MAESTROS.tarifasCliente().then(function(m){ Object.keys(m).forEach(function(k){ TARIFAS[k]=m[k]; }); }).catch(function(){})
+        .then(function(){ return db().collection("contabilidad").where("modulo","==","flete").get(); })
+        .then(function(s){ s.docs.forEach(function(dd){ var f=dd.data(); var k=String(f.cliente||"").toUpperCase(); if(k && !TARIFAS[k]) TARIFAS[k]={tarifa:num(f.tarifa),moneda:f.moneda||"USD",igv:(f.igv!=null?f.igv:18)}; }); }).catch(function(){});
       cargar();
     });
   </script>

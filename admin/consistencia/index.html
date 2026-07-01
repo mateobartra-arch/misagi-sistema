@@ -56,7 +56,9 @@
       {col:"mantenimiento", modulo:"correctivo",  label:"Correctivos",  placa:"placa", cond:null},
       {col:"mantenimiento", modulo:"preventivo",  label:"Preventivos",  placa:"placa", cond:null},
       {col:"roster",        modulo:null,          label:"Roster",       placa:null,    cond:null, dni:"dni"},
-      {col:"documentos",    modulo:null,          label:"Documentos",   placa:"placa", cond:null}
+      {col:"documentos",    modulo:null,          label:"Documentos",   placa:"placa", cond:null},
+      {col:"contabilidad",  modulo:"guias",       label:"Guías · tracto",placa:"tracto",cond:"conductor"},
+      {col:"contabilidad",  modulo:"guias",       label:"Guías · tolva", placa:"tolva", cond:null}
     ];
 
     function revisar(){
@@ -96,7 +98,30 @@
             bloques.push({label:f.label, n:docs.length, nHU:nHU, rows:rows});
           });
 
-          document.getElementById("sub").textContent="Revisado: "+totalReg+" registros en "+FUENTES.length+" módulos";
+          // --- Especial: Guías · cliente sin tarifa en Maestro de Fletes ---
+          var rutasT=(porCol["operaciones"]||[]).filter(function(r){return String(r.modulo||"")==="rutas" && r.activo!==false;});
+          var fletesL=(porCol["contabilidad"]||[]).filter(function(r){return String(r.modulo||"")==="flete";});
+          var claves=rutasT.concat(fletesL).map(function(f){return String(f.cliente||"").trim().toUpperCase();}).filter(Boolean);
+          var guias=(porCol["contabilidad"]||[]).filter(function(r){return String(r.modulo||"")==="guias";});
+          var huCli={};
+          guias.forEach(function(g){ var c=String(g.cliente||"").trim().toUpperCase(); if(!c) return; var ok=claves.some(function(k){return c.indexOf(k)>=0;}); if(!ok) huCli[g.cliente]=(huCli[g.cliente]||0)+1; });
+          var rowsCli=""; Object.keys(huCli).forEach(function(v){ rowsCli+='<div class="bad-row"><span>🏢 Razón social sin tarifa en Rutas y tarifas: <code>'+esc(v)+'</code></span><span class="tag">'+huCli[v]+' guía(s)</span></div>'; });
+          var nCli=Object.keys(huCli).length; totalHU+=nCli; totalReg+=guias.length;
+          bloques.push({label:"Guías · cliente vs Rutas/tarifas", n:guias.length, nHU:nCli, rows:rowsCli});
+
+          // --- Especial: Programación (unidades anidadas; se ignoran terceros) ---
+          var progs=(porCol["operaciones"]||[]).filter(function(r){return String(r.modulo||"")==="programacion";});
+          var huPP={}, huPC={}, nUn=0;
+          progs.forEach(function(pr){ (pr.unidades||[]).forEach(function(u){ nUn++;
+            ["tracto","tolva"].forEach(function(kk){ if(u[kk]){ var pk=MISAGI_MAESTROS.normPlaca(u[kk]); if(pk&&!placasOK[pk]) huPP[u[kk]]=(huPP[u[kk]]||0)+1; } });
+            if(u.conductor && u.externo!==true){ var cn=String(u.conductor).trim().toUpperCase(); if(!nombresOK[cn]) huPC[u.conductor]=(huPC[u.conductor]||0)+1; }
+          }); });
+          var rowsP=""; Object.keys(huPP).forEach(function(v){ rowsP+='<div class="bad-row"><span>🚛 Placa fuera del maestro: <code>'+esc(v)+'</code></span><span class="tag">'+huPP[v]+'</span></div>'; });
+          Object.keys(huPC).forEach(function(v){ rowsP+='<div class="bad-row"><span>👤 Conductor fuera del maestro (no marcado como tercero): <code>'+esc(v)+'</code></span><span class="tag">'+huPC[v]+'</span></div>'; });
+          var nP=Object.keys(huPP).length+Object.keys(huPC).length; totalHU+=nP; totalReg+=nUn;
+          bloques.push({label:"Programación", n:nUn, nHU:nP, rows:rowsP});
+
+          document.getElementById("sub").textContent="Revisado: "+totalReg+" registros en "+bloques.length+" módulos";
           var kpis=document.getElementById("kpis");
           kpis.innerHTML=
             '<div class="kpi"><div class="n">'+Object.keys(placasOK).length+'</div><div class="l">Placas en maestro</div></div>'+
