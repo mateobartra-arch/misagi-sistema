@@ -36,6 +36,7 @@
       <span class="chip on" data-f="todos">Todos</span>
       <span class="chip" data-f="conductor">Conductores</span>
       <span class="chip" data-f="administrativo">Administrativos</span>
+      <span class="chip" data-f="externo">Externos</span>
     </div>
     <div class="toolbar"><input type="search" id="buscar" placeholder="Buscar por nombre, DNI o cargo…"></div>
     <div class="table-wrap"><table id="tabla"><thead><tr><th>Apellidos y nombres</th><th>DNI</th><th>Licencia</th><th>Tipo</th><th>Cargo</th><th>Empresa</th><th>Estado</th><th></th></tr></thead><tbody></tbody></table></div>
@@ -55,6 +56,7 @@
         <div class="field"><label>Cargo</label><input name="cargo" placeholder="Ej. Conductor, Asistente, Gerente…"></div>
         <div class="field"><label>Empresa</label><input name="empresa" placeholder="MISAGI"></div>
         <div class="field"><label style="text-transform:none;letter-spacing:0"><input type="checkbox" name="activo" checked style="width:auto;margin-right:7px">Activo</label></div>
+        <div class="field"><label style="text-transform:none;letter-spacing:0"><input type="checkbox" name="externo" style="width:auto;margin-right:7px">Conductor externo (tercero: Raciemsa, etc.)</label></div>
         <div id="err" class="msg-alert error hidden"></div>
         <div style="display:flex;gap:10px;justify-content:space-between;margin-top:6px">
           <button type="button" class="btn btn-danger hidden" id="btnDel">Borrar</button>
@@ -79,7 +81,8 @@
     function filtradas(){
       var q=(document.getElementById("buscar").value||"").toLowerCase().trim();
       var arr=C.slice().sort(function(a,b){return (a.orden==null?9999:a.orden)-(b.orden==null?9999:b.orden) || String(a.nombre||"").localeCompare(String(b.nombre||""));});
-      if(FILTRO!=="todos") arr=arr.filter(function(d){return tipoDe(d)===FILTRO;});
+      if(FILTRO==="externo") arr=arr.filter(function(d){return d.externo===true;});
+      else if(FILTRO!=="todos") arr=arr.filter(function(d){return tipoDe(d)===FILTRO;});
       if(!q) return arr;
       return arr.filter(function(d){return (String(d.nombre||"")+" "+String(d.dni||"")+" "+String(d.cargo||"")).toLowerCase().indexOf(q)>=0;});
     }
@@ -91,7 +94,7 @@
       if(!f.length){ tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:24px">Sin resultados.</td></tr>'; return; }
       tb.innerHTML=f.map(function(d){
         var est=d.activo===false?'<span class="st off">Inactivo</span>':'<span class="st ok">Activo</span>';
-        var t=tipoDe(d)==="conductor"?'<span class="tg c">Conductor</span>':'<span class="tg a">Administrativo</span>';
+        var t=tipoDe(d)==="conductor"?'<span class="tg c">Conductor</span>':'<span class="tg a">Administrativo</span>'; if(d.externo) t+=' <span class="tg" style="background:#fff7ed;color:#c2410c">Ext</span>';
         return '<tr><td><strong>'+esc(d.nombre)+'</strong></td><td>'+esc(d.dni)+'</td><td>'+t+'</td><td>'+esc(d.cargo||"")+'</td><td>'+esc(d.empresa||"")+'</td><td>'+est+'</td><td><div class="acts"><button class="btn btn-ghost btn-sm" data-e="'+esc(d.dni)+'">Editar</button></div></td></tr>';
       }).join("");
       tb.querySelectorAll("[data-e]").forEach(function(b){b.onclick=function(){abrir(C.filter(function(x){return String(x.dni)===b.dataset.e;})[0]);};});
@@ -108,14 +111,14 @@
       document.getElementById("mtit").textContent=reg?"Editar persona":"Nueva persona";
       document.getElementById("btnDel").classList.toggle("hidden",!reg);
       f.dni.readOnly=!!reg;
-      if(reg){ f.nombre.value=reg.nombre||""; f.dni.value=reg.dni||""; f.tipo.value=tipoDe(reg); f.cargo.value=reg.cargo||""; f.licencia.value=reg.licencia||""; f.categoria.value=reg.categoria||""; f.celular.value=reg.celular||""; f.empresa.value=reg.empresa||""; f.activo.checked=reg.activo!==false; }
+      if(reg){ f.nombre.value=reg.nombre||""; f.dni.value=reg.dni||""; f.tipo.value=tipoDe(reg); f.cargo.value=reg.cargo||""; f.licencia.value=reg.licencia||""; f.categoria.value=reg.categoria||""; f.celular.value=reg.celular||""; f.empresa.value=reg.empresa||""; f.activo.checked=reg.activo!==false; f.externo.checked=reg.externo===true; }
       document.getElementById("modal").classList.remove("hidden");
     }
     function cerrar(){document.getElementById("modal").classList.add("hidden");}
     document.getElementById("form").addEventListener("submit",function(e){
       e.preventDefault(); var f=e.target, err=document.getElementById("err"); err.classList.add("hidden");
       var dni=String(f.dni.value||"").trim(); if(!dni){ err.textContent="El DNI es obligatorio."; err.classList.remove("hidden"); return; }
-      var reg={ dni:dni, nombre:f.nombre.value.trim(), tipo:f.tipo.value, cargo:f.cargo.value.trim(), licencia:f.licencia.value.trim(), categoria:f.categoria.value.trim(), celular:f.celular.value.trim(), empresa:f.empresa.value.trim(), activo:f.activo.checked };
+      var reg={ dni:dni, nombre:f.nombre.value.trim(), tipo:f.tipo.value, cargo:f.cargo.value.trim(), licencia:f.licencia.value.trim(), categoria:f.categoria.value.trim(), celular:f.celular.value.trim(), empresa:f.empresa.value.trim(), activo:f.activo.checked, externo:f.externo.checked };
       if(!f.dataset.id){ reg.orden=C.length; }
       var btn=document.getElementById("save"); btn.disabled=true; btn.textContent="Guardando…";
       db().collection("personas").doc(dni).set(reg,{merge:true}).then(function(){ btn.disabled=false; btn.textContent="Guardar"; cerrar(); cargar(); })

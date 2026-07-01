@@ -1,17 +1,6 @@
 /* ==========================================================================
    MISAGI — Maestros compartidos (única fuente de verdad).
-   --------------------------------------------------------------------------
-   Cualquier módulo puebla sus desplegables y DERIVA datos (tipo, estado…)
-   desde aquí. Regla: si algo no está en el maestro, no aparece ni se deriva.
-
-   Entidades maestras:
-     • Unidades  (operaciones/modulo=unidades)  — clave: PLACA (AAA-000)
-     • Personas  (personas)                      — clave: DNI
-   Helpers de consulta:
-     unidades(), conductores(), personas()
-     mapaUnidades()  -> { PLACA: {…} }     infoUnidad(placa)
-     mapaPersonas()  -> { DNI: {…} }       infoPersona(dni)
-     opciones(fuente) -> [string]          (solo activos / no-baja)
+   Unidades (placa) y Personas (DNI). Los módulos derivan de aquí.
    ========================================================================== */
 (function (global) {
   var fx = function () { return firebase.firestore(); };
@@ -41,10 +30,10 @@
   }
   function conductores() {
     if (cache.conductores) return Promise.resolve(cache.conductores);
-    return personas().then(function (a) { cache.conductores = a.filter(function (p) { return String(p.tipo || "conductor").toLowerCase() === "conductor"; }); return cache.conductores; });
+    // Excluye externos (terceros): esos solo se usan en Programación, no en roster/combustible.
+    return personas().then(function (a) { cache.conductores = a.filter(function (p) { return String(p.tipo || "conductor").toLowerCase() === "conductor" && p.externo !== true; }); return cache.conductores; });
   }
 
-  // ---- Normalizadores de clave (para que los joins nunca fallen) ----
   function normPlaca(p) {
     var v = String(p == null ? "" : p).toUpperCase().replace(/[^A-Z0-9]/g, "");
     if (v.length === 6) v = v.slice(0, 3) + "-" + v.slice(3);
@@ -52,7 +41,6 @@
   }
   function esBaja(u) { return String((u && u.estado) || "Operativo").toLowerCase() === "baja"; }
 
-  // ---- Mapas de consulta (clave normalizada) ----
   function mapaUnidades() {
     return unidades().then(function (a) { var m = {}; a.forEach(function (u) { if (u.placa) m[normPlaca(u.placa)] = u; }); return m; });
   }
@@ -62,7 +50,6 @@
   function infoUnidad(placa) { return mapaUnidades().then(function (m) { return m[normPlaca(placa)] || null; }); }
   function infoPersona(dni) { return mapaPersonas().then(function (m) { return m[String(dni)] || null; }); }
 
-  // ---- Desplegables: SOLO activos (excluye unidades de baja) ----
   function opciones(fuente) {
     if (fuente === "unidades") return unidades().then(function (a) { return a.filter(function (u) { return !esBaja(u); }).map(function (u) { return u.placa; }).filter(Boolean); });
     if (fuente === "conductores") return conductores().then(function (a) { return a.filter(function (c) { return c.activo !== false; }).map(function (c) { return c.nombre; }).filter(Boolean); });
