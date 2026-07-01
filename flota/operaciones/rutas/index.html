@@ -26,8 +26,8 @@
   <script>
     MISAGI_REGISTRO.init({
   area:"operaciones", coleccion:"operaciones", modulo:"rutas", titulo:"Rutas",
-  campos:[{k:"nombre",label:"Nombre de ruta"},{k:"distancia",label:"Distancia"},{k:"icono",label:"Icono"}],
-  columnas:["nombre","distancia"],
+  campos:[{k:"nombre",label:"Nombre de ruta"},{k:"cliente",label:"Cliente",tipo:"select",opciones:["Hudbay","Raciemsa","Cuajone","Toquepala","Hierro","Otro"]},{k:"distancia",label:"Distancia (km)",tipo:"number"},{k:"tarifa",label:"Tarifa (S/)",tipo:"number"},{k:"peaje",label:"Peaje (S/)",tipo:"number"},{k:"icono",label:"Icono"}],
+  columnas:["nombre","cliente","distancia","tarifa"],
   resumen:[{label:"Rutas",op:"count"}]
 });
   </script>

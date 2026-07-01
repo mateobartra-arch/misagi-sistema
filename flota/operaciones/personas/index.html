@@ -38,7 +38,7 @@
       <span class="chip" data-f="administrativo">Administrativos</span>
     </div>
     <div class="toolbar"><input type="search" id="buscar" placeholder="Buscar por nombre, DNI o cargo…"></div>
-    <div class="table-wrap"><table id="tabla"><thead><tr><th>Apellidos y nombres</th><th>DNI</th><th>Tipo</th><th>Cargo</th><th>Empresa</th><th>Estado</th><th></th></tr></thead><tbody></tbody></table></div>
+    <div class="table-wrap"><table id="tabla"><thead><tr><th>Apellidos y nombres</th><th>DNI</th><th>Licencia</th><th>Tipo</th><th>Cargo</th><th>Empresa</th><th>Estado</th><th></th></tr></thead><tbody></tbody></table></div>
     <p class="side-note" style="margin-top:14px">Esta es la <strong>única fuente</strong> de personas del sistema: alimenta el Roster, los desplegables de conductor/responsable y la creación de accesos. Si alguien no está aquí, no aparece en ningún módulo.</p>
   </div>
 
@@ -48,6 +48,9 @@
       <form id="form">
         <div class="field"><label>Apellidos y nombres *</label><input name="nombre" required placeholder="Ej. Arapa Choquehuanca, LUIS MIGUEL"></div>
         <div class="field"><label>DNI *</label><input name="dni" inputmode="numeric" required placeholder="Ej. 46557013"></div>
+        <div class="field"><label>Licencia de conducir</label><input name="licencia" placeholder="Ej. H46557013"></div>
+        <div class="field"><label>Categoría de licencia</label><input name="categoria" placeholder="Ej. A-IIIc"></div>
+        <div class="field"><label>Celular</label><input name="celular" inputmode="numeric" placeholder="Ej. 999888777"></div>
         <div class="field"><label>Tipo *</label><select name="tipo"><option value="conductor">Conductor</option><option value="administrativo">Administrativo</option></select></div>
         <div class="field"><label>Cargo</label><input name="cargo" placeholder="Ej. Conductor, Asistente, Gerente…"></div>
         <div class="field"><label>Empresa</label><input name="empresa" placeholder="MISAGI"></div>
@@ -85,7 +88,7 @@
       var nc=C.filter(function(d){return tipoDe(d)==="conductor";}).length, na=C.length-nc;
       document.getElementById("sub").textContent=C.length+" persona(s) · "+nc+" conductores · "+na+" administrativos";
       document.getElementById("impBar").classList.toggle("hidden", C.length>0);
-      if(!f.length){ tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">Sin resultados.</td></tr>'; return; }
+      if(!f.length){ tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:24px">Sin resultados.</td></tr>'; return; }
       tb.innerHTML=f.map(function(d){
         var est=d.activo===false?'<span class="st off">Inactivo</span>':'<span class="st ok">Activo</span>';
         var t=tipoDe(d)==="conductor"?'<span class="tg c">Conductor</span>':'<span class="tg a">Administrativo</span>';
@@ -105,14 +108,14 @@
       document.getElementById("mtit").textContent=reg?"Editar persona":"Nueva persona";
       document.getElementById("btnDel").classList.toggle("hidden",!reg);
       f.dni.readOnly=!!reg;
-      if(reg){ f.nombre.value=reg.nombre||""; f.dni.value=reg.dni||""; f.tipo.value=tipoDe(reg); f.cargo.value=reg.cargo||""; f.empresa.value=reg.empresa||""; f.activo.checked=reg.activo!==false; }
+      if(reg){ f.nombre.value=reg.nombre||""; f.dni.value=reg.dni||""; f.tipo.value=tipoDe(reg); f.cargo.value=reg.cargo||""; f.licencia.value=reg.licencia||""; f.categoria.value=reg.categoria||""; f.celular.value=reg.celular||""; f.empresa.value=reg.empresa||""; f.activo.checked=reg.activo!==false; }
       document.getElementById("modal").classList.remove("hidden");
     }
     function cerrar(){document.getElementById("modal").classList.add("hidden");}
     document.getElementById("form").addEventListener("submit",function(e){
       e.preventDefault(); var f=e.target, err=document.getElementById("err"); err.classList.add("hidden");
       var dni=String(f.dni.value||"").trim(); if(!dni){ err.textContent="El DNI es obligatorio."; err.classList.remove("hidden"); return; }
-      var reg={ dni:dni, nombre:f.nombre.value.trim(), tipo:f.tipo.value, cargo:f.cargo.value.trim(), empresa:f.empresa.value.trim(), activo:f.activo.checked };
+      var reg={ dni:dni, nombre:f.nombre.value.trim(), tipo:f.tipo.value, cargo:f.cargo.value.trim(), licencia:f.licencia.value.trim(), categoria:f.categoria.value.trim(), celular:f.celular.value.trim(), empresa:f.empresa.value.trim(), activo:f.activo.checked };
       if(!f.dataset.id){ reg.orden=C.length; }
       var btn=document.getElementById("save"); btn.disabled=true; btn.textContent="Guardando…";
       db().collection("personas").doc(dni).set(reg,{merge:true}).then(function(){ btn.disabled=false; btn.textContent="Guardar"; cerrar(); cargar(); })
