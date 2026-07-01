@@ -3,9 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rutas — MISAGI S.A.C.</title>
+  <title>Rutas (maestro) — MISAGI S.A.C.</title>
   <link rel="icon" type="image/png" href="../../../assets/misagi-icon.png">
   <link rel="stylesheet" href="../../../assets/theme.css">
+  <style>
+    table{width:100%;border-collapse:collapse;font-size:.86rem}
+    th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left}
+    td.r,th.r{text-align:right}
+    th{font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted)}
+    .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px}
+    .tag.usd{background:#dbeafe;color:#1d4ed8} .tag.pen{background:var(--verde-l);color:var(--verde-d)}
+    .field label{display:block;font-size:.74rem;color:var(--text-muted);margin-bottom:4px;font-weight:600}
+    .field input,.field select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit}
+    .calc{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 12px;margin:6px 0 12px;font-size:.9rem;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .calc b{font-size:1.05rem}
+  </style>
 </head>
 <body>
   <header class="msg-header">
@@ -14,22 +26,123 @@
     <a class="btn btn-ghost btn-sm" href="../../../index.html">← Portal</a>
     <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
   </header>
-  <div class="container" id="reg"></div>
+  <div class="container" id="app" style="display:none">
+    <div class="page-head">
+      <div><h1>Rutas (maestro)</h1><div class="page-sub" id="sub">Cargando…</div></div>
+      <div style="display:flex;gap:10px"><button class="btn btn-ghost" id="btnExp">⬇ Excel</button><button class="btn btn-primary" id="btnNew">+ Nueva ruta</button></div>
+    </div>
+    <p class="side-note">Tarifa por ruta y cliente, con su <strong>moneda</strong>. Pones la <strong>tarifa base</strong> y el sistema calcula <strong>IGV y total</strong> solo. De aquí toma la utilidad (USD se convierte a soles con el TC del mes).</p>
+    <div class="toolbar" style="margin:14px 0"><input type="search" id="buscar" placeholder="Buscar ruta o cliente…"></div>
+    <div class="table-wrap"><table id="tabla"><thead><tr><th>Ruta</th><th>Cliente</th><th class="r">Distancia</th><th>Moneda</th><th class="r">Tarifa base</th><th class="r">IGV</th><th class="r">Total</th><th></th></tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div id="modal" class="modal-overlay hidden">
+    <div class="modal-box" style="max-width:480px">
+      <div class="modal-head"><h3 id="mtit">Nueva ruta</h3><button class="modal-x" id="mx">✕</button></div>
+      <form id="form">
+        <div class="field" style="margin-bottom:10px"><label>Nombre de ruta *</label><input name="nombre" required placeholder="Ej. HUDBAY / LIMA-AREQUIPA"></div>
+        <div style="display:flex;gap:10px;margin-bottom:10px">
+          <div class="field" style="flex:1"><label>Cliente</label><input name="cliente" placeholder="Ej. HUDBAY / Raciemsa"></div>
+          <div class="field" style="width:130px"><label>Distancia (km)</label><input name="distancia" type="number" step="1" placeholder="930"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:6px">
+          <div class="field" style="width:120px"><label>Moneda *</label><select name="moneda"><option value="USD">USD ($)</option><option value="PEN">PEN (S/)</option></select></div>
+          <div class="field" style="flex:1"><label>Tarifa base (sin IGV) *</label><input name="tarifa" type="number" step="0.01" required placeholder="42"></div>
+          <div class="field" style="width:90px"><label>IGV %</label><input name="igv" type="number" step="1" value="18"></div>
+        </div>
+        <div class="calc" id="calc">
+          <span>IGV: <b id="cIgv">—</b></span>
+          <span>Total (con IGV): <b id="cTot">—</b></span>
+        </div>
+        <div class="field" style="margin-bottom:10px"><label>Peaje (opcional)</label><input name="peaje" type="number" step="0.01" placeholder=""></div>
+        <div id="err" class="msg-alert error hidden"></div>
+        <div style="display:flex;gap:10px;justify-content:space-between;margin-top:6px">
+          <button type="button" class="btn btn-danger hidden" id="btnDel">Borrar</button>
+          <div style="display:flex;gap:10px;margin-left:auto"><button type="button" class="btn btn-ghost" id="cancel">Cancelar</button><button type="submit" class="btn btn-primary" id="save">Guardar</button></div>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="../../../assets/firebase-config.js"></script>
   <script src="../../../assets/auth.js"></script>
-  <script src="../../../assets/seed-flota-mant.js"></script>
-  <script src="../../../assets/registro.js"></script>
   <script>
-    MISAGI_REGISTRO.init({
-  area:"operaciones", coleccion:"operaciones", modulo:"rutas", titulo:"Rutas",
-  campos:[{k:"nombre",label:"Nombre de ruta"},{k:"cliente",label:"Cliente",tipo:"select",opciones:["Hudbay","Raciemsa","Cuajone","Toquepala","Hierro","Otro"]},{k:"distancia",label:"Distancia (km)",tipo:"number"},{k:"tarifa",label:"Tarifa (S/)",tipo:"number"},{k:"peaje",label:"Peaje (S/)",tipo:"number"},{k:"icono",label:"Icono"}],
-  columnas:["nombre","cliente","distancia","tarifa"],
-  resumen:[{label:"Rutas",op:"count"}]
-});
+    var db=function(){return firebase.firestore();};
+    var R=[];
+    function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+    function num(x){var n=parseFloat(String(x==null?"":x).replace(",","."));return isNaN(n)?0:n;}
+    function fmt(n,mon){return (mon==="USD"?"$ ":"S/ ")+num(n).toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2});}
+    function cargar(){
+      db().collection("operaciones").where("modulo","==","rutas").get().then(function(s){
+        R=s.docs.map(function(d){var o=d.data();o._id=d.id;return o;}); pintar();
+      }).catch(function(e){document.getElementById("sub").textContent="Error: "+e.message;});
+    }
+    function pintar(){
+      var q=(document.getElementById("buscar").value||"").toLowerCase();
+      var f=R.filter(function(r){return !q||((r.nombre||"")+" "+(r.cliente||"")).toLowerCase().indexOf(q)>=0;})
+             .sort(function(a,b){return String(a.nombre||"").localeCompare(String(b.nombre||""));});
+      document.getElementById("sub").textContent=R.length+" ruta(s)";
+      var tb=document.querySelector("#tabla tbody");
+      if(!f.length){ tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:22px">Sin rutas. Usa “+ Nueva ruta”.</td></tr>'; return; }
+      tb.innerHTML=f.map(function(r){
+        var mon=String(r.moneda||"PEN");
+        var base=num(r.tarifa), igvp=(r.igv!=null?num(r.igv):18), igv=num(r.igv_monto||base*igvp/100), tot=num(r.total||base+igv);
+        var mtag=mon==="USD"?'<span class="tag usd">USD $</span>':'<span class="tag pen">PEN S/</span>';
+        return '<tr><td><strong>'+esc(r.nombre)+'</strong></td><td>'+esc(r.cliente||"—")+'</td><td class="r">'+esc(r.distancia||r.km||"")+'</td><td>'+mtag+'</td><td class="r">'+(base?fmt(base,mon):"—")+'</td><td class="r">'+(base?fmt(igv,mon):"—")+'</td><td class="r"><strong>'+(base?fmt(tot,mon):"—")+'</strong></td><td style="text-align:right"><button class="btn btn-ghost btn-sm" data-e="'+r._id+'">Editar</button> <button class="btn btn-ghost btn-sm" data-d="'+r._id+'">✕</button></td></tr>';
+      }).join("");
+      tb.querySelectorAll("[data-e]").forEach(function(b){b.onclick=function(){abrir(R.filter(function(x){return x._id===b.dataset.e;})[0]);};});
+      tb.querySelectorAll("[data-d]").forEach(function(b){b.onclick=function(){ if(confirm("¿Borrar esta ruta?")) db().collection("operaciones").doc(b.dataset.d).delete().then(cargar); };});
+    }
+    function recalc(){
+      var f=document.getElementById("form"); var base=num(f.tarifa.value), igvp=num(f.igv.value), mon=f.moneda.value;
+      var igv=base*igvp/100, tot=base+igv;
+      document.getElementById("cIgv").textContent=base?fmt(igv,mon):"—";
+      document.getElementById("cTot").textContent=base?fmt(tot,mon):"—";
+    }
+    function abrir(reg){
+      var f=document.getElementById("form"); f.reset(); document.getElementById("err").classList.add("hidden");
+      f.dataset.id=reg?reg._id:"";
+      document.getElementById("mtit").textContent=reg?"Editar ruta":"Nueva ruta";
+      document.getElementById("btnDel").classList.toggle("hidden",!reg);
+      if(reg){ f.nombre.value=reg.nombre||""; f.cliente.value=reg.cliente||""; f.distancia.value=reg.distancia||reg.km||""; f.moneda.value=reg.moneda||"PEN"; f.tarifa.value=reg.tarifa||""; f.igv.value=(reg.igv!=null?reg.igv:18); f.peaje.value=reg.peaje||""; }
+      recalc();
+      document.getElementById("modal").classList.remove("hidden");
+    }
+    function cerrar(){document.getElementById("modal").classList.add("hidden");}
+    document.getElementById("form").addEventListener("submit",function(e){
+      e.preventDefault(); var f=e.target, err=document.getElementById("err"); err.classList.add("hidden");
+      var base=num(f.tarifa.value), igvp=num(f.igv.value);
+      var reg={ modulo:"rutas", nombre:f.nombre.value.trim(), cliente:f.cliente.value.trim(), distancia:f.distancia.value.trim(),
+                moneda:f.moneda.value, tarifa:base, igv:igvp, igv_monto:+(base*igvp/100).toFixed(2), total:+(base*(1+igvp/100)).toFixed(2),
+                peaje:num(f.peaje.value)||"" };
+      if(!reg.nombre){ err.textContent="El nombre de la ruta es obligatorio."; err.classList.remove("hidden"); return; }
+      var btn=document.getElementById("save"); btn.disabled=true; btn.textContent="Guardando…";
+      var p = f.dataset.id ? db().collection("operaciones").doc(f.dataset.id).set(reg,{merge:true}) : db().collection("operaciones").add(reg);
+      p.then(function(){ btn.disabled=false; btn.textContent="Guardar"; cerrar(); cargar(); })
+       .catch(function(e2){ err.textContent=e2.message; err.classList.remove("hidden"); btn.disabled=false; btn.textContent="Guardar"; });
+    });
+    document.getElementById("btnDel").onclick=function(){ var id=document.getElementById("form").dataset.id; if(id&&confirm("¿Borrar esta ruta?")) db().collection("operaciones").doc(id).delete().then(function(){cerrar();cargar();}); };
+    document.getElementById("form").tarifa.addEventListener("input",recalc);
+    document.getElementById("form").igv.addEventListener("input",recalc);
+    document.getElementById("form").moneda.addEventListener("change",recalc);
+    document.getElementById("btnNew").onclick=function(){abrir(null);};
+    document.getElementById("buscar").oninput=pintar;
+    document.getElementById("mx").onclick=cerrar; document.getElementById("cancel").onclick=cerrar;
+    document.getElementById("btnExp").onclick=function(){
+      if(!R.length){alert("Nada que exportar.");return;}
+      var rows=R.map(function(r){return {Ruta:r.nombre,Cliente:r.cliente||"",Distancia:r.distancia||r.km||"",Moneda:r.moneda||"PEN",TarifaBase:num(r.tarifa),IGV:num(r.igv_monto),Total:num(r.total),Peaje:num(r.peaje)};});
+      var ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Rutas"); XLSX.writeFile(wb,"rutas.xlsx");
+    };
+    MISAGI.requireAccess("operaciones").then(function(){
+      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+      document.getElementById("app").style.display="";
+      cargar();
+    });
   </script>
 </body>
 </html>
