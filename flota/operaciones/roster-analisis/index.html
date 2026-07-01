@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roster · Días efectivos — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../../assets/theme.css">
+  <style>
+    .subtabs{display:flex;gap:6px;margin:10px 0 4px;flex-wrap:wrap}
+    .subtab{padding:8px 16px;border-radius:10px 10px 0 0;text-decoration:none;color:var(--text-muted);font-weight:600;font-size:.88rem;border:1px solid transparent}
+    .subtab.on{background:#fff;border-color:var(--border);border-bottom-color:#fff;color:var(--verde-d)}
+    .filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0}
+    .filters select{padding:8px 12px;border:1px solid var(--border);border-radius:9px;font-family:inherit}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+    .kpi{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px}
+    .kpi .n{font-size:1.5rem;font-weight:800} .kpi .l{font-size:.74rem;color:var(--text-muted);margin-top:2px}
+    .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
+    table{width:100%;border-collapse:collapse;font-size:.84rem}
+    th,td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:center}
+    th:first-child,td:first-child{text-align:left}
+    th{font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted)}
+    tfoot td{font-weight:700;border-top:2px solid var(--border)}
+    .leg{font-size:.78rem;color:var(--text-muted);background:#f8fafc;border:1px dashed var(--border);border-radius:9px;padding:10px 12px;margin-top:10px}
+    .leg b{color:var(--text)}
+    .ef{font-weight:800;color:var(--verde-d)}
+  </style>
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Roster</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" style="padding-bottom:0">
+    <div class="subtabs">
+      <a class="subtab" href="../roster/">📅 Calendario</a>
+      <a class="subtab on" href="../roster-analisis/">📊 Días efectivos</a>
+    </div>
+  </div>
+  <div class="container" id="app" style="display:none">
+    <div class="page-head">
+      <div><h1>Días efectivos</h1><div class="page-sub" id="sub">Calculando…</div></div>
+      <button class="btn btn-ghost" id="btnExp">⬇ Excel</button>
+    </div>
+    <div class="filters">
+      <label style="font-size:.85rem;color:var(--text-muted)">Mes:</label>
+      <select id="mes"></select>
+    </div>
+    <div class="grid" id="kpis"></div>
+    <div class="card">
+      <h3 style="margin:0 0 10px;font-size:.95rem">Por conductor</h3>
+      <div style="overflow-x:auto" id="tabla"></div>
+      <div class="leg">
+        <b>Días efectivos</b> = días en ruta + presente + ½ medio día (el descanso no cuenta).<br>
+        <b>Códigos:</b> H1-H3 Hudbay · R1-R5 Raciemsa · C1-C2 Cuajone · T1-T2 Toquepala · A1-A3 Hierro · P Presente · M/D Medio día · D Descanso.
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 10px;font-size:.95rem">Días-conductor por cliente (mes)</h3>
+      <div id="porCliente"></div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="../../../assets/firebase-config.js"></script>
+  <script src="../../../assets/auth.js"></script>
+  <script>
+    var db=function(){return firebase.firestore();};
+    function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+    var CLI={H:"Hudbay",R:"Raciemsa",C:"Cuajone",T:"Toquepala",A:"Hierro"};
+    var R=[], resumen=[];
+
+    // Clasifica un código de roster
+    function clasifica(cod){
+      var c=String(cod||"").trim().toUpperCase();
+      if(c==="D") return {tipo:"descanso"};
+      if(c==="P") return {tipo:"presente"};
+      if(c==="M/D"||c==="MD") return {tipo:"medio"};
+      var m=c.match(/^([HRCTA])\s*\d/);
+      if(m) return {tipo:"ruta", cliente:CLI[m[1]]};
+      return {tipo:"otro", cod:c};
+    }
+
+    function cargar(){
+      db().collection("roster").get().then(function(snap){
+        R=snap.docs.map(function(d){return d.data();});
+        var meses={}; R.forEach(function(r){var m=String(r.fecha||"").slice(0,7); if(m) meses[m]=true;});
+        var arr=Object.keys(meses).sort();
+        var sel=document.getElementById("mes");
+        sel.innerHTML=arr.map(function(m){return '<option>'+m+'</option>';}).join("");
+        if(arr.length) sel.value=arr[arr.length-1];
+        sel.onchange=pintar;
+        pintar();
+      }).catch(function(e){ document.getElementById("sub").textContent="Error: "+e.message; });
+    }
+
+    function pintar(){
+      var m=document.getElementById("mes").value;
+      var del=R.filter(function(r){return String(r.fecha||"").slice(0,7)===m;});
+      var porC={}; // dni -> {nombre, ruta, presente, medio, descanso, clientes:{}}
+      var clientesTot={};
+      del.forEach(function(r){
+        var k=String(r.dni||r.nombre||"?");
+        var o=porC[k]=porC[k]||{nombre:r.nombre||k, ruta:0, presente:0, medio:0, descanso:0, clientes:{}};
+        var c=clasifica(r.estado);
+        if(c.tipo==="ruta"){ o.ruta++; o.clientes[c.cliente]=(o.clientes[c.cliente]||0)+1; clientesTot[c.cliente]=(clientesTot[c.cliente]||0)+1; }
+        else if(c.tipo==="presente") o.presente++;
+        else if(c.tipo==="medio") o.medio++;
+        else if(c.tipo==="descanso") o.descanso++;
+      });
+      resumen=Object.keys(porC).map(function(k){var o=porC[k]; o.efectivos=o.ruta+o.presente+o.medio*0.5; return o;})
+        .sort(function(a,b){return b.efectivos-a.efectivos;});
+
+      var totEf=resumen.reduce(function(s,o){return s+o.efectivos;},0);
+      var totRuta=resumen.reduce(function(s,o){return s+o.ruta;},0);
+      var totPres=resumen.reduce(function(s,o){return s+o.presente;},0);
+      var totDesc=resumen.reduce(function(s,o){return s+o.descanso;},0);
+      document.getElementById("sub").textContent="Mes "+m+" · "+resumen.length+" conductores";
+      document.getElementById("kpis").innerHTML=
+        '<div class="kpi"><div class="n">'+totEf+'</div><div class="l">Días efectivos (total)</div></div>'+
+        '<div class="kpi"><div class="n">'+totRuta+'</div><div class="l">Días en ruta</div></div>'+
+        '<div class="kpi"><div class="n">'+totPres+'</div><div class="l">Días presente</div></div>'+
+        '<div class="kpi"><div class="n">'+totDesc+'</div><div class="l">Descansos</div></div>';
+
+      var html='<table><thead><tr><th>Conductor</th><th>Ruta</th><th>Presente</th><th>½ día</th><th>Descanso</th><th>Efectivos</th></tr></thead><tbody>'+
+        resumen.map(function(o){return '<tr><td><strong>'+esc(o.nombre)+'</strong></td><td>'+o.ruta+'</td><td>'+o.presente+'</td><td>'+o.medio+'</td><td>'+o.descanso+'</td><td class="ef">'+o.efectivos+'</td></tr>';}).join("")+
+        '</tbody><tfoot><tr><td>Total</td><td>'+totRuta+'</td><td>'+totPres+'</td><td>'+resumen.reduce(function(s,o){return s+o.medio;},0)+'</td><td>'+totDesc+'</td><td>'+totEf+'</td></tr></tfoot></table>';
+      document.getElementById("tabla").innerHTML=html;
+
+      var cks=Object.keys(clientesTot).sort(function(a,b){return clientesTot[b]-clientesTot[a];});
+      document.getElementById("porCliente").innerHTML = cks.length ? '<table><thead><tr><th>Cliente</th><th>Días-conductor</th></tr></thead><tbody>'+
+        cks.map(function(c){return '<tr><td><strong>'+esc(c)+'</strong></td><td>'+clientesTot[c]+'</td></tr>';}).join("")+'</tbody></table>'
+        : '<div class="leg">Sin días de ruta registrados en el mes.</div>';
+    }
+
+    document.getElementById("btnExp").onclick=function(){
+      if(!resumen.length){ alert("Nada que exportar."); return; }
+      var m=document.getElementById("mes").value;
+      var rows=resumen.map(function(o){return {Conductor:o.nombre, Ruta:o.ruta, Presente:o.presente, MedioDia:o.medio, Descanso:o.descanso, DiasEfectivos:o.efectivos};});
+      var ws=XLSX.utils.json_to_sheet(rows), wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,ws,"Dias efectivos");
+      XLSX.writeFile(wb,"dias-efectivos-"+m+".xlsx");
+    };
+
+    MISAGI.requireAccess("operaciones").then(function(s){
+      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+      document.getElementById("app").style.display="";
+      cargar();
+    });
+  </script>
+</body>
+</html>

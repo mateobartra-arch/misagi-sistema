@@ -14,13 +14,13 @@
 </head>
 <body>
   <header class="msg-header">
-    <a class="brand" href="../../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Programación</a>
+    <a class="brand" href="../../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI &middot; Programaci&oacute;n</a>
     <div class="spacer"></div>
-    <a class="btn btn-ghost btn-sm" href="../../../index.html">← Portal</a>
+    <a class="btn btn-ghost btn-sm" href="../../../index.html">&larr; Portal</a>
     <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
   </header>
-  <div id="gate" class="gate-msg">Verificando acceso…</div>
-  <iframe id="appFrame" class="app-frame hidden" title="Programación"></iframe>
+  <div id="gate" class="gate-msg">Cargando datos del maestro&hellip;</div>
+  <iframe id="appFrame" class="app-frame hidden" title="Programacion"></iframe>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
@@ -28,13 +28,55 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="../../../assets/firebase-config.js"></script>
   <script src="../../../assets/auth.js"></script>
+  <script src="../../../assets/maestros.js"></script>
   <script>
-    MISAGI.requireAccess("operaciones").then(function () {
-      document.getElementById("gate").classList.add("hidden");
-      var f = document.getElementById("appFrame");
-      f.src = "app.html";
-      f.classList.remove("hidden");
-      document.getElementById("logoutBtn").onclick = function () { MISAGI.logout(); };
+    var db = function(){ return firebase.firestore(); };
+    var RUTAS_DEFAULT = [
+      {nombre:'HUDBAY', icono:'⛏️', km:'930 KM'},
+      {nombre:'AQP - ILO', icono:'⚓', km:'230 km'},
+      {nombre:'AQP - MATARANI', icono:'🏭', km:'140 km'},
+      {nombre:'AQP - CUSCO', icono:'🗻', km:'520 km'},
+      {nombre:'AQP - PUNO', icono:'🌊', km:'295 km'},
+      {nombre:'LOCAL / MINERA', icono:'🔧', km:'Variable'}
+    ];
+    function splitNombre(n){
+      var s = String(n||"").trim(); var i = s.indexOf(",");
+      if(i>=0) return { apellidos:s.slice(0,i).trim(), nombres:s.slice(i+1).trim() };
+      return { apellidos:s, nombres:"" };
+    }
+    function noBaja(u){ return String(u.estado||"Operativo").toLowerCase() !== "baja"; }
+
+    function sembrarDesdeMaestro(cb){
+      Promise.all([
+        MISAGI_MAESTROS.personas(),
+        MISAGI_MAESTROS.unidades(),
+        db().collection("operaciones").where("modulo","==","rutas").get().catch(function(){return {docs:[]};})
+      ]).then(function(res){
+        var personas = res[0]||[], unidades = res[1]||[], rutasDocs = (res[2]&&res[2].docs)||[];
+        var conductores = personas
+          .filter(function(p){ return String(p.tipo||"conductor").toLowerCase()==="conductor" && p.activo!==false; })
+          .map(function(p){ var nm=splitNombre(p.nombre); return { apellidos:nm.apellidos, nombres:nm.nombres, licencia:p.licencia||"", dni:String(p.dni||""), empresa:p.empresa||"MISAGI" }; });
+        var tractos = unidades.filter(function(u){ return String(u.tipo||"").toLowerCase()==="tracto" && noBaja(u); })
+          .map(function(u){ return { placa:u.placa, marca:u.marca||"", anio:u.anio||"", mtc:u.mtc||"", empresa:u.empresa||"MISAGI" }; });
+        var tolvas = unidades.filter(function(u){ return String(u.tipo||"").toLowerCase()==="tolva" && noBaja(u); })
+          .map(function(u){ return { placa:u.placa, anio:u.anio||"" }; });
+        var rutas = rutasDocs.map(function(d){ var r=d.data(); return { nombre:r.nombre||r.ruta||"", icono:r.icono||"🗺️", km:r.km||r.distancia||"" }; }).filter(function(r){return r.nombre;});
+        if(!rutas.length) rutas = RUTAS_DEFAULT;
+        if(conductores.length){
+          try{ localStorage.setItem("misagi_db", JSON.stringify({ conductores:conductores, tractos:tractos, tolvas:tolvas, rutas:rutas })); }catch(e){}
+        }
+        cb();
+      }).catch(function(){ cb(); });
+    }
+
+    MISAGI.requireAccess("operaciones").then(function(){
+      document.getElementById("logoutBtn").onclick = function(){ MISAGI.logout(); };
+      sembrarDesdeMaestro(function(){
+        document.getElementById("gate").classList.add("hidden");
+        var f = document.getElementById("appFrame");
+        f.src = "app.html";
+        f.classList.remove("hidden");
+      });
     });
   </script>
 </body>
