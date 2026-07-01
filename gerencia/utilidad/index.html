@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rentabilidad / Utilidad — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../assets/theme.css">
+  <style>
+    .tabs{display:flex;gap:6px;margin:12px 0;flex-wrap:wrap}
+    .tab{padding:9px 16px;border:1px solid var(--border);background:#fff;border-radius:10px;font-weight:600;font-size:.86rem;cursor:pointer;color:var(--text-muted)}
+    .tab.on{background:var(--verde-d);color:#fff;border-color:var(--verde-d)}
+    .filters{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+    .filters select,.filters input{padding:8px 12px;border:1px solid var(--border);border-radius:9px;font-family:inherit}
+    .tcbox{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--border);border-radius:9px;padding:4px 8px}
+    .tcbox input{width:70px;border:none;font-weight:700;padding:4px}
+    .tcbox .t{font-size:.72rem;color:var(--text-muted)}
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+    .kpi{background:#fff;border:1px solid var(--border);border-radius:14px;padding:15px}
+    .kpi .n{font-size:1.4rem;font-weight:800;line-height:1.1} .kpi .l{font-size:.72rem;color:var(--text-muted);margin-top:3px}
+    .kpi.pos .n{color:var(--verde-d)} .kpi.neg .n{color:var(--danger)} .kpi.usd .n{color:#1d4ed8}
+    .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
+    .card h3{margin:0 0 12px;font-size:.92rem}
+    canvas{max-height:260px}
+    table{width:100%;border-collapse:collapse;font-size:.82rem}
+    th,td{padding:6px 9px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+    th:first-child,td:first-child{text-align:left}
+    th{font-size:.68rem;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted)}
+    tfoot td{font-weight:800;border-top:2px solid var(--border)}
+    .pos{color:var(--verde-d)} .neg{color:var(--danger)}
+    .pane{display:none} .pane.on{display:block}
+    .note{font-size:.78rem;color:var(--text-muted)}
+  </style>
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Rentabilidad</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" id="app" style="display:none">
+    <div class="page-head">
+      <div><h1>Rentabilidad / Utilidad</h1><div class="page-sub" id="sub">Cargando…</div></div>
+      <button class="btn btn-ghost" id="btnRe">↻ Actualizar</button>
+    </div>
+    <div class="filters">
+      <label style="font-size:.85rem;color:var(--text-muted)">Mes:</label>
+      <select id="mes"><option value="">Todos</option></select>
+      <div class="tcbox"><span class="t">TC del mes</span><input id="tc" type="number" step="0.001" placeholder="—"><span class="t" id="tcInfo">elige un mes</span></div>
+      <button class="btn btn-ghost btn-sm" id="btnSunat">↧ TC SUNAT del mes</button>
+    </div>
+    <div class="tabs" id="tabs">
+      <button class="tab on" data-t="ind">📊 Indicadores</button>
+      <button class="tab" data-t="ing">📈 Ingresos</button>
+      <button class="tab" data-t="aba">⛽ Abastecimientos</button>
+      <button class="tab" data-t="gas">💸 Gastos</button>
+    </div>
+
+    <div class="pane on" id="p-ind">
+      <div class="kpis" id="k-ind"></div>
+      <div class="note" style="margin-bottom:12px">Ingresos en <strong>USD</strong>, gastos en <strong>S/</strong>. La utilidad convierte los ingresos a soles con el TC (ingresos × TC − gastos).</div>
+      <div class="card"><h3>Utilidad por unidad (S/)</h3><canvas id="chUtil"></canvas></div>
+      <div class="card"><h3>Detalle por placa</h3><div style="overflow-x:auto" id="t-ind"></div></div>
+    </div>
+    <div class="pane" id="p-ing">
+      <div class="kpis" id="k-ing"></div>
+      <div class="card"><h3>Ingreso por cliente</h3><div id="t-ingC"></div></div>
+      <div class="card"><h3>Ingreso por unidad (tracto)</h3><div style="overflow-x:auto" id="t-ingP"></div></div>
+    </div>
+    <div class="pane" id="p-aba">
+      <div class="kpis" id="k-aba"></div>
+      <div class="card"><h3>Abastecimiento por unidad (S/)</h3><div style="overflow-x:auto" id="t-aba"></div></div>
+    </div>
+    <div class="pane" id="p-gas">
+      <div class="kpis" id="k-gas"></div>
+      <div class="card"><h3>Gastos por unidad (S/)</h3><div style="overflow-x:auto" id="t-gas"></div></div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="../../assets/firebase-config.js"></script>
+  <script src="../../assets/auth.js"></script>
+  <script>
+    var db=function(){return firebase.firestore();};
+    var GUIAS=[],COMB=[],GNL=[],LAV=[],MANT=[],MES="",TCM={},TCDEF=3.75,charts={},TAB="ind";
+    function tcDe(mes){ return num(TCM[mes])||TCDEF; }
+    function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+    function num(x){var n=parseFloat(String(x==null?"":x).replace(",","."));return isNaN(n)?0:n;}
+    function NP(p){p=String(p||"").toUpperCase().replace(/[^A-Z0-9]/g,"");if(p.length===6)p=p.slice(0,3)+"-"+p.slice(3);return p;}
+    function S(n){return "S/ "+Math.round(num(n)).toLocaleString("es-PE");}
+    function D(n){return "$ "+Math.round(num(n)).toLocaleString("es-PE");}
+    function enMes(f){ return !MES || String(f||"").slice(0,7)===MES; }
+
+    function ultimoDia(mes){ var p=mes.split("-"); var d=new Date(+p[0], +p[1], 0); return mes+"-"+("0"+d.getDate()).slice(-2); }
+    function traerSunatMes(){
+      if(!MES){ alert("Elige un mes primero para fijar su TC."); return; }
+      var info=document.getElementById("tcInfo"); info.textContent="consultando SUNAT…";
+      fetch("https://api.apis.net.pe/v1/tipo-cambio-sunat?date="+ultimoDia(MES)).then(function(r){return r.json();}).then(function(d){
+        if(d&&d.venta){ TCM[MES]=+d.venta; document.getElementById("tc").value=d.venta; info.textContent="SUNAT "+(d.fecha||MES)+" (guardado)"; guardarTC(); render(); }
+        else info.textContent="SUNAT sin dato para ese mes";
+      }).catch(function(){ info.textContent="SUNAT no disponible — pon el TC a mano"; });
+    }
+    function guardarTC(){ db().collection("contabilidad").doc("_config_tc").set({modulo:"config",tcMes:TCM,tcDefault:TCDEF},{merge:true}).catch(function(){}); }
+    function sincroTCbox(){
+      var inp=document.getElementById("tc"), info=document.getElementById("tcInfo");
+      if(MES){ inp.disabled=false; inp.value=(TCM[MES]!=null?TCM[MES]:""); info.textContent=(TCM[MES]!=null?"TC fijado para "+MES:"sin TC — fija el del mes"); }
+      else { inp.disabled=true; inp.value=""; info.textContent="cada mes usa su TC guardado"; }
+    }
+
+    function cargar(){
+      Promise.all([
+        db().collection("contabilidad").where("modulo","==","guias").get(),
+        db().collection("operaciones").get(),
+        db().collection("mantenimiento").where("modulo","==","correctivo").get(),
+        db().collection("contabilidad").doc("_config_tc").get()
+      ]).then(function(r){
+        GUIAS=r[0].docs.map(function(d){return d.data();});
+        var op=r[1].docs.map(function(d){return d.data();});
+        COMB=op.filter(function(o){return o.modulo==="combustible";});
+        GNL=op.filter(function(o){return o.modulo==="gnl";});
+        LAV=op.filter(function(o){return o.modulo==="lavado";});
+        MANT=r[2].docs.map(function(d){return d.data();});
+        if(r[3].exists){ var cf=r[3].data(); if(cf.tcMes)TCM=cf.tcMes; if(cf.tcDefault)TCDEF=num(cf.tcDefault)||TCDEF; }
+        var meses={}; GUIAS.forEach(function(g){if(g.mes)meses[g.mes]=1;});
+        [COMB,GNL,LAV,MANT].forEach(function(a){a.forEach(function(r){var m=String(r.fecha||"").slice(0,7);if(m)meses[m]=1;});});
+        var sel=document.getElementById("mes"),cur=sel.value;
+        sel.innerHTML='<option value="">Todos</option>'+Object.keys(meses).sort().reverse().map(function(m){return '<option>'+m+'</option>';}).join("");
+        sel.value=cur;
+        sincroTCbox();
+        render();
+      }).catch(function(e){document.getElementById("sub").textContent="Error: "+e.message;});
+    }
+
+    function agregados(){
+      var ingU={},ingP={},comb={},gnl={},lav={},mant={},placas={};
+      var tot={ingUSD:0,ingPEN:0,tne:0,gal:0,urea:0,kg:0,combS:0,gnlS:0,lavS:0,mantS:0,guias:0};
+      var cli={};
+      var ingS={};
+      GUIAS.forEach(function(g){ if(!enMes(g.mes))return; var p=NP(g.tracto); placas[p]=1; var mon=String(g.moneda||"USD").toUpperCase(); var v=num(g.precio_sin_igv); var tc=tcDe(g.mes); var vS=(mon==="PEN")?v:v*tc;
+        if(mon==="PEN"){ ingP[p]=(ingP[p]||0)+v; tot.ingPEN+=v; } else { ingU[p]=(ingU[p]||0)+v; tot.ingUSD+=v; }
+        ingS[p]=(ingS[p]||0)+vS; tot.ingSol=(tot.ingSol||0)+vS;
+        tot.tne+=num(g.tne); tot.guias++; var c=g.cliente||"—"; cli[c]=cli[c]||{usd:0,pen:0,tne:0}; if(mon==="PEN")cli[c].pen+=v; else cli[c].usd+=v; cli[c].tne+=num(g.tne); });
+      COMB.forEach(function(r){ if(!enMes(r.fecha))return; var p=NP(r.placa); placas[p]=1; comb[p]=(comb[p]||0)+num(r.costo); tot.combS+=num(r.costo); tot.gal+=num(r.galones); tot.urea+=num(r.litros); });
+      GNL.forEach(function(r){ if(!enMes(r.fecha))return; var p=NP(r.placa); placas[p]=1; gnl[p]=(gnl[p]||0)+num(r.costo); tot.gnlS+=num(r.costo); tot.kg+=num(r.kg); });
+      LAV.forEach(function(r){ if(!enMes(r.fecha))return; var p=NP(r.placa); placas[p]=1; lav[p]=(lav[p]||0)+num(r.costo); tot.lavS+=num(r.costo); });
+      MANT.forEach(function(r){ if(!enMes(r.fecha))return; var p=NP(r.placa); placas[p]=1; mant[p]=(mant[p]||0)+num(r.costo); tot.mantS+=num(r.costo); });
+      return {ingU:ingU,ingP:ingP,ingS:ingS,comb:comb,gnl:gnl,lav:lav,mant:mant,placas:Object.keys(placas).filter(Boolean).sort(),tot:tot,cli:cli};
+    }
+
+    function render(){
+      var a=agregados(), t=a.tot;
+      var tcRef = MES? tcDe(MES) : TCDEF;
+      var ingSol = t.ingSol||0;      // ingresos convertidos a soles (cada mes con su TC)
+      var gastoTot = t.combS+t.gnlS+t.lavS+t.mantS;
+      var utilS = ingSol - gastoTot;
+      document.getElementById("sub").textContent=(MES||"Todos los meses")+" · "+t.guias+" guías · "+(MES?("TC "+tcDe(MES)):"TC por mes");
+
+      document.getElementById("k-ind").innerHTML=
+        kpi(D(t.ingUSD),"Ingresos (USD)","usd")+
+        kpi(S(ingSol),"Ingresos (S/ equiv.)","")+
+        kpi(S(t.combS+t.gnlS),"Abastecimientos","")+
+        kpi(S(t.lavS+t.mantS),"Otros gastos","")+
+        kpi(S(utilS),"Utilidad (S/)",utilS>=0?"pos":"neg")+
+        kpi(D(utilS/(tcRef||1)),"Utilidad (USD aprox)",utilS>=0?"pos":"neg")+
+        kpi((ingSol?Math.round(utilS/ingSol*100):0)+"%","Margen",utilS>=0?"pos":"neg");
+      var filas=a.placas.map(function(p){
+        var ingS=a.ingS[p]||0, ab=(a.comb[p]||0)+(a.gnl[p]||0), ga=(a.lav[p]||0)+(a.mant[p]||0), ut=ingS-ab-ga;
+        return {p:p,usd:a.ingU[p]||0,ingS:ingS,ab:ab,ga:ga,ut:ut};
+      }).sort(function(x,y){return y.ut-x.ut;});
+      document.getElementById("t-ind").innerHTML=tabla(
+        ["Placa","Ingreso $","Ingreso S/","Abastec.","Gastos","Utilidad S/","Margen"],
+        filas.map(function(f){return ['<strong>'+esc(f.p)+'</strong>',D(f.usd),S(f.ingS),S(f.ab),S(f.ga),'<span class="'+(f.ut>=0?"pos":"neg")+'">'+S(f.ut)+'</span>',(f.ingS?Math.round(f.ut/f.ingS*100):0)+'%'];}),
+        ["Total",D(t.ingUSD),S(ingSol),S(t.combS+t.gnlS),S(t.lavS+t.mantS),S(utilS),(ingSol?Math.round(utilS/ingSol*100):0)+'%']
+      );
+      chart("chUtil","bar",{labels:filas.map(function(f){return f.p;}),datasets:[{label:"Utilidad S/",data:filas.map(function(f){return Math.round(f.ut);}),backgroundColor:filas.map(function(f){return f.ut>=0?"#1a6b3c":"#dc2626";})}]});
+
+      document.getElementById("k-ing").innerHTML=
+        kpi(t.guias,"Guías","")+kpi(t.tne.toFixed(1),"Toneladas","")+kpi(D(t.ingUSD),"Ingreso (USD)","usd")+kpi(S(ingSol),"Ingreso (S/ equiv.)","pos");
+      document.getElementById("t-ingC").innerHTML=tabla(["Cliente","Toneladas","Ingreso $","Ingreso S/"],
+        Object.keys(a.cli).sort(function(x,y){return (a.cli[y].usd+a.cli[y].pen)-(a.cli[x].usd+a.cli[x].pen);}).map(function(c){return ['<strong>'+esc(c)+'</strong>',a.cli[c].tne.toFixed(1),D(a.cli[c].usd),S(a.cli[c].pen)];}),null);
+      document.getElementById("t-ingP").innerHTML=tabla(["Tracto","Ingreso $","Ingreso S/ equiv."],
+        a.placas.filter(function(p){return a.ingU[p]||a.ingP[p];}).sort(function(x,y){return (a.ingU[y]||0)-(a.ingU[x]||0);}).map(function(p){return ['<strong>'+esc(p)+'</strong>',D(a.ingU[p]||0),S(a.ingS[p]||0)];}),null);
+
+      document.getElementById("k-aba").innerHTML=
+        kpi(t.gal.toFixed(0),"Galones diésel","")+kpi(t.urea.toFixed(0)+" L","Urea","")+kpi(t.kg.toFixed(0)+" kg","GNL","")+kpi(S(t.combS+t.gnlS),"Costo abastec.","neg");
+      document.getElementById("t-aba").innerHTML=tabla(["Placa","Combustible","GNL","Total"],
+        a.placas.filter(function(p){return (a.comb[p]||a.gnl[p]);}).sort(function(x,y){return ((a.comb[y]||0)+(a.gnl[y]||0))-((a.comb[x]||0)+(a.gnl[x]||0));}).map(function(p){return ['<strong>'+esc(p)+'</strong>',S(a.comb[p]||0),S(a.gnl[p]||0),S((a.comb[p]||0)+(a.gnl[p]||0))];}),
+        ["Total",S(t.combS),S(t.gnlS),S(t.combS+t.gnlS)]);
+
+      document.getElementById("k-gas").innerHTML=
+        kpi(S(t.lavS),"Lavado/engrase","")+kpi(S(t.mantS),"Mantenimiento","")+kpi(S(t.lavS+t.mantS),"Total gastos","neg");
+      document.getElementById("t-gas").innerHTML=tabla(["Placa","Lavado","Mantenimiento","Total"],
+        a.placas.filter(function(p){return (a.lav[p]||a.mant[p]);}).sort(function(x,y){return ((a.lav[y]||0)+(a.mant[y]||0))-((a.lav[x]||0)+(a.mant[x]||0));}).map(function(p){return ['<strong>'+esc(p)+'</strong>',S(a.lav[p]||0),S(a.mant[p]||0),S((a.lav[p]||0)+(a.mant[p]||0))];}),
+        ["Total",S(t.lavS),S(t.mantS),S(t.lavS+t.mantS)]);
+    }
+
+    function kpi(n,l,cls){return '<div class="kpi '+(cls||"")+'"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>';}
+    function tabla(head,rows,foot){
+      var h='<table><thead><tr>'+head.map(function(x,i){return '<th'+(i?' class="r"':'')+'>'+esc(x)+'</th>';}).join("")+'</tr></thead><tbody>';
+      h+= rows.length? rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+c+'</td>';}).join("")+'</tr>';}).join("") : '<tr><td colspan="'+head.length+'" style="text-align:center;color:var(--text-muted);padding:16px">Sin datos</td></tr>';
+      h+='</tbody>'+(foot?'<tfoot><tr>'+foot.map(function(c){return '<td>'+c+'</td>';}).join("")+'</tr></tfoot>':'')+'</table>';
+      return h;
+    }
+    function chart(id,type,data){ if(charts[id])charts[id].destroy(); var c=document.getElementById(id); if(!c)return; charts[id]=new Chart(c,{type:type,data:data,options:{responsive:true,plugins:{legend:{display:false}}}}); }
+
+    document.getElementById("tabs").querySelectorAll(".tab").forEach(function(b){
+      b.onclick=function(){ document.querySelectorAll(".tab").forEach(function(x){x.classList.remove("on");}); b.classList.add("on"); TAB=b.dataset.t; document.querySelectorAll(".pane").forEach(function(p){p.classList.remove("on");}); document.getElementById("p-"+TAB).classList.add("on"); };
+    });
+    document.getElementById("mes").onchange=function(){ MES=this.value; sincroTCbox(); render(); };
+    document.getElementById("tc").onchange=function(){ if(MES){ TCM[MES]=num(this.value)||0; guardarTC(); render(); } };
+    document.getElementById("btnSunat").onclick=traerSunatMes;
+    document.getElementById("btnRe").onclick=cargar;
+
+    MISAGI.requireLogin().then(function(s){
+      if(!MISAGI.esAdmin(s.perfil)){ alert("Solo gerencia/admin."); location.href="../../index.html"; return; }
+      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+      document.getElementById("app").style.display="";
+      cargar();
+    });
+  </script>
+</body>
+</html>

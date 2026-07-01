@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resumen de guías — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../assets/theme.css">
+  <style>
+    .drop{border:2px dashed var(--border);border-radius:14px;padding:24px;text-align:center;background:#fff;cursor:pointer;transition:.2s;margin-bottom:14px}
+    .drop:hover,.drop.over{border-color:var(--verde-d);background:var(--verde-l)}
+    .drop .big{font-size:1.05rem;font-weight:700;color:var(--verde-d)}
+    .drop .sm{font-size:.82rem;color:var(--text-muted);margin-top:4px}
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+    .kpi{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px}
+    .kpi .n{font-size:1.5rem;font-weight:800} .kpi .l{font-size:.74rem;color:var(--text-muted);margin-top:2px}
+    .kpi.money .n{color:var(--verde-d)}
+    .grp{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+    .grp h3{margin:0 0 12px;font-size:.9rem}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+    .f label{display:block;font-size:.72rem;color:var(--text-muted);margin-bottom:3px;font-weight:600}
+    .f input,.f select{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:.85rem}
+    .f.auto input{background:#f0fdf4;border-color:#bbf7d0}
+    .f.calc input{background:#eff6ff;border-color:#bfdbfe;font-weight:700}
+    .badge{font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:6px}
+    .badge.ok{background:var(--verde-l);color:var(--verde-d)} .badge.warn{background:#fef3c7;color:#b45309}
+    table{width:100%;border-collapse:collapse;font-size:.8rem}
+    th,td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+    th{font-size:.68rem;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted)}
+    td.r,th.r{text-align:right}
+    .tabla-wrap{overflow-x:auto;background:#fff;border:1px solid var(--border);border-radius:14px}
+    .toolbar2{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0}
+    .toolbar2 select,.toolbar2 input{padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit}
+    #prog{display:none;background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:.88rem}
+    .modal-ov{position:fixed;inset:0;background:rgba(8,16,28,.5);display:none;place-items:center;z-index:50}
+    .modal-ov.on{display:grid}
+    .modal-bx{background:#fff;border-radius:14px;padding:20px;max-width:440px;width:92%}
+    .trow{display:flex;gap:8px;margin-bottom:7px} .trow input{flex:1;padding:6px 9px;border:1px solid var(--border);border-radius:8px;font-family:inherit}
+  </style>
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Contabilidad</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" id="app" style="display:none">
+    <div class="page-head">
+      <div><h1>Resumen de guías</h1><div class="page-sub" id="sub">Sube una o varias guías PDF: se llenan los campos y se calcula el ingreso solo.</div></div>
+      <div style="display:flex;gap:8px"><button class="btn btn-ghost" id="btnXls">⬆ Importar Excel</button><button class="btn btn-ghost" id="btnTarifas">⚙ Maestro de Fletes</button><button class="btn btn-ghost" id="btnExp">⬇ Exportar Excel</button></div><input type="file" id="fileXls" accept=".xlsx,.xls" hidden>
+    </div>
+
+    <div class="kpis" id="kpis"></div>
+
+    <div class="drop" id="drop">
+      <div class="big">📄 Arrastra una o varias guías PDF (o haz clic)</div>
+      <div class="sm">Se procesan todas juntas. TNE × tarifa/ton = ingreso automático.</div>
+      <input type="file" id="file" accept="application/pdf" multiple hidden>
+    </div>
+    <div id="prog"></div>
+
+    <form id="form" style="display:none">
+      <div class="grp">
+        <h3>🚚 Datos de la guía <span style="font-weight:400;color:var(--text-muted);font-size:.78rem">— extraídos automáticamente</span></h3>
+        <div class="grid">
+          <div class="f auto"><label>Fecha inicio traslado</label><input name="fecha_traslado"></div>
+          <div class="f auto"><label>Fecha generación guía</label><input name="fecha_emision"></div>
+          <div class="f auto"><label>Guía R. Transportista</label><input name="guia_transportista"></div>
+          <div class="f auto"><label>Guía R. Remitente</label><input name="guia_remitente"></div>
+          <div class="f auto"><label>Tracto <span id="bTracto"></span></label><input name="tracto"></div>
+          <div class="f auto"><label>Tolva <span id="bTolva"></span></label><input name="tolva"></div>
+          <div class="f auto"><label>Conductor <span id="bCond"></span></label><input name="conductor"></div>
+          <div class="f auto"><label>N° Licencia</label><input name="licencia"></div>
+          <div class="f auto"><label>Cliente (remitente)</label><input name="cliente"></div>
+          <div class="f auto"><label>Ruta</label><input name="ruta"></div>
+          <div class="f auto"><label>Destinatario</label><input name="destinatario"></div>
+          <div class="f auto"><label>Producto</label><input name="producto"></div>
+          <div class="f auto"><label>Punto de partida</label><input name="punto_partida"></div>
+          <div class="f auto"><label>Dirección de llegada</label><input name="punto_llegada"></div>
+          <div class="f auto"><label>Pagador de flete</label><input name="pagador_flete"></div>
+          <div class="f auto"><label>Transportista</label><input name="transportista"></div>
+        </div>
+      </div>
+      <div class="grp">
+        <h3>💵 Ingreso <span style="font-weight:400;color:var(--text-muted);font-size:.78rem">— TNE × tarifa (se calcula solo, editable)</span></h3>
+        <div class="grid">
+          <div class="f auto"><label>TNE (toneladas)</label><input name="tne" type="number" step="0.01"></div>
+          <div class="f"><label>Tarifa por tonelada (Flete)</label><input name="flete" type="number" step="0.01"></div>
+          <div class="f"><label>Moneda</label><select name="moneda"><option value="USD">USD ($)</option><option value="PEN">PEN (S/)</option></select></div>
+          <div class="f calc"><label>Precio sin IGV</label><input name="precio_sin_igv" type="number" step="0.01"></div>
+          <div class="f calc"><label>Precio con IGV</label><input name="precio_con_igv" type="number" step="0.01"></div>
+        </div>
+      </div>
+      <div class="grp">
+        <h3>💰 Facturación / Detracción <span style="font-weight:400;color:var(--text-muted);font-size:.78rem">— manual</span></h3>
+        <div class="grid">
+          <div class="f"><label>N° Factura</label><input name="n_factura"></div>
+          <div class="f"><label>Fecha factura</label><input name="fecha_factura" type="date"></div>
+          <div class="f"><label>Estado de factura</label><select name="estado_factura"><option value=""></option><option>PENDIENTE</option><option>FACTORING</option><option>PAGADA</option></select></div>
+          <div class="f"><label>Importe detracción</label><input name="importe_detraccion" type="number" step="0.01"></div>
+          <div class="f"><label>N° constancia</label><input name="n_constancia"></div>
+          <div class="f"><label>Estado detracción</label><select name="estado_detraccion"><option value=""></option><option>PENDIENTE</option><option>PAGADA</option></select></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:22px">
+        <button type="button" class="btn btn-ghost" id="btnCancel">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="btnSave">💾 Guardar guía</button>
+      </div>
+    </form>
+
+    <div class="toolbar2">
+      <strong id="cnt">0 guías</strong>
+      <select id="fMes"><option value="">Todos los meses</option></select>
+      <select id="fCliente"><option value="">Todos los clientes</option></select>
+      <input type="search" id="fBuscar" placeholder="Buscar guía, placa, conductor…">
+    </div>
+    <div class="tabla-wrap"><table id="tabla"><thead><tr>
+      <th>Guía Transp.</th><th>F. traslado</th><th>Tracto</th><th>Tolva</th><th>Conductor</th><th>Cliente</th><th class="r">TNE</th><th class="r">Tarifa</th><th class="r">Sin IGV</th><th class="r">Con IGV</th><th>Factura</th><th></th>
+    </tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="modal-ov" id="mTar">
+    <div class="modal-bx">
+      <h3 style="margin:0 0 12px">Tarifa por tonelada (por cliente)</h3>
+      <div id="tarRows"></div>
+      <button class="btn btn-ghost btn-sm" id="tarAdd" style="margin:6px 0 12px">+ Agregar cliente</button>
+      <div class="f" style="margin-bottom:12px"><label>IGV (%)</label><input id="tarIgv" type="number" step="1" style="width:100px;padding:7px 9px;border:1px solid var(--border);border-radius:8px"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-ghost" id="tarCancel">Cancelar</button>
+        <button class="btn btn-primary" id="tarSave">Guardar tarifas</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="../../assets/firebase-config.js"></script>
+  <script src="../../assets/auth.js"></script>
+  <script src="../../assets/maestros.js"></script>
+  <script>
+    if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    var db=function(){return firebase.firestore();};
+    var GUIAS=[], MAP_U={}, MAP_P={}, TARIFAS={};
+    var TAR_DOC="_config_tarifas";
+    function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+    function num(x){var n=parseFloat(String(x==null?"":x).replace(",","."));return isNaN(n)?0:n;}
+    function placaFmt(p){p=String(p||"").toUpperCase().replace(/[^A-Z0-9]/g,"");if(p.length===6)p=p.slice(0,3)+"-"+p.slice(3);return p;}
+    function soles(n){return "S/ "+Number(n||0).toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2});}
+    var RUTA_CLIENTE={"HUDBAY":"CONSTANCIA"};
+    function tarifaDe(cliente){ var k=String(cliente||"").toUpperCase(); var res=null; Object.keys(TARIFAS).forEach(function(t){ if(k.indexOf(t)>=0) res=TARIFAS[t]; }); return res; }
+
+    function parseGuia(raw){
+      var s=String(raw||"").replace(/\s+/g," ").trim();
+      function m(re){var x=s.match(re);return x?x[1].trim():"";}
+      var g=s.match(/\b(EG\d{2})\s*-\s*0*(\d+)/i);
+      var cliente=m(/Datos del remitente:\s*(.+?)\s*-\s*REGISTRO/);
+      var rk=cliente.toUpperCase(), ruta=""; Object.keys(RUTA_CLIENTE).forEach(function(k){ if(rk.indexOf(k)>=0) ruta=RUTA_CLIENTE[k]; });
+      return {
+        guia_transportista: g?g[1]+"-"+g[2]:"",
+        fecha_emision: m(/Fecha y hora de emisi[oó]n:\s*(\d{2}\/\d{2}\/\d{4})/),
+        fecha_traslado: m(/Fecha de inicio de Traslado:\s*(\d{2}\/\d{2}\/\d{4})/),
+        punto_partida: m(/Punto de Partida:\s*(.+?)\s*Punto de llegada/),
+        punto_llegada: m(/Punto de llegada:\s*(.+?)\s*Datos del remitente/),
+        cliente: cliente,
+        destinatario: m(/Datos del destinatario:\s*(.+?)\s*-\s*REGISTRO/),
+        producto: m(/\d+\s+(?:NO|SI)\s+(.+?)\s+(?:KILOGRAMO|TONELADA|UNIDAD)/i),
+        tne: m(/Peso Bruto total de la carga:\s*([\d.]+)/),
+        tracto: placaFmt(m(/Principal:\s*N[uú]mero de placa:\s*([A-Z0-9]+)/)),
+        tolva: placaFmt(m(/Secundario\s*1?:\s*N[uú]mero de placa:\s*([A-Z0-9]+)/)),
+        conductor: m(/Datos de los conductores:\s*Principal:\s*(.+?)\s*-\s*DOCUMENTO/),
+        dni: m(/DOCUMENTO NACIONAL DE IDENTIDAD N[°º]?\s*(\d+)/),
+        licencia: m(/N[uú]mero de licencia de conducir:\s*([A-Z0-9]+)/),
+        pagador_flete: m(/Datos de pagador de flete:\s*(.+?)\s*-\s*REGISTRO/),
+        guia_remitente: (m(/GU[IÍ]A REMITENTE\s*([A-Z0-9]+\s*-\s*\d+)/i)||"").replace(/\s+/g,""),
+        transportista: (s.match(/^(.+?)\s*RUC/)||["","MISAGI SAC"])[1]||"MISAGI SAC",
+        ruta: ruta
+      };
+    }
+    function calcIngreso(d){
+      var t=tarifaDe(d.cliente);
+      var tne=num(d.tne), flete=num(d.flete)|| (t?t.tarifa:0);
+      var igvPct=t?num(t.igv):18;
+      d.flete=flete||""; if(t&&!d.moneda) d.moneda=t.moneda;
+      d.precio_sin_igv= tne&&flete ? +(tne*flete).toFixed(2) : (d.precio_sin_igv||"");
+      d.precio_con_igv= d.precio_sin_igv ? +(d.precio_sin_igv*(1+igvPct/100)).toFixed(2) : (d.precio_con_igv||"");
+      d.mes=(d.fecha_traslado||d.fecha_emision||"").split("/").reverse().join("-").slice(0,7);
+      return d;
+    }
+    function textoPDF(file){
+      return new Promise(function(resolve,reject){
+        var reader=new FileReader();
+        reader.onload=function(){
+          pdfjsLib.getDocument({data:reader.result}).promise.then(function(pdf){
+            var proms=[]; for(var i=1;i<=pdf.numPages;i++) proms.push(pdf.getPage(i).then(function(p){return p.getTextContent();}));
+            Promise.all(proms).then(function(pages){ resolve(pages.map(function(tc){return tc.items.map(function(it){return it.str;}).join(" ");}).join(" ")); });
+          }).catch(reject);
+        };
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    // ---- Un solo PDF -> formulario ----
+    function unPDF(file){
+      document.getElementById("sub").textContent="Analizando guía…";
+      textoPDF(file).then(function(txt){ llenar(calcIngreso(parseGuia(txt))); })
+        .catch(function(e){ document.getElementById("sub").textContent="No se pudo leer: "+e.message; });
+    }
+    // ---- Varios PDFs -> guarda todos ----
+    function lotePDF(files){
+      var prog=document.getElementById("prog"); prog.style.display="";
+      var ok=0, err=0, tt=0, ing=0, i=0;
+      (function next(){
+        if(i>=files.length){ prog.innerHTML='✅ Listo: <strong>'+ok+'</strong> guías · <strong>'+tt.toFixed(2)+' t</strong> · ingreso <strong>'+soles(ing)+'</strong>'+(err?' · '+err+' con error':''); cargar(); return; }
+        var f=files[i++]; prog.innerHTML='Procesando '+i+'/'+files.length+'… ('+esc(f.name)+')';
+        textoPDF(f).then(function(txt){
+          var d=calcIngreso(parseGuia(txt));
+          if(!d.guia_transportista){ err++; next(); return; }
+          tt+=num(d.tne); ing+=num(d.precio_sin_igv);
+          d.modulo="guias"; d._ts=firebase.firestore.FieldValue.serverTimestamp();
+          db().collection("contabilidad").doc("guia_"+d.guia_transportista.replace(/[^A-Z0-9-]/gi,"")).set(d,{merge:true})
+            .then(function(){ok++;next();}).catch(function(){err++;next();});
+        }).catch(function(){ err++; next(); });
+      })();
+    }
+
+    function llenar(d){
+      var f=document.getElementById("form");
+      Object.keys(d).forEach(function(k){ if(f[k]!==undefined && d[k]!=="" && d[k]!=null) f[k].value=d[k]; });
+      f.style.display="";
+      badge("bTracto",MAP_U[placaFmt(d.tracto)]); badge("bTolva",MAP_U[placaFmt(d.tolva)],true); badge("bCond",d.dni&&MAP_P[String(d.dni)],true);
+      document.getElementById("sub").textContent="✓ Extraído. Ingreso calculado ("+soles(d.precio_con_igv)+" con IGV). Revisa y guarda.";
+      f.scrollIntoView({behavior:"smooth"});
+    }
+    function badge(id,ok,tercero){ var e=document.getElementById(id); if(!e)return; if(ok){e.className="badge ok";e.setAttribute("style","");e.textContent="✓ MISAGI";} else if(tercero){e.className="badge";e.setAttribute("style","background:#eef;color:#446");e.textContent="tercero";} else {e.className="badge warn";e.setAttribute("style","");e.textContent="⚠ revisar";} }
+    function recalcForm(){
+      var f=document.getElementById("form"); var tne=num(f.tne.value), flete=num(f.flete.value);
+      var t=tarifaDe(f.cliente.value); var igvPct=t?num(t.igv):18;
+      if(tne&&flete){ f.precio_sin_igv.value=(tne*flete).toFixed(2); f.precio_con_igv.value=(tne*flete*(1+igvPct/100)).toFixed(2); }
+    }
+
+    function guardar(e){
+      e.preventDefault(); var f=e.target, reg={modulo:"guias"};
+      Array.prototype.forEach.call(f.elements,function(el){ if(el.name) reg[el.name]=el.value; });
+      if(!reg.guia_transportista){ alert("Falta el número de guía."); return; }
+      reg.mes=(reg.fecha_traslado||reg.fecha_emision||"").split("/").reverse().join("-").slice(0,7);
+      reg._ts=firebase.firestore.FieldValue.serverTimestamp();
+      var btn=document.getElementById("btnSave"); btn.disabled=true; btn.textContent="Guardando…";
+      db().collection("contabilidad").doc("guia_"+reg.guia_transportista.replace(/[^A-Z0-9-]/gi,"")).set(reg,{merge:true}).then(function(){
+        btn.disabled=false; btn.textContent="💾 Guardar guía"; f.reset(); f.style.display="none"; cargar();
+      }).catch(function(err){ alert("Error: "+err.message); btn.disabled=false; btn.textContent="💾 Guardar guía"; });
+    }
+
+    function cargar(){
+      db().collection("contabilidad").where("modulo","==","guias").get().then(function(snap){
+        GUIAS=snap.docs.map(function(d){var o=d.data();o._id=d.id;return o;});
+        var meses={}, clientes={};
+        GUIAS.forEach(function(g){ if(g.mes)meses[g.mes]=1; if(g.cliente)clientes[g.cliente]=1; });
+        opt("fMes",Object.keys(meses).sort().reverse()); opt("fCliente",Object.keys(clientes).sort());
+        pintar();
+      }).catch(function(e){ document.getElementById("sub").textContent="Error: "+e.message; });
+    }
+    function opt(id,arr){ var s=document.getElementById(id), cur=s.value; s.innerHTML=s.options[0].outerHTML+arr.map(function(x){return '<option>'+esc(x)+'</option>';}).join(""); s.value=cur; }
+    function filtradas(){
+      var mes=document.getElementById("fMes").value, cli=document.getElementById("fCliente").value, q=(document.getElementById("fBuscar").value||"").toLowerCase();
+      return GUIAS.filter(function(g){
+        if(mes&&g.mes!==mes) return false;
+        if(cli&&g.cliente!==cli) return false;
+        if(q && (String(g.guia_transportista||"")+g.tracto+g.tolva+g.conductor+g.n_factura).toLowerCase().indexOf(q)<0) return false;
+        return true;
+      }).sort(function(a,b){return String(b.mes+b.guia_transportista).localeCompare(String(a.mes+a.guia_transportista));});
+    }
+    function pintar(){
+      var f=filtradas();
+      var tt=f.reduce(function(s,g){return s+num(g.tne);},0);
+      var isi=f.reduce(function(s,g){return s+num(g.precio_sin_igv);},0);
+      var ici=f.reduce(function(s,g){return s+num(g.precio_con_igv);},0);
+      document.getElementById("kpis").innerHTML=
+        '<div class="kpi"><div class="n">'+f.length+'</div><div class="l">Guías</div></div>'+
+        '<div class="kpi"><div class="n">'+tt.toFixed(2)+'</div><div class="l">Toneladas (TNE)</div></div>'+
+        '<div class="kpi money"><div class="n">'+soles(isi)+'</div><div class="l">Ingreso sin IGV</div></div>'+
+        '<div class="kpi money"><div class="n">'+soles(ici)+'</div><div class="l">Ingreso con IGV</div></div>';
+      document.getElementById("cnt").textContent=f.length+" guías";
+      var tb=document.querySelector("#tabla tbody");
+      tb.innerHTML=f.length?f.map(function(g){
+        return '<tr><td><strong>'+esc(g.guia_transportista)+'</strong></td><td>'+esc(g.fecha_traslado||"")+'</td><td>'+esc(g.tracto||"")+'</td><td>'+esc(g.tolva||"")+'</td><td>'+esc((g.conductor||"").slice(0,20))+'</td><td>'+esc((g.cliente||"").slice(0,16))+'</td><td class="r">'+esc(g.tne||"")+'</td><td class="r">'+esc(g.flete||"")+'</td><td class="r">'+soles(g.precio_sin_igv)+'</td><td class="r">'+soles(g.precio_con_igv)+'</td><td>'+esc(g.n_factura||"")+'</td><td><button class="btn btn-ghost btn-sm" data-e="'+g._id+'">Editar</button></td></tr>';
+      }).join(""):'<tr><td colspan="12" style="text-align:center;color:var(--text-muted);padding:22px">Sin guías. Sube PDFs arriba.</td></tr>';
+      tb.querySelectorAll("[data-e]").forEach(function(b){b.onclick=function(){editar(b.dataset.e);};});
+    }
+    function editar(id){
+      var g=GUIAS.filter(function(x){return x._id===id;})[0]; if(!g)return;
+      var f=document.getElementById("form"); f.style.display="";
+      Array.prototype.forEach.call(f.elements,function(el){ if(el.name&&g[el.name]!=null) el.value=g[el.name]; });
+      badge("bTracto",MAP_U[placaFmt(g.tracto)]); badge("bTolva",MAP_U[placaFmt(g.tolva)],true); badge("bCond",g.dni&&MAP_P[String(g.dni)],true);
+      f.scrollIntoView({behavior:"smooth"});
+    }
+
+    var COLS=[["fecha_traslado","Fecha Inicio traslado"],["fecha_emision","Fecha Generación guia"],["guia_transportista","Guia R. Transportista"],["guia_remitente","Guia R. Remitente"],["tracto","Tracto"],["tolva","Tolva"],["transportista","Transportista"],["conductor","Conductor"],["licencia","N Licencia"],["cliente","Cliente"],["punto_partida","Punto de Partida"],["destinatario","Destinatario"],["ruta","Ruta"],["punto_llegada","Direccion de llegada"],["tne","TNE"],["producto","Producto"],["pagador_flete","Pagador de flete"],["flete","Flete (tarifa/ton)"],["moneda","Moneda"],["precio_sin_igv","Precio sin IGV"],["precio_con_igv","Precio con IGV"],["n_factura","N Factura"],["fecha_factura","Fecha Factura"],["estado_factura","Estado Factura"],["importe_detraccion","Importe detraccion"],["n_constancia","N constancia"],["estado_detraccion","Estado detraccion"]];
+    document.getElementById("btnExp").onclick=function(){
+      var f=filtradas(); if(!f.length){alert("Nada que exportar.");return;}
+      var rows=f.map(function(g){var o={};COLS.forEach(function(c){o[c[1]]=g[c[0]]||"";});return o;});
+      var ws=XLSX.utils.json_to_sheet(rows,{header:COLS.map(function(c){return c[1];})}), wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,ws,"Guias"); XLSX.writeFile(wb,"resumen-guias.xlsx");
+    };
+
+    // ---- Tarifas ----
+    function abrirTarifas(){
+      var box=document.getElementById("tarRows"); box.innerHTML="";
+      Object.keys(TARIFAS).forEach(function(k){ addTarRow(k,TARIFAS[k]); });
+      document.getElementById("tarIgv").value=Math.round(IGV*100);
+      document.getElementById("mTar").classList.add("on");
+    }
+    function addTarRow(k,v){
+      var box=document.getElementById("tarRows"); var div=document.createElement("div"); div.className="trow";
+      div.innerHTML='<input class="tk" placeholder="Cliente (ej. HUDBAY)" value="'+esc(k||"")+'"><input class="tv" type="number" step="0.01" placeholder="S/ x ton" value="'+esc(v||"")+'"><button class="btn btn-ghost btn-sm tdel">✕</button>';
+      div.querySelector(".tdel").onclick=function(){div.remove();};
+      box.appendChild(div);
+    }
+    function guardarTarifas(){
+      var t={}; document.querySelectorAll("#tarRows .trow").forEach(function(r){ var k=r.querySelector(".tk").value.trim().toUpperCase(); var v=num(r.querySelector(".tv").value); if(k) t[k]=v; });
+      var igv=num(document.getElementById("tarIgv").value)/100;
+      db().collection("contabilidad").doc(TAR_DOC).set({modulo:"config",tarifas:t,igv:igv},{merge:true}).then(function(){
+        TARIFAS=t; IGV=igv||0.18; document.getElementById("mTar").classList.remove("on"); cargar();
+      }).catch(function(e){ alert("Error: "+e.message); });
+    }
+
+    var drop=document.getElementById("drop"), file=document.getElementById("file");
+    drop.onclick=function(){file.click();};
+    file.onchange=function(){ var fs=file.files; if(fs.length===1) unPDF(fs[0]); else if(fs.length>1) lotePDF(Array.prototype.slice.call(fs)); file.value=""; };
+    drop.ondragover=function(e){e.preventDefault();drop.classList.add("over");};
+    drop.ondragleave=function(){drop.classList.remove("over");};
+    drop.ondrop=function(e){e.preventDefault();drop.classList.remove("over"); var fs=e.dataTransfer.files; if(fs.length===1) unPDF(fs[0]); else if(fs.length>1) lotePDF(Array.prototype.slice.call(fs));};
+    document.getElementById("form").addEventListener("submit",guardar);
+    document.getElementById("form").tne.addEventListener("input",recalcForm);
+    document.getElementById("form").flete.addEventListener("input",recalcForm);
+    document.getElementById("btnCancel").onclick=function(){var f=document.getElementById("form");f.reset();f.style.display="none";};
+    ["fMes","fCliente"].forEach(function(id){document.getElementById(id).onchange=pintar;});
+    document.getElementById("fBuscar").oninput=pintar;
+    document.getElementById("btnTarifas").onclick=function(){ location.href="../fletes/"; };
+    document.getElementById("tarAdd").onclick=function(){addTarRow("","");};
+    document.getElementById("tarCancel").onclick=function(){document.getElementById("mTar").classList.remove("on");};
+    document.getElementById("tarSave").onclick=guardarTarifas;
+
+    // ---- Importar Excel de DESPACHO (varias guías por archivo) ----
+    function fmtCell(k,v){
+      if(v instanceof Date && !isNaN(v)){ var dd=("0"+v.getDate()).slice(-2),mm=("0"+(v.getMonth()+1)).slice(-2),yy=v.getFullYear(); return k==="fecha_factura"? yy+"-"+mm+"-"+dd : dd+"/"+mm+"/"+yy; }
+      return String(v==null?"":v).trim();
+    }
+    function importExcel(file){
+      var prog=document.getElementById("prog"); prog.style.display=""; prog.innerHTML="Leyendo Excel…";
+      var reader=new FileReader();
+      reader.onload=function(e){
+        var wb=XLSX.read(new Uint8Array(e.target.result),{type:"array",cellDates:true});
+        var regs=[];
+        wb.SheetNames.forEach(function(sn){
+          var rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:"",raw:true});
+          var hi=-1;
+          for(var i=0;i<Math.min(rows.length,15);i++){ var r=rows[i].map(function(x){return String(x).toLowerCase();}); if(r.some(function(c){return c.indexOf("tracto")>=0;})&&r.some(function(c){return c.indexOf("guia")>=0||c.indexOf("guía")>=0;})){hi=i;break;} }
+          if(hi<0) return;
+          var head=rows[hi].map(function(x){return String(x).trim().toLowerCase();});
+          function col(inc,exc){ inc=inc||[];exc=exc||[]; for(var i=0;i<head.length;i++){var h=head[i]; if(inc.every(function(t){return h.indexOf(t)>=0;}) && !exc.some(function(t){return h.indexOf(t)>=0;})) return i;} return -1; }
+          function anyCol(a,b){ var x=col(a); return x>=0?x:col(b); }
+          var M={
+            fecha_traslado:col(["traslado"]), fecha_emision:col(["generaci"]),
+            guia_transportista:anyCol(["guia","transportista"],["guía","transportista"]),
+            guia_remitente:anyCol(["guia","remitente"],["guía","remitente"]),
+            tracto:col(["tracto"]), tolva:col(["tolva"]),
+            transportista:col(["transportista"],["guia","guía","remitente"]),
+            conductor:col(["conductor"]), licencia:col(["licencia"]), cliente:col(["cliente"]),
+            punto_partida:col(["punto de partida"]), destinatario:col(["punto de ll"]),
+            ruta:col(["ruta"]), punto_llegada:col(["direccion de llegada"]),
+            tne:col(["tne"]), producto:col(["producto"]), pagador_flete:col(["pagador"]),
+            flete:col(["flete"],["pagador"]), precio_sin_igv:col(["precio sin igv"]), precio_con_igv:col(["precio con igv"]),
+            n_factura:col(["factura"],["fecha","estado","tercero"]), fecha_factura:col(["fecha","factura"]),
+            estado_factura:col(["estado de factura"]), importe_detraccion:col(["importe","detraccion"]),
+            n_constancia:col(["constancia"]), estado_detraccion:col(["estado","detraccion"])
+          };
+          for(var rr=hi+1; rr<rows.length; rr++){
+            var row=rows[rr]; var g=M.guia_transportista>=0? String(row[M.guia_transportista]||"").trim() : "";
+            if(!g) continue;
+            var reg={modulo:"guias"};
+            Object.keys(M).forEach(function(k){ if(M[k]>=0) reg[k]=fmtCell(k,row[M[k]]); });
+            reg.tracto=placaFmt(reg.tracto); reg.tolva=placaFmt(reg.tolva);
+            reg.mes=(reg.fecha_traslado||reg.fecha_emision||"").split("/").reverse().join("-").slice(0,7);
+            if(!reg.moneda){ var tf=tarifaDe(reg.cliente); reg.moneda=tf?tf.moneda:"USD"; }
+            regs.push(reg);
+          }
+        });
+        guardarLote(regs);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+    function guardarLote(regs){
+      if(!regs.length){ document.getElementById("prog").innerHTML="⚠ No se encontraron guías en el Excel (revisa que tenga las columnas de DESPACHO)."; return; }
+      var prog=document.getElementById("prog"), i=0, ok=0;
+      (function next(){
+        if(i>=regs.length){ prog.innerHTML='✅ Importadas <strong>'+ok+'</strong> guías del Excel.'; cargar(); return; }
+        var chunk=regs.slice(i,i+400), b=db().batch();
+        chunk.forEach(function(d){ var doc={}; Object.keys(d).forEach(function(k){doc[k]=d[k];}); doc._ts=firebase.firestore.FieldValue.serverTimestamp(); b.set(db().collection("contabilidad").doc("guia_"+String(d.guia_transportista).replace(/[^A-Z0-9-]/gi,"")),doc,{merge:true}); });
+        b.commit().then(function(){ ok+=chunk.length; i+=chunk.length; prog.innerHTML='Importando… '+ok+'/'+regs.length; next(); }).catch(function(e){ prog.innerHTML='Error: '+e.message; });
+      })();
+    }
+    (function(){ var bx=document.getElementById("btnXls"), fx=document.getElementById("fileXls"); bx.onclick=function(){fx.click();}; fx.onchange=function(){ if(fx.files[0]) importExcel(fx.files[0]); fx.value=""; }; })();
+
+    MISAGI.requireAccess("contabilidad").then(function(){
+      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+      document.getElementById("app").style.display="";
+      Promise.all([MISAGI_MAESTROS.mapaUnidades(),MISAGI_MAESTROS.mapaPersonas()]).then(function(r){ MAP_U=r[0]||{}; MAP_P=r[1]||{}; });
+      db().collection("contabilidad").where("modulo","==","flete").get().then(function(s){ s.docs.forEach(function(dd){ var f=dd.data(); if(f.cliente) TARIFAS[String(f.cliente).toUpperCase()]={tarifa:num(f.tarifa),moneda:f.moneda||"USD",igv:(f.igv!=null?f.igv:18)}; }); }).catch(function(){});
+      cargar();
+    });
+  </script>
+</body>
+</html>

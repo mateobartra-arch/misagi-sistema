@@ -36,6 +36,7 @@ const MISAGI_MODULOS = [
     area: "admin", grupo: "Administración", ik: "lock",
     apps: [
       { id: "admin.gerencia", nombre: "Tablero gerencial", url: "gerencia/", estado: "activo", desc: "Indicadores de flota, costos, mantenimiento y metas" },
+      { id: "admin.utilidad", nombre: "Rentabilidad / Utilidad", url: "gerencia/utilidad/", estado: "activo", desc: "Ingresos, abastecimientos, gastos y utilidad por unidad" },
       { id: "admin.accesos", nombre: "Accesos del personal", url: "admin/accesos/", estado: "activo", desc: "Crear y gestionar los logins del equipo" },
       { id: "admin.enlaces", nombre: "Accesos directos (Drive)", url: "admin/enlaces/", estado: "activo", desc: "Gestionar enlaces y quién los ve" },
       { id: "admin.alertas", nombre: "Alertas / Vencimientos", url: "alertas/", estado: "activo", desc: "Documentos, EMO, mantenimiento y correctivos por vencer" },
@@ -100,6 +101,8 @@ const MISAGI_MODULOS = [
   {
     area: "contabilidad", grupo: "Contabilidad", ik: "book",
     apps: [
+      { id: "contabilidad.guias", nombre: "Resumen de guías", url: "contabilidad/guias/", estado: "activo", desc: "Sube la guía PDF y extrae los datos automáticamente" },
+      { id: "contabilidad.fletes", nombre: "Maestro de Fletes", url: "contabilidad/fletes/", estado: "activo", desc: "Tarifa por TNE por cliente y moneda" },
       { id: "contabilidad.general", nombre: "Contabilidad", url: "contabilidad/", estado: "proximamente", desc: "Libros, comprobantes y reportes" }
     ]
   },
