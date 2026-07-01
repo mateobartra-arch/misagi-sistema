@@ -48,6 +48,7 @@
     <div class="tabla-wrap"><table id="tabla"><thead><tr><th>Fecha</th><th>Ruta</th><th>Conductores</th><th>Tractos</th><th>Unid.</th><th></th></tr></thead><tbody></tbody></table></div>
   </div>
 
+  <datalist id="empresasT"><option>SERVOSA</option><option>SORDOSA</option><option>SERVOSA CARGO</option></datalist>
   <div class="modal-ov" id="mv"><div class="modal-bx" id="mvBody"></div></div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -60,7 +61,7 @@
   <script>
     var db=function(){return firebase.firestore();};
     function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
-    var CONDS=[], TRACS=[], TOLVAS=[], RUTAS=[], UNIS=[], PROGS=[];
+    var CONDS=[], TERC=[], TRACS=[], TOLVAS=[], RUTAS=[], RUTASOBJ=[], UNIS=[], PROGS=[];
 
     function cargarMaestros(){
       return Promise.all([
@@ -68,21 +69,27 @@
         MISAGI_MAESTROS.unidades(),
         db().collection("operaciones").where("modulo","==","rutas").get().catch(function(){return {docs:[]};})
       ]).then(function(r){
-        CONDS=(r[0]||[]).filter(function(p){return String(p.tipo||"conductor").toLowerCase()==="conductor"&&p.activo!==false;}).map(function(p){return {nombre:p.nombre,dni:String(p.dni||""),ext:p.externo===true};});
+        var pers=r[0]||[];
+        // Conductores propios (MISAGI) y terceros (SERVOSA/SORDOSA…), ambos del maestro de Personas
+        CONDS=pers.filter(function(p){return String(p.tipo||"conductor").toLowerCase()==="conductor"&&p.activo!==false&&p.externo!==true;}).map(function(p){return p.nombre;}).filter(Boolean);
+        TERC=pers.filter(function(p){return p.externo===true&&p.activo!==false;}).map(function(p){return {nombre:p.nombre, empresa:(p.empresa||p.cargo||"")};}).filter(function(x){return x.nombre;});
         var u=r[1]||[];
         TRACS=u.filter(function(x){return String(x.tipo||"").toLowerCase()==="tracto"&&String(x.estado||"").toLowerCase()!=="baja";}).map(function(x){return x.placa;});
         TOLVAS=u.filter(function(x){return String(x.tipo||"").toLowerCase()==="tolva"&&String(x.estado||"").toLowerCase()!=="baja";}).map(function(x){return x.placa;});
-        RUTAS=((r[2]&&r[2].docs)||[]).map(function(d){return d.data().nombre;}).filter(Boolean);
-        if(!RUTAS.length) RUTAS=["HUDBAY","AQP - ILO","AQP - MATARANI","LOCAL / MINERA"];
-        document.getElementById("ruta").innerHTML='<option value=""></option>'+RUTAS.map(function(x){return '<option>'+esc(x)+'</option>';}).join("");
+        RUTASOBJ=((r[2]&&r[2].docs)||[]).map(function(d){var o=d.data();return {nombre:o.nombre, cliente:o.cliente||""};}).filter(function(x){return x.nombre;});
+        RUTAS=RUTASOBJ.map(function(x){return x.nombre;});
+        if(!RUTASOBJ.length){ RUTASOBJ=[{nombre:"HUDBAY",cliente:""},{nombre:"AQP - ILO",cliente:""},{nombre:"AQP - MATARANI",cliente:""},{nombre:"LOCAL / MINERA",cliente:""}]; RUTAS=RUTASOBJ.map(function(x){return x.nombre;}); }
+        document.getElementById("ruta").innerHTML='<option value=""></option>'+RUTASOBJ.map(function(x){return '<option value="'+esc(x.nombre)+'">'+esc(x.nombre)+(x.cliente?' — '+esc(x.cliente):'')+'</option>';}).join("");
       });
     }
     function optSel(list,val,extra){ return '<option value=""></option>'+(extra||"")+list.map(function(x){var v=(typeof x==="object")?x.nombre:x;return '<option'+(v===val?" selected":"")+'>'+esc(v)+'</option>';}).join(""); }
     function renderUnis(){
       document.getElementById("unis").innerHTML=UNIS.map(function(u,i){
+        var gM='<optgroup label="MISAGI">'+CONDS.map(function(v){return '<option'+(v===u.conductor?" selected":"")+'>'+esc(v)+'</option>';}).join("")+'</optgroup>';
+        var gT=TERC.length?('<optgroup label="Terceros (SERVOSA / SORDOSA…)">'+TERC.map(function(t){return '<option'+(t.nombre===u.conductor?" selected":"")+'>'+esc(t.nombre)+(t.empresa?' — '+esc(t.empresa):'')+'</option>';}).join("")+'</optgroup>'):"";
         var cond = u.externo
-          ? '<div class="f"><label>Conductor externo</label><input data-i="'+i+'" data-k="conductor" value="'+esc(u.conductor)+'" placeholder="Nombre del tercero"></div><div class="f"><label>DNI</label><input data-i="'+i+'" data-k="dni" value="'+esc(u.dni)+'" placeholder="DNI"></div>'
-          : '<div class="f"><label>Conductor</label><select data-i="'+i+'" data-k="conductor">'+optSel(CONDS.map(function(c){return c.nombre;}),u.conductor)+'</select></div>';
+          ? '<div class="f"><label>Conductor tercero</label><input data-i="'+i+'" data-k="conductor" value="'+esc(u.conductor)+'" placeholder="Nombre del conductor"></div><div class="f"><label>Empresa</label><input list="empresasT" data-i="'+i+'" data-k="empresa" value="'+esc(u.empresa||"")+'" placeholder="SERVOSA / SORDOSA"></div><div class="f"><label>DNI</label><input data-i="'+i+'" data-k="dni" value="'+esc(u.dni)+'" placeholder="DNI"></div>'
+          : '<div class="f"><label>Conductor</label><select data-i="'+i+'" data-k="conductor"><option value=""></option>'+gM+gT+'</select></div>';
         return '<div class="uni"><div class="hd"><span>Unidad '+(i+1)+'</span><button class="btn btn-ghost btn-sm" data-del="'+i+'">✕ quitar</button></div>'+
           '<div class="g3">'+cond+
           '<div class="f"><label>Tracto</label><select data-i="'+i+'" data-k="tracto">'+optSel(TRACS,u.tracto)+'</select></div>'+
@@ -90,10 +97,10 @@
           '<label class="ext"><input type="checkbox" data-ext="'+i+'" '+(u.externo?"checked":"")+' style="width:auto"> Conductor externo (tercero)</label></div>';
       }).join("");
       document.querySelectorAll("#unis [data-k]").forEach(function(el){ el.oninput=el.onchange=function(){ UNIS[el.dataset.i][el.dataset.k]=el.value; }; });
-      document.querySelectorAll("#unis [data-ext]").forEach(function(el){ el.onchange=function(){ UNIS[el.dataset.ext].externo=el.checked; UNIS[el.dataset.ext].conductor=""; UNIS[el.dataset.ext].dni=""; renderUnis(); }; });
+      document.querySelectorAll("#unis [data-ext]").forEach(function(el){ el.onchange=function(){ UNIS[el.dataset.ext].externo=el.checked; UNIS[el.dataset.ext].conductor=""; UNIS[el.dataset.ext].dni=""; UNIS[el.dataset.ext].empresa=""; renderUnis(); }; });
       document.querySelectorAll("#unis [data-del]").forEach(function(el){ el.onclick=function(){ UNIS.splice(+el.dataset.del,1); renderUnis(); }; });
     }
-    function addUni(){ if(UNIS.length>=6){alert("Máximo 6 unidades por programación.");return;} UNIS.push({externo:false,conductor:"",dni:"",tracto:"",tolva:""}); renderUnis(); }
+    function addUni(){ if(UNIS.length>=6){alert("Máximo 6 unidades por programación.");return;} UNIS.push({externo:false,conductor:"",dni:"",empresa:"",tracto:"",tolva:""}); renderUnis(); }
 
     function guardar(){
       var fecha=document.getElementById("fecha").value, ruta=document.getElementById("ruta").value;
@@ -121,7 +128,7 @@
     }
     function ver(id){
       var p=PROGS.filter(function(x){return x._id===id;})[0]; if(!p)return;
-      var rows=(p.unidades||[]).map(function(u,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(u.conductor||"—")+(u.externo?' <span style="color:#c2410c">(ext)</span>':'')+'</td><td>'+esc(u.tracto||"—")+'</td><td>'+esc(u.tolva||"—")+'</td></tr>';}).join("");
+      var rows=(p.unidades||[]).map(function(u,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(u.conductor||"—")+(u.externo?' <span style="color:#c2410c">(tercero'+(u.empresa?' · '+esc(u.empresa):'')+')</span>':'')+'</td><td>'+esc(u.tracto||"—")+'</td><td>'+esc(u.tolva||"—")+'</td></tr>';}).join("");
       document.getElementById("mvBody").innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="margin:0">Programación '+esc(p.fecha)+'</h3><button class="btn btn-ghost btn-sm" onclick="document.getElementById(\'mv\').classList.remove(\'on\')">✕</button></div>'+
         '<p class="side-note">Ruta: <strong>'+esc(p.ruta||"—")+'</strong> · '+(p.nUnidades||0)+' unidad(es)</p>'+
         '<table><thead><tr><th>#</th><th>Conductor</th><th>Tracto</th><th>Tolva</th></tr></thead><tbody>'+rows+'</tbody></table>'+
