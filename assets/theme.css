@@ -43,7 +43,7 @@ a { color: var(--misagi-blue-light); text-decoration: none; }
 
 /* ---- Encabezado de módulo (barra azul, plana y limpia) ---- */
 .msg-header {
-  display: flex; align-items: center; gap: 16px; padding: 13px 24px;
+  display: flex; align-items: center; gap: 16px; padding: 13px 24px; width: 100%;
   background: var(--azul-d); color: #fff;
   box-shadow: 0 1px 0 rgba(0,0,0,.04); position: sticky; top: 0; z-index: 50;
 }
@@ -161,9 +161,10 @@ textarea:focus-visible, .app-card:focus-visible, .gps-link:focus-visible {
    ========================================================================== */
 
 /* 1) AURORA UI — fondo de malla suave detrás de todo */
-body { position: relative; background: #f3f6f4; }
+html { overflow-x: hidden; }
+body { position: relative; background: #f3f6f4; overflow-x: hidden; max-width: 100%; }
 body::before {
-  content: ""; position: fixed; inset: -10vmax; z-index: -2; pointer-events: none;
+  content: ""; position: fixed; inset: 0; z-index: -2; pointer-events: none;
   background:
     radial-gradient(38% 44% at 12% 16%, rgba(26,107,60,.22), transparent 62%),
     radial-gradient(34% 40% at 88% 12%, rgba(13,59,102,.18), transparent 60%),
