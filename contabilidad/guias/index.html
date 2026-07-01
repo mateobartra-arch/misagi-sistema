@@ -120,18 +120,6 @@
     </tr></thead><tbody></tbody></table></div>
   </div>
 
-  <div class="modal-ov" id="mTar">
-    <div class="modal-bx">
-      <h3 style="margin:0 0 12px">Tarifa por tonelada (por cliente)</h3>
-      <div id="tarRows"></div>
-      <button class="btn btn-ghost btn-sm" id="tarAdd" style="margin:6px 0 12px">+ Agregar cliente</button>
-      <div class="f" style="margin-bottom:12px"><label>IGV (%)</label><input id="tarIgv" type="number" step="1" style="width:100px;padding:7px 9px;border:1px solid var(--border);border-radius:8px"></div>
-      <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button class="btn btn-ghost" id="tarCancel">Cancelar</button>
-        <button class="btn btn-primary" id="tarSave">Guardar tarifas</button>
-      </div>
-    </div>
-  </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
@@ -146,13 +134,28 @@
     if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
     var db=function(){return firebase.firestore();};
     var GUIAS=[], MAP_U={}, MAP_P={}, TARIFAS={};
-    var TAR_DOC="_config_tarifas";
     function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
     function num(x){var n=parseFloat(String(x==null?"":x).replace(",","."));return isNaN(n)?0:n;}
     function placaFmt(p){p=String(p||"").toUpperCase().replace(/[^A-Z0-9]/g,"");if(p.length===6)p=p.slice(0,3)+"-"+p.slice(3);return p;}
     function soles(n){return "S/ "+Number(n||0).toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2});}
+    function monedaDe(g){ return (g.moneda||((tarifaDe(g.cliente)||{}).moneda)||"PEN"); }
+    function montoMon(n,mo){ return ((mo||"PEN").toUpperCase()==="USD"?"$ ":"S/ ")+Number(n||0).toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+    function totMon(list,campo){ var m={}; list.forEach(function(g){ var mo=monedaDe(g).toUpperCase(); m[mo]=(m[mo]||0)+num(g[campo]); }); var ks=Object.keys(m); return ks.length? ks.map(function(k){return montoMon(m[k],k);}).join(" · ") : "S/ 0.00"; }
     var RUTA_CLIENTE={"HUDBAY":"CONSTANCIA"};
-    function tarifaDe(cliente){ var k=String(cliente||"").toUpperCase(); var res=null; Object.keys(TARIFAS).forEach(function(t){ if(k.indexOf(t)>=0) res=TARIFAS[t]; }); return res; }
+    function tarifaDe(cliente){ var k=String(cliente||"").toUpperCase(); var res=null, best=0; Object.keys(TARIFAS).forEach(function(t){ if(t && k.indexOf(t)>=0 && t.length>best){ best=t.length; res=TARIFAS[t]; } }); return res; }
+    function fechaISO(f){ var p=String(f||"").split("/"); return p.length===3? (p[2]+"-"+p[1]+"-"+p[0]) : String(f||""); }
+    // Tarifa vigente según la fecha del traslado (maneja cambios de flete por fecha).
+    function tarifaVigente(t, iso){
+      if(!t) return 0;
+      var lista=[];
+      if(t.tarifa) lista.push({desde:t.tarifa_desde||"0000-00-00", tarifa:num(t.tarifa)});
+      (t.vigencias||[]).forEach(function(v){ if(v&&v.tarifa!=null) lista.push({desde:v.desde||"0000-00-00", tarifa:num(v.tarifa)}); });
+      if(!lista.length) return 0;
+      lista.sort(function(a,b){return String(a.desde).localeCompare(String(b.desde));});
+      var d=iso||"9999-99-99", sel=lista[0];
+      lista.forEach(function(v){ if(String(v.desde)<=d) sel=v; });
+      return sel.tarifa;
+    }
 
     function parseGuia(raw){
       var s=String(raw||"").replace(/\s+/g," ").trim();
@@ -183,7 +186,8 @@
     }
     function calcIngreso(d){
       var t=tarifaDe(d.cliente);
-      var tne=num(d.tne), flete=num(d.flete)|| (t?t.tarifa:0);
+      var vig=tarifaVigente(t, fechaISO(d.fecha_traslado||d.fecha_emision));
+      var tne=num(d.tne), flete=num(d.flete)|| vig || (t?num(t.tarifa):0);
       var igvPct=t?num(t.igv):18;
       d.flete=flete||""; if(t&&!d.moneda) d.moneda=t.moneda;
       d.precio_sin_igv= tne&&flete ? +(tne*flete).toFixed(2) : (d.precio_sin_igv||"");
@@ -231,7 +235,7 @@
       var prog=document.getElementById("prog"); prog.style.display="";
       var ok=0, err=0, tt=0, ing=0, i=0;
       (function next(){
-        if(i>=files.length){ prog.innerHTML='✅ Listo: <strong>'+ok+'</strong> guías · <strong>'+tt.toFixed(2)+' t</strong> · ingreso <strong>'+soles(ing)+'</strong>'+(err?' · '+err+' con error':''); cargar(); return; }
+        if(i>=files.length){ prog.innerHTML='✅ Listo: <strong>'+ok+'</strong> guías · <strong>'+tt.toFixed(2)+' t</strong> · ingreso <strong>'+ing.toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2})+' (sin IGV)'+'</strong>'+(err?' · '+err+' con error':''); cargar(); return; }
         var f=files[i++]; prog.innerHTML='Procesando '+i+'/'+files.length+'… ('+esc(f.name)+')';
         textoPDF(f).then(function(txt){
           var d=calcIngreso(parseGuia(txt));
@@ -249,16 +253,18 @@
       Object.keys(d).forEach(function(k){ if(f[k]!==undefined && d[k]!=="" && d[k]!=null) f[k].value=d[k]; });
       f.style.display="";
       badge("bTracto",MAP_U[placaFmt(d.tracto)]); badge("bTolva",MAP_U[placaFmt(d.tolva)],true); badge("bCond",d.dni&&MAP_P[String(d.dni)],true);
-      var tf=tarifaDe(d.cliente); badgeCli(tf);
-      if(tf){ document.getElementById("sub").textContent="✓ Extraído. Ingreso calculado ("+soles(d.precio_con_igv)+" con IGV). Revisa y guarda."; }
+      var tf=tarifaDe(d.cliente); badgeCli(tf, d.flete);
+      if(tf){ document.getElementById("sub").textContent="✓ Extraído. Ingreso calculado ("+montoMon(d.precio_con_igv,monedaDe(d))+" con IGV). Revisa y guarda."; }
       else { document.getElementById("sub").textContent="⚠ Cliente «"+(d.cliente||"?")+"» no está en el maestro de Rutas y tarifas — agrégale su tarifa para calcular el ingreso."; alert("⚠ La razón social «"+(d.cliente||"?")+"» no tiene tarifa registrada en el maestro de Rutas y tarifas.\n\nAgrégala en Operaciones › Rutas y tarifas (ruta + cliente + tarifa por tonelada + moneda) y el ingreso se calculará solo."); }
       f.scrollIntoView({behavior:"smooth"});
     }
-    function badgeCli(t){ var e=document.getElementById("bCli"); if(!e)return; if(t){e.className="badge ok";e.setAttribute("style","");e.textContent="✓ tarifa "+t.tarifa+" "+(t.moneda||"");} else {e.className="badge warn";e.setAttribute("style","");e.textContent="⚠ sin tarifa en el maestro";} }
+    function badgeCli(t,aplicada){ var e=document.getElementById("bCli"); if(!e)return; if(t){e.className="badge ok";e.setAttribute("style","");e.textContent="✓ tarifa "+(aplicada||t.tarifa)+" "+(t.moneda||"");} else {e.className="badge warn";e.setAttribute("style","");e.textContent="⚠ sin tarifa en el maestro";} }
     function badge(id,ok,tercero){ var e=document.getElementById(id); if(!e)return; if(ok){e.className="badge ok";e.setAttribute("style","");e.textContent="✓ MISAGI";} else if(tercero){e.className="badge";e.setAttribute("style","background:#eef;color:#446");e.textContent="tercero";} else {e.className="badge warn";e.setAttribute("style","");e.textContent="⚠ revisar";} }
     function recalcForm(){
-      var f=document.getElementById("form"); var tne=num(f.tne.value), flete=num(f.flete.value);
+      var f=document.getElementById("form"); var tne=num(f.tne.value);
       var t=tarifaDe(f.cliente.value); var igvPct=t?num(t.igv):18;
+      var flete=num(f.flete.value)|| tarifaVigente(t, fechaISO(f.fecha_traslado.value));
+      if(!num(f.flete.value) && flete) f.flete.value=flete;
       if(tne&&flete){ f.precio_sin_igv.value=(tne*flete).toFixed(2); f.precio_con_igv.value=(tne*flete*(1+igvPct/100)).toFixed(2); }
     }
 
@@ -296,17 +302,15 @@
     function pintar(){
       var f=filtradas();
       var tt=f.reduce(function(s,g){return s+num(g.tne);},0);
-      var isi=f.reduce(function(s,g){return s+num(g.precio_sin_igv);},0);
-      var ici=f.reduce(function(s,g){return s+num(g.precio_con_igv);},0);
       document.getElementById("kpis").innerHTML=
         '<div class="kpi"><div class="n">'+f.length+'</div><div class="l">Guías</div></div>'+
         '<div class="kpi"><div class="n">'+tt.toFixed(2)+'</div><div class="l">Toneladas (TNE)</div></div>'+
-        '<div class="kpi money"><div class="n">'+soles(isi)+'</div><div class="l">Ingreso sin IGV</div></div>'+
-        '<div class="kpi money"><div class="n">'+soles(ici)+'</div><div class="l">Ingreso con IGV</div></div>';
+        '<div class="kpi money"><div class="n" style="font-size:1.15rem">'+totMon(f,"precio_sin_igv")+'</div><div class="l">Ingreso sin IGV</div></div>'+
+        '<div class="kpi money"><div class="n" style="font-size:1.15rem">'+totMon(f,"precio_con_igv")+'</div><div class="l">Ingreso con IGV</div></div>';
       document.getElementById("cnt").textContent=f.length+" guías";
       var tb=document.querySelector("#tabla tbody");
       tb.innerHTML=f.length?f.map(function(g){
-        return '<tr><td><strong>'+esc(g.guia_transportista)+'</strong></td><td>'+esc(g.fecha_traslado||"")+'</td><td>'+esc(g.tracto||"")+'</td><td>'+esc(g.tolva||"")+'</td><td>'+esc((g.conductor||"").slice(0,20))+'</td><td>'+esc((g.cliente||"").slice(0,16))+'</td><td class="r">'+esc(g.tne||"")+'</td><td class="r">'+esc(g.flete||"")+'</td><td class="r">'+soles(g.precio_sin_igv)+'</td><td class="r">'+soles(g.precio_con_igv)+'</td><td>'+esc(g.n_factura||"")+'</td><td><button class="btn btn-ghost btn-sm" data-e="'+g._id+'">Editar</button></td></tr>';
+        return '<tr><td><strong>'+esc(g.guia_transportista)+'</strong></td><td>'+esc(g.fecha_traslado||"")+'</td><td>'+esc(g.tracto||"")+'</td><td>'+esc(g.tolva||"")+'</td><td>'+esc((g.conductor||"").slice(0,20))+'</td><td>'+esc((g.cliente||"").slice(0,16))+'</td><td class="r">'+esc(g.tne||"")+'</td><td class="r">'+esc(g.flete||"")+' '+(monedaDe(g).toUpperCase()==="USD"?"$":"S/")+'</td><td class="r">'+montoMon(g.precio_sin_igv,monedaDe(g))+'</td><td class="r">'+montoMon(g.precio_con_igv,monedaDe(g))+'</td><td>'+esc(g.n_factura||"")+'</td><td><button class="btn btn-ghost btn-sm" data-e="'+g._id+'">Editar</button></td></tr>';
       }).join(""):'<tr><td colspan="12" style="text-align:center;color:var(--text-muted);padding:22px">Sin guías. Sube PDFs arriba.</td></tr>';
       tb.querySelectorAll("[data-e]").forEach(function(b){b.onclick=function(){editar(b.dataset.e);};});
     }
@@ -314,7 +318,7 @@
       var g=GUIAS.filter(function(x){return x._id===id;})[0]; if(!g)return;
       var f=document.getElementById("form"); f.style.display="";
       Array.prototype.forEach.call(f.elements,function(el){ if(el.name&&g[el.name]!=null) el.value=g[el.name]; });
-      badge("bTracto",MAP_U[placaFmt(g.tracto)]); badge("bTolva",MAP_U[placaFmt(g.tolva)],true); badge("bCond",g.dni&&MAP_P[String(g.dni)],true); badgeCli(tarifaDe(g.cliente));
+      badge("bTracto",MAP_U[placaFmt(g.tracto)]); badge("bTolva",MAP_U[placaFmt(g.tolva)],true); badge("bCond",g.dni&&MAP_P[String(g.dni)],true); badgeCli(tarifaDe(g.cliente), g.flete);
       f.scrollIntoView({behavior:"smooth"});
     }
 
@@ -326,26 +330,6 @@
       XLSX.utils.book_append_sheet(wb,ws,"Guias"); XLSX.writeFile(wb,"resumen-guias.xlsx");
     };
 
-    // ---- Tarifas ----
-    function abrirTarifas(){
-      var box=document.getElementById("tarRows"); box.innerHTML="";
-      Object.keys(TARIFAS).forEach(function(k){ addTarRow(k,TARIFAS[k]); });
-      document.getElementById("tarIgv").value=Math.round(IGV*100);
-      document.getElementById("mTar").classList.add("on");
-    }
-    function addTarRow(k,v){
-      var box=document.getElementById("tarRows"); var div=document.createElement("div"); div.className="trow";
-      div.innerHTML='<input class="tk" placeholder="Cliente (ej. HUDBAY)" value="'+esc(k||"")+'"><input class="tv" type="number" step="0.01" placeholder="S/ x ton" value="'+esc(v||"")+'"><button class="btn btn-ghost btn-sm tdel">✕</button>';
-      div.querySelector(".tdel").onclick=function(){div.remove();};
-      box.appendChild(div);
-    }
-    function guardarTarifas(){
-      var t={}; document.querySelectorAll("#tarRows .trow").forEach(function(r){ var k=r.querySelector(".tk").value.trim().toUpperCase(); var v=num(r.querySelector(".tv").value); if(k) t[k]=v; });
-      var igv=num(document.getElementById("tarIgv").value)/100;
-      db().collection("contabilidad").doc(TAR_DOC).set({modulo:"config",tarifas:t,igv:igv},{merge:true}).then(function(){
-        TARIFAS=t; IGV=igv||0.18; document.getElementById("mTar").classList.remove("on"); cargar();
-      }).catch(function(e){ alert("Error: "+e.message); });
-    }
 
     var drop=document.getElementById("drop"), file=document.getElementById("file");
     drop.onclick=function(){file.click();};
@@ -356,13 +340,11 @@
     document.getElementById("form").addEventListener("submit",guardar);
     document.getElementById("form").tne.addEventListener("input",recalcForm);
     document.getElementById("form").flete.addEventListener("input",recalcForm);
+    document.getElementById("form").fecha_traslado.addEventListener("input",recalcForm);
     document.getElementById("btnCancel").onclick=function(){var f=document.getElementById("form");f.reset();f.style.display="none";};
     ["fMes","fCliente"].forEach(function(id){document.getElementById(id).onchange=pintar;});
     document.getElementById("fBuscar").oninput=pintar;
     document.getElementById("btnTarifas").onclick=function(){ location.href="../../flota/operaciones/rutas/"; };
-    document.getElementById("tarAdd").onclick=function(){addTarRow("","");};
-    document.getElementById("tarCancel").onclick=function(){document.getElementById("mTar").classList.remove("on");};
-    document.getElementById("tarSave").onclick=guardarTarifas;
 
     // ---- Importar Excel de DESPACHO (varias guías por archivo) ----
     function fmtCell(k,v){
@@ -431,8 +413,8 @@
       Promise.all([MISAGI_MAESTROS.mapaUnidades(),MISAGI_MAESTROS.mapaPersonas()]).then(function(r){ MAP_U=r[0]||{}; MAP_P=r[1]||{}; });
       MISAGI_MAESTROS.tarifasCliente().then(function(m){ Object.keys(m).forEach(function(k){ TARIFAS[k]=m[k]; }); }).catch(function(){})
         .then(function(){ return db().collection("contabilidad").where("modulo","==","flete").get(); })
-        .then(function(s){ s.docs.forEach(function(dd){ var f=dd.data(); var k=String(f.cliente||"").toUpperCase(); if(k && !TARIFAS[k]) TARIFAS[k]={tarifa:num(f.tarifa),moneda:f.moneda||"USD",igv:(f.igv!=null?f.igv:18)}; }); }).catch(function(){});
-      cargar();
+        .then(function(s){ s.docs.forEach(function(dd){ var f=dd.data(); var k=String(f.cliente||"").toUpperCase(); if(k && !TARIFAS[k]) TARIFAS[k]={tarifa:num(f.tarifa),moneda:f.moneda||"USD",igv:(f.igv!=null?f.igv:18)}; }); }).catch(function(){})
+        .then(function(){ cargar(); });   // pinta la tabla ya con tarifas/moneda cargadas
     });
   </script>
 </body>

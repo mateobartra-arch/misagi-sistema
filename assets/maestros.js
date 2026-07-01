@@ -56,7 +56,7 @@
       a.forEach(function (r) {
         if (r.activo === false) return;
         var k = String(r.cliente || "").trim().toUpperCase();
-        if (k) m[k] = { tarifa: Number(r.tarifa) || 0, moneda: r.moneda || "USD", igv: (r.igv != null ? r.igv : 18) };
+        if (k) m[k] = { tarifa: Number(r.tarifa) || 0, moneda: r.moneda || "USD", igv: (r.igv != null ? r.igv : 18), tarifa_desde: r.tarifa_desde || "", vigencias: r.vigencias || [] };
       });
       return m;
     });

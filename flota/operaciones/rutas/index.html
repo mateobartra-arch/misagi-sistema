@@ -48,12 +48,19 @@
         <div class="field" style="margin-bottom:10px"><label>Producto (opcional)</label><input name="producto" placeholder="Ej. CONCENTRADO DE COBRE"></div>
         <div style="display:flex;gap:10px;margin-bottom:6px">
           <div class="field" style="width:120px"><label>Moneda *</label><select name="moneda"><option value="USD">USD ($)</option><option value="PEN">PEN (S/)</option></select></div>
-          <div class="field" style="flex:1"><label>Tarifa base (sin IGV) *</label><input name="tarifa" type="number" step="0.01" required placeholder="42"></div>
+          <div class="field" style="flex:1"><label>Tarifa actual (sin IGV) *</label><input name="tarifa" type="number" step="0.01" required placeholder="42"></div>
           <div class="field" style="width:90px"><label>IGV %</label><input name="igv" type="number" step="1" value="18"></div>
         </div>
+        <div class="field" style="margin-bottom:6px"><label>Tarifa actual vigente desde (opcional)</label><input name="tarifa_desde" type="date"></div>
         <div class="calc" id="calc">
           <span>IGV: <b id="cIgv">—</b></span>
           <span>Total (con IGV): <b id="cTot">—</b></span>
+        </div>
+        <div style="margin:2px 0 12px">
+          <label style="font-size:.74rem;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px">Tarifas anteriores (por cambio de flete)</label>
+          <div id="vigs"></div>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnVig">+ Tarifa anterior</button>
+          <div style="font-size:.72rem;color:var(--text-muted);margin-top:5px">Cada guía usa la tarifa vigente en su fecha de traslado. Ej. HUDBAY: tarifa actual <b>42</b> vigente desde <b>2026-03-12</b>, y agrega una anterior <b>39</b> con fecha desde el inicio (o vacía = aplica a lo previo).</div>
         </div>
         <div class="field" style="margin-bottom:10px"><label>Peaje (opcional)</label><input name="peaje" type="number" step="0.01" placeholder=""></div>
         <div class="field" style="margin-bottom:10px"><label style="text-transform:none;letter-spacing:0"><input type="checkbox" name="activo" checked style="width:auto;margin-right:7px">Tarifa vigente</label></div>
@@ -106,12 +113,21 @@
       document.getElementById("cIgv").textContent=base?fmt(igv,mon):"—";
       document.getElementById("cTot").textContent=base?fmt(tot,mon):"—";
     }
+    function vigRow(v){ v=v||{}; var d=document.createElement("div"); d.className="vigrow"; d.style="display:flex;gap:8px;margin-bottom:6px;align-items:center";
+      d.innerHTML='<input type="date" class="vd" style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:8px"><input type="number" step="0.01" class="vt" placeholder="tarifa" style="width:120px;padding:6px 8px;border:1px solid var(--border);border-radius:8px"><button type="button" class="btn btn-ghost btn-sm vx">✕</button>';
+      d.querySelector(".vd").value=v.desde||""; d.querySelector(".vt").value=(v.tarifa!=null?v.tarifa:"");
+      d.querySelector(".vx").onclick=function(){d.remove();};
+      document.getElementById("vigs").appendChild(d);
+    }
+    function collectVigs(){ var out=[]; document.querySelectorAll("#vigs .vigrow").forEach(function(r){ var t=num(r.querySelector(".vt").value); var de=r.querySelector(".vd").value; if(t) out.push({desde:de||"", tarifa:t}); }); return out; }
+    document.getElementById("btnVig").onclick=function(){ vigRow({}); };
     function abrir(reg){
       var f=document.getElementById("form"); f.reset(); document.getElementById("err").classList.add("hidden");
       f.dataset.id=reg?reg._id:"";
       document.getElementById("mtit").textContent=reg?"Editar ruta":"Nueva ruta";
       document.getElementById("btnDel").classList.toggle("hidden",!reg);
-      if(reg){ f.nombre.value=reg.nombre||""; f.cliente.value=reg.cliente||""; f.producto.value=reg.producto||""; f.distancia.value=reg.distancia||reg.km||""; f.moneda.value=reg.moneda||"PEN"; f.tarifa.value=reg.tarifa||""; f.igv.value=(reg.igv!=null?reg.igv:18); f.peaje.value=reg.peaje||""; f.activo.checked=reg.activo!==false; }
+      document.getElementById("vigs").innerHTML="";
+      if(reg){ f.nombre.value=reg.nombre||""; f.cliente.value=reg.cliente||""; f.producto.value=reg.producto||""; f.distancia.value=reg.distancia||reg.km||""; f.moneda.value=reg.moneda||"PEN"; f.tarifa.value=reg.tarifa||""; f.tarifa_desde.value=reg.tarifa_desde||""; f.igv.value=(reg.igv!=null?reg.igv:18); f.peaje.value=reg.peaje||""; f.activo.checked=reg.activo!==false; (reg.vigencias||[]).forEach(vigRow); }
       recalc();
       document.getElementById("modal").classList.remove("hidden");
     }
@@ -121,7 +137,8 @@
       var base=num(f.tarifa.value), igvp=num(f.igv.value);
       var reg={ modulo:"rutas", nombre:f.nombre.value.trim(), cliente:f.cliente.value.trim(), producto:f.producto.value.trim(), distancia:f.distancia.value.trim(),
                 moneda:f.moneda.value, tarifa:base, igv:igvp, igv_monto:+(base*igvp/100).toFixed(2), total:+(base*(1+igvp/100)).toFixed(2),
-                peaje:num(f.peaje.value)||"", activo:f.activo.checked };
+                peaje:num(f.peaje.value)||"", activo:f.activo.checked,
+                tarifa_desde:f.tarifa_desde.value||"", vigencias:collectVigs() };
       if(!reg.nombre){ err.textContent="El nombre de la ruta es obligatorio."; err.classList.remove("hidden"); return; }
       var btn=document.getElementById("save"); btn.disabled=true; btn.textContent="Guardando…";
       var p = f.dataset.id ? db().collection("operaciones").doc(f.dataset.id).set(reg,{merge:true}) : db().collection("operaciones").add(reg);
