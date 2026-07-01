@@ -49,6 +49,7 @@
       <select id="mes"><option value="">Todos</option></select>
       <div class="tcbox"><span class="t">TC del mes</span><input id="tc" type="number" step="0.001" placeholder="—"><span class="t" id="tcInfo">elige un mes</span></div>
       <button class="btn btn-ghost btn-sm" id="btnSunat">↧ TC SUNAT del mes</button>
+      <div class="tcbox"><span class="t">Alq. tolva 3ro $</span><input id="alq" type="number" step="1" value="100"></div>
     </div>
     <div class="tabs" id="tabs">
       <button class="tab on" data-t="ind">📊 Indicadores</button>
@@ -87,7 +88,7 @@
   <script src="../../assets/auth.js"></script>
   <script>
     var db=function(){return firebase.firestore();};
-    var GUIAS=[],COMB=[],GNL=[],LAV=[],MANT=[],MES="",TCM={},TCDEF=3.75,charts={},TAB="ind";
+    var GUIAS=[],COMB=[],GNL=[],LAV=[],MANT=[],MES="",TCM={},TCDEF=3.75,MASTERU={},ALQ_TOLVA=100,charts={},TAB="ind";
     function tcDe(mes){ return num(TCM[mes])||TCDEF; }
     function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
     function num(x){var n=parseFloat(String(x==null?"":x).replace(",","."));return isNaN(n)?0:n;}
@@ -117,7 +118,8 @@
         db().collection("contabilidad").where("modulo","==","guias").get(),
         db().collection("operaciones").get(),
         db().collection("mantenimiento").where("modulo","==","correctivo").get(),
-        db().collection("contabilidad").doc("_config_tc").get()
+        db().collection("contabilidad").doc("_config_tc").get(),
+        db().collection("contabilidad").doc("_config_costos").get()
       ]).then(function(r){
         GUIAS=r[0].docs.map(function(d){return d.data();});
         var op=r[1].docs.map(function(d){return d.data();});
@@ -125,6 +127,8 @@
         GNL=op.filter(function(o){return o.modulo==="gnl";});
         LAV=op.filter(function(o){return o.modulo==="lavado";});
         MANT=r[2].docs.map(function(d){return d.data();});
+        MASTERU={}; op.filter(function(o){return o.modulo==="unidades";}).forEach(function(u){ if(u.placa) MASTERU[NP(u.placa)]=1; });
+        if(r[4]&&r[4].exists&&r[4].data().alquilerTolvaUSD!=null){ ALQ_TOLVA=num(r[4].data().alquilerTolvaUSD); } document.getElementById("alq").value=ALQ_TOLVA;
         if(r[3].exists){ var cf=r[3].data(); if(cf.tcMes)TCM=cf.tcMes; if(cf.tcDefault)TCDEF=num(cf.tcDefault)||TCDEF; }
         var meses={}; GUIAS.forEach(function(g){if(g.mes)meses[g.mes]=1;});
         [COMB,GNL,LAV,MANT].forEach(function(a){a.forEach(function(r){var m=String(r.fecha||"").slice(0,7);if(m)meses[m]=1;});});
@@ -140,23 +144,24 @@
       var ingU={},ingP={},comb={},gnl={},lav={},mant={},placas={};
       var tot={ingUSD:0,ingPEN:0,tne:0,gal:0,urea:0,kg:0,combS:0,gnlS:0,lavS:0,mantS:0,guias:0};
       var cli={};
-      var ingS={};
+      var ingS={}, alqS={};
       GUIAS.forEach(function(g){ if(!enMes(g.mes))return; var p=NP(g.tracto); placas[p]=1; var mon=String(g.moneda||"USD").toUpperCase(); var v=num(g.precio_sin_igv); var tc=tcDe(g.mes); var vS=(mon==="PEN")?v:v*tc;
         if(mon==="PEN"){ ingP[p]=(ingP[p]||0)+v; tot.ingPEN+=v; } else { ingU[p]=(ingU[p]||0)+v; tot.ingUSD+=v; }
         ingS[p]=(ingS[p]||0)+vS; tot.ingSol=(tot.ingSol||0)+vS;
+        if(g.tolva && !MASTERU[NP(g.tolva)]){ alqS[p]=(alqS[p]||0)+ALQ_TOLVA*tc; tot.alqUSD=(tot.alqUSD||0)+ALQ_TOLVA; tot.alqSol=(tot.alqSol||0)+ALQ_TOLVA*tc; }
         tot.tne+=num(g.tne); tot.guias++; var c=g.cliente||"—"; cli[c]=cli[c]||{usd:0,pen:0,tne:0}; if(mon==="PEN")cli[c].pen+=v; else cli[c].usd+=v; cli[c].tne+=num(g.tne); });
       COMB.forEach(function(r){ if(!enMes(r.fecha))return; var p=NP(r.placa); placas[p]=1; comb[p]=(comb[p]||0)+num(r.costo); tot.combS+=num(r.costo); tot.gal+=num(r.galones); tot.urea+=num(r.litros); });
       GNL.forEach(function(r){ if(!enMes(r.fecha))return; var p=NP(r.placa); placas[p]=1; gnl[p]=(gnl[p]||0)+num(r.costo); tot.gnlS+=num(r.costo); tot.kg+=num(r.kg); });
       LAV.forEach(function(r){ if(!enMes(r.fecha))return; var p=NP(r.placa); placas[p]=1; lav[p]=(lav[p]||0)+num(r.costo); tot.lavS+=num(r.costo); });
       MANT.forEach(function(r){ if(!enMes(r.fecha))return; var p=NP(r.placa); placas[p]=1; mant[p]=(mant[p]||0)+num(r.costo); tot.mantS+=num(r.costo); });
-      return {ingU:ingU,ingP:ingP,ingS:ingS,comb:comb,gnl:gnl,lav:lav,mant:mant,placas:Object.keys(placas).filter(Boolean).sort(),tot:tot,cli:cli};
+      return {ingU:ingU,ingP:ingP,ingS:ingS,alqS:alqS,comb:comb,gnl:gnl,lav:lav,mant:mant,placas:Object.keys(placas).filter(Boolean).sort(),tot:tot,cli:cli};
     }
 
     function render(){
       var a=agregados(), t=a.tot;
       var tcRef = MES? tcDe(MES) : TCDEF;
       var ingSol = t.ingSol||0;      // ingresos convertidos a soles (cada mes con su TC)
-      var gastoTot = t.combS+t.gnlS+t.lavS+t.mantS;
+      var gastoTot = t.combS+t.gnlS+t.lavS+t.mantS+(t.alqSol||0);
       var utilS = ingSol - gastoTot;
       document.getElementById("sub").textContent=(MES||"Todos los meses")+" · "+t.guias+" guías · "+(MES?("TC "+tcDe(MES)):"TC por mes");
 
@@ -165,11 +170,12 @@
         kpi(S(ingSol),"Ingresos (S/ equiv.)","")+
         kpi(S(t.combS+t.gnlS),"Abastecimientos","")+
         kpi(S(t.lavS+t.mantS),"Otros gastos","")+
+        kpi(S(t.alqSol||0),"Alquiler tolvas 3ros","neg")+
         kpi(S(utilS),"Utilidad (S/)",utilS>=0?"pos":"neg")+
         kpi(D(utilS/(tcRef||1)),"Utilidad (USD aprox)",utilS>=0?"pos":"neg")+
         kpi((ingSol?Math.round(utilS/ingSol*100):0)+"%","Margen",utilS>=0?"pos":"neg");
       var filas=a.placas.map(function(p){
-        var ingS=a.ingS[p]||0, ab=(a.comb[p]||0)+(a.gnl[p]||0), ga=(a.lav[p]||0)+(a.mant[p]||0), ut=ingS-ab-ga;
+        var ingS=a.ingS[p]||0, ab=(a.comb[p]||0)+(a.gnl[p]||0), ga=(a.lav[p]||0)+(a.mant[p]||0)+(a.alqS[p]||0), ut=ingS-ab-ga;
         return {p:p,usd:a.ingU[p]||0,ingS:ingS,ab:ab,ga:ga,ut:ut};
       }).sort(function(x,y){return y.ut-x.ut;});
       document.getElementById("t-ind").innerHTML=tabla(
@@ -193,10 +199,10 @@
         ["Total",S(t.combS),S(t.gnlS),S(t.combS+t.gnlS)]);
 
       document.getElementById("k-gas").innerHTML=
-        kpi(S(t.lavS),"Lavado/engrase","")+kpi(S(t.mantS),"Mantenimiento","")+kpi(S(t.lavS+t.mantS),"Total gastos","neg");
-      document.getElementById("t-gas").innerHTML=tabla(["Placa","Lavado","Mantenimiento","Total"],
-        a.placas.filter(function(p){return (a.lav[p]||a.mant[p]);}).sort(function(x,y){return ((a.lav[y]||0)+(a.mant[y]||0))-((a.lav[x]||0)+(a.mant[x]||0));}).map(function(p){return ['<strong>'+esc(p)+'</strong>',S(a.lav[p]||0),S(a.mant[p]||0),S((a.lav[p]||0)+(a.mant[p]||0))];}),
-        ["Total",S(t.lavS),S(t.mantS),S(t.lavS+t.mantS)]);
+        kpi(S(t.lavS),"Lavado/engrase","")+kpi(S(t.mantS),"Mantenimiento","")+kpi(S(t.alqSol||0),"Alq. tolvas 3ros","neg")+kpi(S(t.lavS+t.mantS+(t.alqSol||0)),"Total gastos","neg");
+      document.getElementById("t-gas").innerHTML=tabla(["Placa","Lavado","Mantenimiento","Alq. tolvas","Total"],
+        a.placas.filter(function(p){return (a.lav[p]||a.mant[p]||a.alqS[p]);}).sort(function(x,y){return ((a.lav[y]||0)+(a.mant[y]||0)+(a.alqS[y]||0))-((a.lav[x]||0)+(a.mant[x]||0)+(a.alqS[x]||0));}).map(function(p){return ['<strong>'+esc(p)+'</strong>',S(a.lav[p]||0),S(a.mant[p]||0),S(a.alqS[p]||0),S((a.lav[p]||0)+(a.mant[p]||0)+(a.alqS[p]||0))];}),
+        ["Total",S(t.lavS),S(t.mantS),S(t.alqSol||0),S(t.lavS+t.mantS+(t.alqSol||0))]);
     }
 
     function kpi(n,l,cls){return '<div class="kpi '+(cls||"")+'"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>';}
@@ -214,6 +220,7 @@
     document.getElementById("mes").onchange=function(){ MES=this.value; sincroTCbox(); render(); };
     document.getElementById("tc").onchange=function(){ if(MES){ TCM[MES]=num(this.value)||0; guardarTC(); render(); } };
     document.getElementById("btnSunat").onclick=traerSunatMes;
+    document.getElementById("alq").onchange=function(){ ALQ_TOLVA=num(this.value)||0; db().collection("contabilidad").doc("_config_costos").set({modulo:"config",alquilerTolvaUSD:ALQ_TOLVA},{merge:true}).catch(function(){}); render(); };
     document.getElementById("btnRe").onclick=cargar;
 
     MISAGI.requireLogin().then(function(s){
