@@ -53,6 +53,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
   <script src="../../../assets/firebase-config.js"></script>
   <script src="../../../assets/auth.js"></script>
+  <script src="../../../assets/xls.js"></script>
   <script>
     var db=function(){return firebase.firestore();}, DATA=[], chart=null;
     function num(v){var n=parseFloat(v);return isNaN(n)?0:n;}
@@ -81,9 +82,9 @@
       chart=new Chart(document.getElementById("cMes"),{type:'bar',data:{labels:labels,datasets:[{label:'Gasto S/',data:labels.map(function(m){return Math.round(byM[m]);}),backgroundColor:'#1A6B3C'}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
     }
     ["fD","fH","fP","fT"].forEach(function(id){document.getElementById(id).addEventListener("change",render);});
-    document.getElementById("btnExp").onclick=function(){ var f=aplica(); var head=["Fecha","Unidad","Tipo","Costo","Proveedor"].join(";");
-      var rows=f.map(function(r){return ['"'+(r.fecha||"")+'"','"'+(r.placa||"")+'"','"'+(r.tipo||"")+'"','"'+(r.costo||"")+'"','"'+(r.proveedor||"")+'"'].join(";");});
-      var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(["﻿"+head+"\n"+rows.join("\n")],{type:"text/csv;charset=utf-8;"})); a.download="lavado.csv"; a.click(); };
+    document.getElementById("btnExp").onclick=function(){ var f=aplica(); var cols=["Fecha","Unidad","Tipo","Costo","Proveedor"];
+      var filas=f.map(function(r){return [r.fecha||"",r.placa||"",r.tipo||"",r.costo||"",r.proveedor||""];});
+      MISAGI_XLS.descargar({nombre:"lavado",hoja:"Lavado",titulo:"Lavado y engrase",subtitulo:f.length+" registros",columnas:cols,filas:filas}); };
     function cargar(){ db().collection("operaciones").where("modulo","==","lavado").get().then(function(s){ DATA=s.docs.map(function(d){return d.data();});
       var pl={}; DATA.forEach(function(r){if(r.placa)pl[r.placa]=1;}); document.getElementById("fP").innerHTML='<option value="">Todas</option>'+Object.keys(pl).sort().map(function(p){return '<option>'+p+'</option>';}).join(""); render();
     }).catch(function(e){document.getElementById("sub").textContent="Error: "+e.message;}); }

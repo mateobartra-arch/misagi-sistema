@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuentas por Cobrar — MISAGI S.A.C.</title>
+  <link rel="icon" type="image/png" href="../../assets/misagi-icon.png">
+  <link rel="stylesheet" href="../../assets/theme.css">
+  <style>
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+    .kpi{background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px}
+    .kpi .n{font-size:1.35rem;font-weight:800;line-height:1.15} .kpi .l{font-size:.74rem;color:var(--text-muted);margin-top:3px}
+    .kpi.cob .n{color:#b45309} .kpi.fac .n{color:#1d4ed8} .kpi.pag .n{color:var(--verde-d)}
+    .toolbar2{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}
+    .toolbar2 select,.toolbar2 input{padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit}
+    table{width:100%;border-collapse:collapse;font-size:.84rem}
+    th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+    th{font-size:.68rem;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted)}
+    td.r,th.r{text-align:right}
+    .tabla-wrap{overflow-x:auto;background:#fff;border:1px solid var(--border);border-radius:14px}
+    .st{font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px}
+    .st.pend{background:#fef3c7;color:#b45309} .st.fac{background:#dbeafe;color:#1d4ed8} .st.pag{background:var(--verde-l);color:var(--verde-d)}
+    .age{font-size:11px;font-weight:700;padding:1px 7px;border-radius:10px}
+    .age.ok{background:var(--verde-l);color:var(--verde-d)} .age.w{background:#fef3c7;color:#b45309} .age.b{background:var(--danger-light);color:var(--danger)}
+    tbody tr.cli{cursor:pointer} tbody tr.cli:hover{background:var(--bg-subtle)}
+    tbody tr.det{display:none;background:#fafbfa} tbody tr.det.on{display:table-row}
+    .det td{font-size:.8rem}
+    select.est{padding:4px 6px;border:1px solid var(--border);border-radius:7px;font-size:.78rem}
+  </style>
+</head>
+<body>
+  <header class="msg-header">
+    <a class="brand" href="../../index.html" style="text-decoration:none"><span class="brand-mark">M</span> MISAGI · Cobranzas</a>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="../../index.html">← Portal</a>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+  </header>
+  <div class="container" id="app" style="display:none">
+    <div class="page-head">
+      <div><h1>Cuentas por Cobrar</h1><div class="page-sub" id="sub">Cargando…</div></div>
+      <button class="btn btn-ghost" id="btnRe">↻ Actualizar</button>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="toolbar2">
+      <select id="fMes"><option value="">Todos los meses</option></select>
+      <select id="fEstado">
+        <option value="">Todos los estados</option>
+        <option value="cobrar">Por cobrar</option>
+        <option value="FACTORING">En factoring</option>
+        <option value="PAGADA">Pagadas</option>
+      </select>
+      <input type="search" id="fBuscar" placeholder="Buscar cliente o factura…">
+      <span class="spacer" style="flex:1"></span>
+      <button class="btn btn-ghost" id="btnExp">⬇ Excel</button>
+    </div>
+    <div class="tabla-wrap"><table id="tabla"><thead><tr>
+      <th>Cliente</th><th class="r">Facturado</th><th class="r">Por cobrar</th><th class="r">Factoring</th><th class="r">Pagado</th><th class="r">Detracción</th><th class="r">Guías</th>
+    </tr></thead><tbody></tbody></table></div>
+    <p class="side-note" style="margin-top:12px">Toca un cliente para ver sus guías/facturas. Cambia el <strong>estado</strong> de una guía (Pendiente → Factoring → Pagada) y se actualiza al instante. La <strong>detracción</strong> es liquidez (tu cuenta del Banco de la Nación), no descuenta la deuda.</p>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="../../assets/firebase-config.js"></script>
+  <script src="../../assets/auth.js"></script>
+  <script src="../../assets/xls.js"></script>
+  <script>
+    var db=function(){return firebase.firestore();};
+    function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+    function num(x){var n=parseFloat(String(x==null?"":x).replace(",","."));return isNaN(n)?0:n;}
+    function mon(g){ return String(g.moneda||"USD").toUpperCase()==="PEN"?"PEN":"USD"; }
+    function money(n,m){ return (m==="USD"?"$ ":"S/ ")+num(n).toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+    function fISO(f){ var p=String(f||"").split("/"); return p.length===3?(p[2]+"-"+p[1]+"-"+p[0]):String(f||""); }
+    function estadoDe(g){ var e=String(g.estado_factura||"").toUpperCase(); if(e==="PAGADA")return "PAGADA"; if(e==="FACTORING")return "FACTORING"; return "cobrar"; }
+    function totalGuia(g){ return num(g.precio_con_igv)|| num(g.precio_sin_igv)*1.18; }
+    var GUIAS=[];
+
+    function diasDesde(iso){ if(!iso) return null; var d=new Date(iso+"T00:00:00"); if(isNaN(d)) return null; return Math.round((Date.now()-d)/86400000); }
+    function ageBadge(iso){ var x=diasDesde(iso); if(x==null) return '<span class="age ok">—</span>'; var c=x<=15?"ok":(x<=30?"w":"b"); return '<span class="age '+c+'">'+x+'d</span>'; }
+
+    function cargar(){
+      db().collection("contabilidad").where("modulo","==","guias").get().then(function(s){
+        GUIAS=s.docs.map(function(d){var o=d.data();o._id=d.id;return o;});
+        var meses={}; GUIAS.forEach(function(g){ if(g.mes) meses[g.mes]=1; });
+        opt("fMes",Object.keys(meses).sort().reverse());
+        pintar();
+      }).catch(function(e){ document.getElementById("sub").textContent="Error: "+e.message; });
+    }
+    function opt(id,arr){ var s=document.getElementById(id); s.innerHTML=s.options[0].outerHTML+arr.map(function(x){return '<option>'+esc(x)+'</option>';}).join(""); }
+
+    function filtradas(){
+      var mes=document.getElementById("fMes").value, est=document.getElementById("fEstado").value, q=(document.getElementById("fBuscar").value||"").toLowerCase();
+      return GUIAS.filter(function(g){
+        if(mes && g.mes!==mes) return false;
+        if(est){ if(est==="cobrar" && estadoDe(g)!=="cobrar") return false; if(est!=="cobrar" && estadoDe(g)!==est) return false; }
+        if(q && (String(g.cliente||"")+" "+String(g.n_factura||"")).toLowerCase().indexOf(q)<0) return false;
+        return true;
+      });
+    }
+
+    function pintar(){
+      var f=filtradas();
+      var tot={cobrar:{}, FACTORING:{}, PAGADA:{}, fact:{}, detr:{}};
+      function add(o,m,v){ o[m]=(o[m]||0)+v; }
+      var porCli={};
+      f.forEach(function(g){
+        var m=mon(g), v=totalGuia(g), e=estadoDe(g);
+        var c=g.cliente||"—"; var o=porCli[c]=porCli[c]||{fact:{},cobrar:{},FACTORING:{},PAGADA:{},detr:{},guias:[]};
+        add(o.fact,m,v); add(o[e],m,v); add(o.detr,m,num(g.importe_detraccion));
+        o.guias.push(g);
+        add(tot.fact,m,v); add(tot[e],m,v); add(tot.detr,m,num(g.importe_detraccion));
+      });
+      function fmtMap(mp){ var ks=Object.keys(mp).filter(function(k){return Math.round(mp[k]*100);}); return ks.length? ks.map(function(k){return money(mp[k],k);}).join(" · ") : "—"; }
+      document.getElementById("kpis").innerHTML=
+        '<div class="kpi cob"><div class="n">'+fmtMap(tot.cobrar)+'</div><div class="l">Por cobrar</div></div>'+
+        '<div class="kpi fac"><div class="n">'+fmtMap(tot.FACTORING)+'</div><div class="l">En factoring</div></div>'+
+        '<div class="kpi pag"><div class="n">'+fmtMap(tot.PAGADA)+'</div><div class="l">Pagado</div></div>'+
+        '<div class="kpi"><div class="n">'+fmtMap(tot.fact)+'</div><div class="l">Facturado (total)</div></div>'+
+        '<div class="kpi"><div class="n">'+fmtMap(tot.detr)+'</div><div class="l">Detracción (liquidez)</div></div>';
+      document.getElementById("sub").textContent=f.length+" guías · "+Object.keys(porCli).length+" cliente(s)";
+
+      var tb=document.querySelector("#tabla tbody"); var html="";
+      var clis=Object.keys(porCli).sort(function(a,b){ var sa=Object.values(porCli[a].cobrar).reduce(function(x,y){return x+y;},0), sb=Object.values(porCli[b].cobrar).reduce(function(x,y){return x+y;},0); return sb-sa; });
+      clis.forEach(function(c,ci){
+        var o=porCli[c];
+        html+='<tr class="cli" data-c="'+ci+'"><td><strong>'+esc(c)+'</strong></td><td class="r">'+fmtMap(o.fact)+'</td><td class="r">'+fmtMap(o.cobrar)+'</td><td class="r">'+fmtMap(o.FACTORING)+'</td><td class="r">'+fmtMap(o.PAGADA)+'</td><td class="r">'+fmtMap(o.detr)+'</td><td class="r">'+o.guias.length+'</td></tr>';
+        var det=o.guias.sort(function(a,b){return String(b.fecha_factura||b.fecha_traslado||"").localeCompare(String(a.fecha_factura||a.fecha_traslado||""));}).map(function(g){
+          var e=estadoDe(g), m=mon(g);
+          var sel='<select class="est" data-id="'+g._id+'"><option value="PENDIENTE"'+(e==="cobrar"?" selected":"")+'>Pendiente</option><option value="FACTORING"'+(e==="FACTORING"?" selected":"")+'>Factoring</option><option value="PAGADA"'+(e==="PAGADA"?" selected":"")+'>Pagada</option></select>';
+          var ageBase=fISO(g.fecha_factura)|| fISO(g.fecha_traslado);
+          return '<tr class="det d'+ci+'"><td style="padding-left:22px">'+esc(g.guia_transportista||g._id)+' <span style="color:var(--text-muted)">'+esc(g.n_factura||"s/factura")+'</span></td><td class="r">'+money(totalGuia(g),m)+'</td><td colspan="2">'+sel+' '+(e!=="PAGADA"?ageBadge(ageBase):'')+'</td><td class="r">'+esc(g.fecha_factura||g.fecha_traslado||"")+'</td><td class="r">'+money(num(g.importe_detraccion),m)+'</td><td></td></tr>';
+        }).join("");
+        html+=det;
+      });
+      tb.innerHTML= html || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:22px">Sin guías.</td></tr>';
+      tb.querySelectorAll("tr.cli").forEach(function(tr){ tr.onclick=function(){ tb.querySelectorAll("tr.det.d"+tr.dataset.c).forEach(function(d){ d.classList.toggle("on"); }); }; });
+      tb.querySelectorAll("select.est").forEach(function(se){ se.onclick=function(ev){ev.stopPropagation();}; se.onchange=function(){ cambiarEstado(se.dataset.id, se.value); }; });
+    }
+
+    function cambiarEstado(id,estado){
+      db().collection("contabilidad").doc(id).set({estado_factura:estado},{merge:true}).then(function(){
+        var g=GUIAS.filter(function(x){return x._id===id;})[0]; if(g) g.estado_factura=estado; pintar();
+      }).catch(function(e){ alert("Error: "+e.message); });
+    }
+
+    document.getElementById("btnExp").onclick=function(){
+      var f=filtradas(); if(!f.length){alert("Nada que exportar.");return;}
+      var cols=["Cliente","Guía","Factura","Fecha","Moneda","Total","Estado","Detracción"];
+      var filas=f.map(function(g){var m=mon(g);return [g.cliente||"",g.guia_transportista||"",g.n_factura||"",g.fecha_factura||g.fecha_traslado||"",m,totalGuia(g),(estadoDe(g)==="cobrar"?"POR COBRAR":estadoDe(g)),num(g.importe_detraccion)];});
+      MISAGI_XLS.descargar({nombre:"cuentas-por-cobrar",hoja:"CxC",titulo:"Cuentas por Cobrar",subtitulo:f.length+" guías",columnas:cols,filas:filas});
+    };
+    ["fMes","fEstado"].forEach(function(id){document.getElementById(id).onchange=pintar;});
+    document.getElementById("fBuscar").oninput=pintar;
+    document.getElementById("btnRe").onclick=cargar;
+
+    MISAGI.requireAccess("contabilidad").then(function(){
+      document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
+      document.getElementById("app").style.display="";
+      cargar();
+    });
+  </script>
+</body>
+</html>

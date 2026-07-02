@@ -68,6 +68,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="../../../assets/firebase-config.js"></script>
   <script src="../../../assets/auth.js"></script>
+  <script src="../../../assets/xls.js"></script>
   <script src="../../../assets/seed-personal.js"></script>
   <script src="../../../assets/seed-roster.js"></script>
   <script>
@@ -217,17 +218,15 @@
     document.getElementById("prev").onclick=function(){ M--; if(M<0){M=11;Y--;} cargar(); };
     document.getElementById("next").onclick=function(){ M++; if(M>11){M=0;Y++;} cargar(); };
     document.getElementById("btnExport").onclick=function(){
-      var nd=diasMes(), head=["Conductor","Trabajados"]; for(var d=1;d<=nd;d++) head.push(d);
-      var rows=CONDUCTORES.map(function(c){
+      var nd=diasMes(), cols=["Conductor","Trabajados"]; for(var d=1;d<=nd;d++) cols.push(String(d));
+      var filas=CONDUCTORES.map(function(c){
         var t=0, arr=[c.nombre];
         for(var d=1;d<=nd;d++){ if(trabajado(DATA[c.dni+"_"+fechaDe(d)])) t++; }
         arr.push(t);
         for(var d2=1;d2<=nd;d2++){ arr.push(DATA[c.dni+"_"+fechaDe(d2)]||""); }
-        return arr.map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';}).join(";");
+        return arr;
       });
-      var csv="﻿"+head.join(";")+"\n"+rows.join("\n");
-      var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));
-      a.download="roster-"+Y+"-"+pad(M+1)+".csv"; a.click();
+      MISAGI_XLS.descargar({nombre:"roster-"+Y+"-"+pad(M+1),hoja:"Roster",titulo:"Roster "+nombreMes(),subtitulo:CONDUCTORES.length+" conductores",columnas:cols,filas:filas});
     };
 
     MISAGI.requireAccess("operaciones").then(function(s){

@@ -109,7 +109,7 @@
       return total;
     }
     function ingresoMes(m){
-      var ing={}; (DATA.guias||[]).forEach(function(g){ if(g.mes===m){ var mo=(g.moneda||"USD").toUpperCase(); ing[mo]=(ing[mo]||0)+num(g.precio_sin_igv); } });
+      var ing={}; (DATA.guias||[]).forEach(function(g){ if(g.mes===m){ var mo=(g.moneda||"USD").toUpperCase(); ing[mo]=(ing[mo]||0)+(num(g.precio_con_igv)||num(g.precio_sin_igv)*1.18); } });
       return ing;
     }
     function fmtIng(ing){ var ks=Object.keys(ing); return ks.length? ks.map(function(k){return (k==="USD"?"$ ":"S/ ")+Math.round(ing[k]).toLocaleString("es-PE");}).join(" · ") : "—"; }
@@ -146,7 +146,7 @@
       document.getElementById("sub").textContent="Mes "+m+" · "+total+" unidades · "+DATA.personas.length+" personas";
 
       document.getElementById("kFin").innerHTML=
-        kpi("../contabilidad/guias/","💵",fmtIng(ing),"Ingresos del mes (sin IGV)",nGuias+" guías","hero")+
+        kpi("../contabilidad/guias/","💵",fmtIng(ing),"Ingresos del mes (con IGV)",nGuias+" guías","hero")+
         kpi("utilidad/","📊","Ver","Rentabilidad / Utilidad","ingresos − costos, USD→S/","hero")+
         kpi("../flota/operaciones/combustible/","⛽",soles(costo),"Costo de operación (mes)","combustible+GNL+lavado+mantto","")+
         kpi("../contabilidad/guias/","🧾",nGuias,"Guías del mes","toneladas × tarifa","");

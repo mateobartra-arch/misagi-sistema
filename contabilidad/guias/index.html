@@ -129,6 +129,7 @@
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="../../assets/firebase-config.js"></script>
   <script src="../../assets/auth.js"></script>
+  <script src="../../assets/xls.js"></script>
   <script src="../../assets/maestros.js"></script>
   <script>
     if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -327,9 +328,9 @@
     var COLS=[["fecha_traslado","Fecha Inicio traslado"],["fecha_emision","Fecha Generación guia"],["guia_transportista","Guia R. Transportista"],["guia_remitente","Guia R. Remitente"],["tracto","Tracto"],["tolva","Tolva"],["transportista","Transportista"],["conductor","Conductor"],["licencia","N Licencia"],["cliente","Cliente"],["punto_partida","Punto de Partida"],["destinatario","Destinatario"],["ruta","Ruta"],["punto_llegada","Direccion de llegada"],["tne","TNE"],["producto","Producto"],["pagador_flete","Pagador de flete"],["flete","Flete (tarifa/ton)"],["moneda","Moneda"],["precio_sin_igv","Precio sin IGV"],["precio_con_igv","Precio con IGV"],["n_factura","N Factura"],["fecha_factura","Fecha Factura"],["estado_factura","Estado Factura"],["importe_detraccion","Importe detraccion"],["n_constancia","N constancia"],["estado_detraccion","Estado detraccion"]];
     document.getElementById("btnExp").onclick=function(){
       var f=filtradas(); if(!f.length){alert("Nada que exportar.");return;}
-      var rows=f.map(function(g){var o={};COLS.forEach(function(c){o[c[1]]=g[c[0]]||"";});return o;});
-      var ws=XLSX.utils.json_to_sheet(rows,{header:COLS.map(function(c){return c[1];})}), wb=XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb,ws,"Guias"); XLSX.writeFile(wb,"resumen-guias.xlsx");
+      var cols=COLS.map(function(c){return c[1];});
+      var filas=f.map(function(g){return COLS.map(function(c){return g[c[0]]==null?"":g[c[0]];});});
+      MISAGI_XLS.descargar({nombre:"resumen-guias",hoja:"Guias",titulo:"Resumen de guías",subtitulo:f.length+" guías",columnas:cols,filas:filas});
     };
 
 

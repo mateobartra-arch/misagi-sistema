@@ -72,6 +72,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="../../../assets/firebase-config.js"></script>
   <script src="../../../assets/auth.js"></script>
+  <script src="../../../assets/xls.js"></script>
   <script src="../../../assets/seed-personas.js"></script>
   <script>
     var db=function(){return firebase.firestore();};
@@ -157,10 +158,9 @@
     var _bi=document.getElementById("btnImp"); if(_bi) _bi.onclick=function(){ importarSeed(false); };
     var _br=document.getElementById("btnReemp"); if(_br) _br.onclick=function(){ importarSeed(true); };
     document.getElementById("btnExp").onclick=function(){
-      var head=["Apellidos y nombres","DNI","Tipo","Cargo","Empresa","Estado"].join(";");
-      var rows=C.map(function(d){return ['"'+(d.nombre||"")+'"','"'+(d.dni||"")+'"',tipoDe(d),'"'+(d.cargo||"")+'"','"'+(d.empresa||"")+'"',(d.activo===false?"Inactivo":"Activo")].join(";");});
-      var csv="﻿"+head+"\n"+rows.join("\n");
-      var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"})); a.download="personas.csv"; a.click();
+      var cols=["Apellidos y nombres","DNI","Tipo","Cargo","Empresa","Estado"];
+      var filas=C.map(function(d){return [d.nombre||"",d.dni||"",tipoDe(d),d.cargo||"",d.empresa||"",(d.activo===false?"Inactivo":"Activo")];});
+      MISAGI_XLS.descargar({nombre:"personas",hoja:"Personas",titulo:"Directorio de Personas",subtitulo:C.length+" personas",columnas:cols,filas:filas});
     };
     document.getElementById("btnNew").onclick=function(){abrir(null);};
     document.getElementById("buscar").oninput=pintar;

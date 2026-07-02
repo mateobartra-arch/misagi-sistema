@@ -214,11 +214,22 @@
         rd.readAsArrayBuffer(file);
       });
     }
+    function ensureMisagi(cb){
+      if(window.MISAGI_XLS) return cb();
+      var base=""; var sc=[].slice.call(document.scripts).filter(function(x){return /registro\.js/.test(x.src);})[0];
+      if(sc) base=sc.src.replace(/registro\.js.*$/,"");
+      var s=document.createElement("script"); s.src=base+"xls.js"; s.onload=function(){cb();}; s.onerror=function(){ alert("No se pudo cargar el exportador."); }; document.head.appendChild(s);
+    }
     function exportar(){
-      ensureXLSX(function(){
-        var data=DATA.map(function(d){ var o={}; cfg.campos.forEach(function(c){ o[c.label]=(d[c.k]==null?"":d[c.k]); }); return o; });
-        var ws=XLSX.utils.json_to_sheet(data); var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,(cfg.titulo||"Datos").slice(0,28));
-        XLSX.writeFile(wb, cfg.modulo+".xlsx");
+      ensureMisagi(function(){
+        var cols=cfg.campos.map(function(c){return c.label;});
+        var filas=filtradas().map(function(d){ return cfg.campos.map(function(c){ return d[c.k]==null?"":d[c.k]; }); });
+        var totales=null;
+        if((cfg.resumen||[]).some(function(r){return r.campo;})){
+          totales=cfg.campos.map(function(){return "";}); totales[0]="TOTAL";
+          cfg.resumen.forEach(function(r){ if(!r.campo) return; var idx=cfg.campos.map(function(c){return c.k;}).indexOf(r.campo); if(idx>=0){ totales[idx]=DATA.reduce(function(a,d){return a+Number(d[r.campo]||0);},0); } });
+        }
+        MISAGI_XLS.descargar({ nombre:cfg.modulo, hoja:cfg.titulo, titulo:cfg.titulo, subtitulo:DATA.length+" registro(s)", columnas:cols, filas:filas, totales:totales });
       });
     }
 

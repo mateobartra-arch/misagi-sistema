@@ -89,6 +89,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
   <script src="../assets/firebase-config.js"></script>
   <script src="../assets/auth.js"></script>
+  <script src="../assets/xls.js"></script>
   <script>
     var db=function(){return firebase.firestore();};
     var DOCS=[], modo="lista";
@@ -223,11 +224,10 @@
       e.target.classList.add("on"); modo=e.target.dataset.m; render();
     });
     document.getElementById("btnExp").onclick=function(){
-      var cols=["entidad","categoria","tipo","numero","emision","vencimiento","obs","archivo_url"];
-      var head=["Pertenece","Categoría","Tipo","N°","Emisión","Vencimiento","Observación","Archivo"].join(";");
-      var rows=DOCS.map(function(d){return cols.map(function(k){return '"'+String(d[k]==null?"":d[k]).replace(/"/g,'""')+'"';}).join(";");});
-      var csv="﻿"+head+"\n"+rows.join("\n");
-      var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"})); a.download="documentos.csv"; a.click();
+      var keys=["entidad","categoria","tipo","numero","emision","vencimiento","obs","archivo_url"];
+      var cols=["Pertenece","Categoría","Tipo","N°","Emisión","Vencimiento","Observación","Archivo"];
+      var filas=DOCS.map(function(d){return keys.map(function(k){return d[k]==null?"":d[k];});});
+      MISAGI_XLS.descargar({nombre:"documentos",hoja:"Documentos",titulo:"Gestión documentaria",subtitulo:DOCS.length+" documentos",columnas:cols,filas:filas});
     };
     document.getElementById("btnNew").onclick=function(){abrir(null);};
     document.getElementById("buscar").oninput=render;

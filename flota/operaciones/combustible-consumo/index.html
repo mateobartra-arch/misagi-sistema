@@ -81,6 +81,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
   <script src="../../../assets/firebase-config.js"></script>
   <script src="../../../assets/auth.js"></script>
+  <script src="../../../assets/xls.js"></script>
   <script>
     var db=function(){return firebase.firestore();};
     var DATA=[], CH={};
@@ -177,9 +178,9 @@
     document.getElementById("rangos").addEventListener("click",function(e){ if(!e.target.classList.contains("chip"))return; document.querySelectorAll("#rangos .chip").forEach(function(c){c.classList.remove("on");}); e.target.classList.add("on"); rango(e.target.dataset.r); });
     ["fDesde","fHasta","fPlaca","fCond","fProd"].forEach(function(id){ document.getElementById(id).addEventListener("change",render); });
     document.getElementById("btnExp").onclick=function(){
-      var f=aplica(); var head=["Fecha","Unidad","Conductor","Producto","Galones","Costo","Grifo"].join(";");
-      var rows=f.map(function(r){return ['"'+(r.fecha||"")+'"','"'+(r.placa||"")+'"','"'+(r.conductor||"")+'"','"'+(r.obs||"")+'"','"'+(r.galones||"")+'"','"'+(r.costo||"")+'"','"'+(r.grifo||"")+'"'].join(";");});
-      var csv="﻿"+head+"\n"+rows.join("\n"); var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"})); a.download="consumo-combustible.csv"; a.click();
+      var f=aplica(); var cols=["Fecha","Unidad","Conductor","Producto","Galones","Costo","Grifo"];
+      var filas=f.map(function(r){return [r.fecha||"",r.placa||"",r.conductor||"",r.obs||"",r.galones||"",r.costo||"",r.grifo||""];});
+      MISAGI_XLS.descargar({nombre:"consumo-combustible",hoja:"Consumo",titulo:"Consumo de combustible",subtitulo:f.length+" registros",columnas:cols,filas:filas});
     };
 
     function cargar(){

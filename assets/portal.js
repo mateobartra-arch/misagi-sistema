@@ -102,6 +102,7 @@ const MISAGI_MODULOS = [
     area: "contabilidad", grupo: "Contabilidad", ik: "book",
     apps: [
       { id: "contabilidad.guias", nombre: "Resumen de guías", url: "contabilidad/guias/", estado: "activo", desc: "Sube la guía PDF y extrae los datos automáticamente" },
+      { id: "contabilidad.cobranzas", nombre: "Cuentas por Cobrar", url: "contabilidad/cobranzas/", estado: "activo", desc: "Facturas por cliente: por cobrar, factoring, pagadas y detracción" },
       { id: "contabilidad.general", nombre: "Contabilidad", url: "contabilidad/", estado: "proximamente", desc: "Libros, comprobantes y reportes" }
     ]
   },

@@ -160,7 +160,7 @@
       return {meses:meses, dias:Math.max(0,Math.round((h-a)/86400000))};
     }
     function antiguedadTxt(ing){ var x=antiguedad(ing); if(!x) return "—"; var y=Math.floor(x.meses/12), m=x.meses%12; var t=(y?y+" año"+(y>1?"s":""):"")+(y&&m?" ":"")+(m?m+" mes"+(m>1?"es":""):""); return t||"menos de 1 mes"; }
-    function vacGanadas(ing){ var x=antiguedad(ing); if(!x) return null; return Math.round(30*x.dias/365); }
+    function vacGanadas(ing){ var x=antiguedad(ing); if(!x) return null; return Math.floor(x.meses/12)*30; }
 
     /* ---- Render por pestaña ---- */
     function vInicio(){
@@ -269,8 +269,13 @@
         '</div>'+
       '</div><div>'+
         '<div class="panel"><h2>Saldo</h2>'+
-          '<div class="kpi" style="box-shadow:none;border:none;padding:0"><div class="v g" style="font-size:34px">—</div><div class="l">Días disponibles</div></div>'+
-          '<div class="note">Tu saldo se calculará según tus meses de servicio cuando conectemos RRHH.</div>'+
+          (function(){
+            var gan=vacGanadas(PERFIL.ingreso);
+            if(gan==null) return '<div class="kpi" style="box-shadow:none;border:none;padding:0"><div class="v g" style="font-size:34px">—</div><div class="l">Días disponibles</div></div><div class="note">Aún no tenemos tu <b>fecha de ingreso</b> en el maestro de Personas. Pídele a RRHH que la registre.</div>';
+            var tom=PERFIL._vacTomados||0, saldo=gan-tom;
+            return '<div class="kpi" style="box-shadow:none;border:none;padding:0"><div class="v g" style="font-size:34px">'+saldo+'</div><div class="l">Días disponibles</div></div>'+
+              '<div class="note">Ganados: <b>'+gan+'</b> · Tomados: <b>'+tom+'</b> · Antigüedad: '+antiguedadTxt(PERFIL.ingreso)+'.<br>Regla: 30 días por cada año completo de servicio. Ingreso: ('+(PERFIL.ingreso||"—")+').</div>';
+          })()+
         '</div>'+
         '<div class="panel"><h2>Mis solicitudes</h2><div id="solList2"><div class="empty">Cargando…</div></div></div>'+
       '</div></div>';

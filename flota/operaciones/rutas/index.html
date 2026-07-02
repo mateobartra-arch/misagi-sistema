@@ -80,6 +80,7 @@
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="../../../assets/firebase-config.js"></script>
   <script src="../../../assets/auth.js"></script>
+  <script src="../../../assets/xls.js"></script>
   <script>
     var db=function(){return firebase.firestore();};
     var R=[];
@@ -154,8 +155,9 @@
     document.getElementById("mx").onclick=cerrar; document.getElementById("cancel").onclick=cerrar;
     document.getElementById("btnExp").onclick=function(){
       if(!R.length){alert("Nada que exportar.");return;}
-      var rows=R.map(function(r){return {Ruta:r.nombre,Cliente:r.cliente||"",Producto:r.producto||"",Distancia:r.distancia||r.km||"",Moneda:r.moneda||"PEN",TarifaBase:num(r.tarifa),IGV:num(r.igv_monto),Total:num(r.total),Peaje:num(r.peaje),Vigente:(r.activo===false?"No":"Si")};});
-      var ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Rutas"); XLSX.writeFile(wb,"rutas.xlsx");
+      var cols=["Ruta","Cliente","Producto","Distancia","Moneda","Tarifa base","IGV","Total","Peaje","Vigente"];
+      var filas=R.map(function(r){return [r.nombre,r.cliente||"",r.producto||"",r.distancia||r.km||"",r.moneda||"PEN",num(r.tarifa),num(r.igv_monto),num(r.total),num(r.peaje),(r.activo===false?"No":"Si")];});
+      MISAGI_XLS.descargar({nombre:"rutas-tarifas",hoja:"Rutas",titulo:"Rutas y tarifas",subtitulo:R.length+" rutas",columnas:cols,filas:filas});
     };
     MISAGI.requireAccess("operaciones").then(function(){
       document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};

@@ -49,7 +49,7 @@
       <select id="mes"><option value="">Todos</option></select>
       <div class="tcbox"><span class="t">TC del mes</span><input id="tc" type="number" step="0.001" placeholder="—"><span class="t" id="tcInfo">elige un mes</span></div>
       <button class="btn btn-ghost btn-sm" id="btnSunat">↧ TC SUNAT del mes</button>
-      <div class="tcbox"><span class="t">Alq. tolva 3ro $</span><input id="alq" type="number" step="1" value="100"></div>
+      <div class="tcbox"><span class="t">Alq. tolva 3ro $ (base +IGV)</span><input id="alq" type="number" step="1" value="100"></div>
       <div class="tcbox"><span class="t">Alq. conductor 3ro S/</span><input id="alqCond" type="number" step="1" value="1187"></div>
     </div>
     <div class="tabs" id="tabs">
@@ -149,10 +149,10 @@
       var tot={ingUSD:0,ingPEN:0,tne:0,gal:0,urea:0,kg:0,combS:0,gnlS:0,lavS:0,mantS:0,guias:0};
       var cli={};
       var ingS={}, alqS={}, alqCS={};
-      GUIAS.forEach(function(g){ if(!enMes(g.mes))return; var p=NP(g.tracto); placas[p]=1; var mon=String(g.moneda||"USD").toUpperCase(); var v=num(g.precio_sin_igv); var tc=tcDe(g.mes); var vS=(mon==="PEN")?v:v*tc;
+      GUIAS.forEach(function(g){ if(!enMes(g.mes))return; var p=NP(g.tracto); placas[p]=1; var mon=String(g.moneda||"USD").toUpperCase(); var v=num(g.precio_con_igv)||num(g.precio_sin_igv)*1.18; var tc=tcDe(g.mes); var vS=(mon==="PEN")?v:v*tc;
         if(mon==="PEN"){ ingP[p]=(ingP[p]||0)+v; tot.ingPEN+=v; } else { ingU[p]=(ingU[p]||0)+v; tot.ingUSD+=v; }
         ingS[p]=(ingS[p]||0)+vS; tot.ingSol=(tot.ingSol||0)+vS;
-        if(g.tolva && !MASTERU[NP(g.tolva)]){ alqS[p]=(alqS[p]||0)+ALQ_TOLVA*tc; tot.alqUSD=(tot.alqUSD||0)+ALQ_TOLVA; tot.alqSol=(tot.alqSol||0)+ALQ_TOLVA*tc; }
+        if(g.tolva && !MASTERU[NP(g.tolva)]){ var vt=ALQ_TOLVA*1.18; alqS[p]=(alqS[p]||0)+vt*tc; tot.alqUSD=(tot.alqUSD||0)+vt; tot.alqSol=(tot.alqSol||0)+vt*tc; }
         var cd=String(g.conductor||"").trim().toUpperCase(); var condPropio=(g.dni&&MASTERC[String(g.dni)])||(cd&&MASTERN[cd]); if(g.conductor && !condPropio){ alqCS[p]=(alqCS[p]||0)+ALQ_COND; tot.alqCondSol=(tot.alqCondSol||0)+ALQ_COND; }
         tot.tne+=num(g.tne); tot.guias++; var c=g.cliente||"—"; cli[c]=cli[c]||{usd:0,pen:0,tne:0}; if(mon==="PEN")cli[c].pen+=v; else cli[c].usd+=v; cli[c].tne+=num(g.tne); });
       COMB.forEach(function(r){ if(!enMes(r.fecha))return; var p=NP(r.placa); placas[p]=1; comb[p]=(comb[p]||0)+num(r.costo); tot.combS+=num(r.costo); tot.gal+=num(r.galones); tot.urea+=num(r.litros); });
@@ -171,13 +171,13 @@
       document.getElementById("sub").textContent=(MES||"Todos los meses")+" · "+t.guias+" guías · "+(MES?("TC "+tcDe(MES)):"TC por mes");
 
       document.getElementById("k-ind").innerHTML=
-        kpi(D(t.ingUSD),"Ingresos (USD)","usd")+
-        kpi(S(ingSol),"Ingresos (S/ equiv.)","")+
+        kpi(D(t.ingUSD),"Ingresos USD (con IGV)","usd")+
+        kpi(S(ingSol),"Ingresos S/ (con IGV)","")+
         kpi(S(t.combS+t.gnlS),"Abastecimientos","")+
         kpi(S(t.lavS+t.mantS),"Otros gastos","")+
         kpi(S(t.alqSol||0),"Alquiler tolvas 3ros","neg")+
         kpi(S(t.alqCondSol||0),"Alquiler conductor 3ros","neg")+
-        kpi(S(utilS),"Utilidad (S/)",utilS>=0?"pos":"neg")+
+        kpi(S(utilS),"Utilidad operativa (S/, con IGV)",utilS>=0?"pos":"neg")+
         kpi(D(utilS/(tcRef||1)),"Utilidad (USD aprox)",utilS>=0?"pos":"neg")+
         kpi((ingSol?Math.round(utilS/ingSol*100):0)+"%","Margen",utilS>=0?"pos":"neg");
       var filas=a.placas.map(function(p){

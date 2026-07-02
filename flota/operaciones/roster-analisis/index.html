@@ -71,6 +71,7 @@
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="../../../assets/firebase-config.js"></script>
   <script src="../../../assets/auth.js"></script>
+  <script src="../../../assets/xls.js"></script>
   <script>
     var db=function(){return firebase.firestore();};
     function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
@@ -144,10 +145,9 @@
     document.getElementById("btnExp").onclick=function(){
       if(!resumen.length){ alert("Nada que exportar."); return; }
       var m=document.getElementById("mes").value;
-      var rows=resumen.map(function(o){return {Conductor:o.nombre, Ruta:o.ruta, Presente:o.presente, MedioDia:o.medio, Descanso:o.descanso, DiasEfectivos:o.efectivos};});
-      var ws=XLSX.utils.json_to_sheet(rows), wb=XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb,ws,"Dias efectivos");
-      XLSX.writeFile(wb,"dias-efectivos-"+m+".xlsx");
+      var cols=["Conductor","Ruta","Presente","Medio día","Descanso","Días efectivos"];
+      var filas=resumen.map(function(o){return [o.nombre,o.ruta,o.presente,o.medio,o.descanso,o.efectivos];});
+      MISAGI_XLS.descargar({nombre:"dias-efectivos-"+m,hoja:"Dias efectivos",titulo:"Días efectivos — "+m,subtitulo:resumen.length+" conductores",columnas:cols,filas:filas});
     };
 
     MISAGI.requireAccess("operaciones").then(function(s){

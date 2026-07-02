@@ -81,6 +81,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="../../assets/firebase-config.js"></script>
   <script src="../../assets/auth.js"></script>
+  <script src="../../assets/xls.js"></script>
   <script src="../../assets/seed-personal.js"></script>
   <script>
     var PERSONAL=[];  var sesion=null, esAdmin=false;
@@ -180,11 +181,9 @@
     // Exportar a CSV (Excel). Excluye remuneración si no es admin.
     document.getElementById("btnExport").onclick=function(){
       var cols = esAdmin ? TODOS : F_PERSONAL.concat(F_LABORAL);
-      var head=cols.map(function(c){return c[1];}).join(";");
-      var rows=PERSONAL.map(function(d){return cols.map(function(c){var v=String(d[c[0]]==null?"":d[c[0]]).replace(/"/g,'""'); return '"'+v+'"';}).join(";");});
-      var csv="﻿"+head+"\n"+rows.join("\n");
-      var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));
-      a.download="personal-misagi.csv"; a.click();
+      var head=cols.map(function(c){return c[1];});
+      var filas=PERSONAL.map(function(d){return cols.map(function(c){return d[c[0]]==null?"":d[c[0]];});});
+      MISAGI_XLS.descargar({nombre:"personal-misagi",hoja:"Personal",titulo:"Personal / Legajos",subtitulo:PERSONAL.length+" trabajadores",columnas:head,filas:filas});
     };
 
     document.getElementById("btnNuevo").onclick=function(){abrir(null);};
