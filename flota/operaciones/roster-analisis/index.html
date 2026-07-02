@@ -55,7 +55,7 @@
       <div style="overflow-x:auto" id="tabla"></div>
       <div class="leg">
         <b>Días efectivos</b> = días en ruta + presente + ½ medio día (el descanso no cuenta).<br>
-        <b>Códigos:</b> H1-H3 Hudbay · R1-R5 Raciemsa · C1-C2 Cuajone · T1-T2 Toquepala · A1-A3 Hierro · P Presente · M/D Medio día · D Descanso.
+        <b>Códigos:</b> H1-H3 Hudbay · R1-R5 Raciemsa · C1-C2 Cuajone · T1-T2 Toquepala · A1-A3 Hierro · P Presente · M/D Medio día · D Descanso · V Vacaciones.
       </div>
     </div>
     <div class="card">
@@ -81,6 +81,7 @@
     function clasifica(cod){
       var c=String(cod||"").trim().toUpperCase();
       if(c==="D") return {tipo:"descanso"};
+      if(c==="V") return {tipo:"vacaciones"};
       if(c==="P") return {tipo:"presente"};
       if(c==="M/D"||c==="MD") return {tipo:"medio"};
       var m=c.match(/^([HRCTA])\s*\d/);

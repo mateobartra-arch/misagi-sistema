@@ -58,9 +58,21 @@
       tb.querySelectorAll("[data-a]").forEach(function(b){b.onclick=function(){resolver(b.dataset.a,"aprobada");};});
       tb.querySelectorAll("[data-r]").forEach(function(b){b.onclick=function(){resolver(b.dataset.r,"rechazada");};});
     }
+    function rangoFechas(desde,hasta){ var out=[]; var a=new Date(desde+"T00:00:00"),b=new Date(hasta+"T00:00:00"); if(isNaN(a)||isNaN(b)||b<a) return out; for(var d=new Date(a); d<=b; d.setDate(d.getDate()+1)){ out.push(d.toISOString().slice(0,10)); } return out; }
     function resolver(id,estado){
+      var sol=SOL.filter(function(s){return s._id===id;})[0];
+      function marcar(){ db().collection("solicitudes").doc(id).set({estado:estado,resueltoTs:Date.now()},{merge:true}).then(cargar).catch(function(e){alert(e.message);}); }
+      if(estado==="aprobada" && sol && sol.tipo==="vacaciones" && sol.desde && sol.hasta && sol.dni){
+        var dias=rangoFechas(sol.desde,sol.hasta);
+        if(!dias.length){ alert("La solicitud no tiene fechas válidas; se aprobará sin marcar el roster."); marcar(); return; }
+        if(!confirm("Aprobar y marcar "+dias.length+" día(s) como V (vacaciones) en el roster de "+(sol.nombre||sol.dni)+"?")) return;
+        var b=db().batch();
+        dias.forEach(function(f){ b.set(db().collection("roster").doc(String(sol.dni)+"_"+f), {modulo:"roster",dni:String(sol.dni),nombre:sol.nombre||"",fecha:f,estado:"V"},{merge:true}); });
+        b.commit().then(function(){ alert("✓ Aprobada. "+dias.length+" día(s) marcados como V en el roster."); marcar(); }).catch(function(e){ alert("Error al marcar roster: "+e.message); });
+        return;
+      }
       if(!confirm("¿Marcar como "+estado+"?")) return;
-      db().collection("solicitudes").doc(id).set({estado:estado,resueltoTs:Date.now()},{merge:true}).then(cargar).catch(function(e){alert(e.message);});
+      marcar();
     }
     function cargar(){ db().collection("solicitudes").get().then(function(snap){ SOL=snap.docs.map(function(d){var o=d.data();o._id=d.id;return o;}); pintar(); }).catch(function(e){document.getElementById("sub").textContent="Error: "+e.message;}); }
     document.getElementById("chips").addEventListener("click",function(e){ if(!e.target.classList.contains("chip"))return; document.querySelectorAll("#chips .chip").forEach(function(c){c.classList.remove("on");}); e.target.classList.add("on"); filtro=e.target.dataset.f; pintar(); });

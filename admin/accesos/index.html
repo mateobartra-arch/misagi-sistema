@@ -40,7 +40,7 @@
       <div><h1>Accesos del Personal</h1><div class="page-sub" id="sub">Cargando…</div></div>
       <button class="btn btn-primary" id="btnNuevo">+ Nuevo acceso</button>
     </div>
-    <div class="toolbar"><input type="search" id="buscar" placeholder="Buscar por nombre o correo…"><div class="spacer"></div><button class="btn btn-ghost" id="btnPrecargar">Precargados del Excel</button></div>
+    <div class="toolbar"><input type="search" id="buscar" placeholder="Buscar por nombre o correo…"><div class="spacer"></div><button class="btn btn-ghost" id="btnExigirTodos">🔒 Exigir cambio de clave a todos</button><button class="btn btn-ghost" id="btnPrecargar">Precargados del Excel</button></div>
     <div id="precargados"></div>
     <div class="table-wrap">
       <table id="tabla"><thead><tr>
@@ -159,11 +159,12 @@
         return '<tr><td><strong>'+esc(d.nombre)+'</strong></td><td>'+esc(d.dni||"—")+'</td><td>'+esc(d.email)+'</td><td>'+esc(d.tipo||"")+'</td><td>'+resumenAcceso(d)+'</td><td>'+est+'</td>'+
           '<td><div class="acts"><a class="btn btn-ghost btn-sm" href="../../index.html?vercomo='+d._id+'">Ver portal</a><button class="btn btn-ghost btn-sm" data-e="'+d._id+'">Editar</button>'+
           '<button class="btn btn-ghost btn-sm" data-t="'+d._id+'">'+(d.activo===false?"Activar":"Desactivar")+'</button>'+
-          '<button class="btn btn-ghost btn-sm" data-r="'+esc(d.email)+'">Reset clave</button></div></td></tr>';
+          '<button class="btn btn-ghost btn-sm" data-r="'+esc(d.email)+'">Reset clave</button>'+'<button class="btn btn-ghost btn-sm" data-x="'+d._id+'" title="Obliga a cambiar la contraseña en el próximo ingreso">Exigir clave</button></div></td></tr>';
       }).join("");
       tb.querySelectorAll("[data-e]").forEach(function(b){b.onclick=function(){abrir(datos.filter(function(x){return x._id===b.dataset.e;})[0]);};});
       tb.querySelectorAll("[data-t]").forEach(function(b){b.onclick=function(){toggle(b.dataset.t);};});
       tb.querySelectorAll("[data-r]").forEach(function(b){b.onclick=function(){reset(b.dataset.r);};});
+      tb.querySelectorAll("[data-x]").forEach(function(b){b.onclick=function(){exigirClave(b.dataset.x);};});
     }
     function cargar(){
       db().collection("usuarios").get().then(function(snap){
@@ -242,6 +243,22 @@
       if(!confirm("¿Enviar correo para restablecer la contraseña a "+email+"?"))return;
       firebase.auth().sendPasswordResetEmail(email).then(function(){alert("Correo de restablecimiento enviado a "+email);}).catch(function(e){alert(e.message);});
     }
+    function exigirClave(uid){
+      var u=datos.filter(function(x){return x._id===uid;})[0];
+      if(!confirm("¿Exigir a "+((u&&u.nombre)||"esta cuenta")+" que cambie su contraseña en el próximo ingreso?")) return;
+      db().collection("usuarios").doc(uid).set({debeCambiarClave:true},{merge:true}).then(function(){ alert("✓ Se le pedirá cambiar la contraseña al ingresar."); cargar(); }).catch(function(e){alert(e.message);});
+    }
+    function exigirTodos(){
+      var objetivo=datos.filter(function(d){ return !((d.areas||[]).indexOf("admin")>=0); });
+      if(!objetivo.length){ alert("No hay cuentas (no-admin) a las que exigir."); return; }
+      if(!confirm("Se exigirá cambiar la contraseña en el próximo ingreso a "+objetivo.length+" cuenta(s) (no incluye administradores). ¿Continuar?")) return;
+      var rest=objetivo.slice();
+      (function lote(){ if(!rest.length){ alert("✓ Listo: "+objetivo.length+" cuenta(s) deberán cambiar su contraseña."); cargar(); return; }
+        var chunk=rest.splice(0,400), b=db().batch();
+        chunk.forEach(function(d){ b.set(db().collection("usuarios").doc(d._id),{debeCambiarClave:true},{merge:true}); });
+        b.commit().then(lote).catch(function(e){ alert("Error: "+e.message); });
+      })();
+    }
 
     // Autocompletar contraseña con el DNI mientras no se edite a mano
     (function(){
@@ -251,6 +268,7 @@
     })();
 
     document.getElementById("btnNuevo").onclick=function(){abrir(null);};
+    var _bx=document.getElementById("btnExigirTodos"); if(_bx) _bx.onclick=exigirTodos;
     document.getElementById("buscar").oninput=pintar;
     document.getElementById("modalX").onclick=cerrar;
     document.getElementById("cancelar").onclick=cerrar;

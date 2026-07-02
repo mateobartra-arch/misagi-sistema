@@ -152,6 +152,16 @@
       return d.toLocaleDateString('es-PE',{weekday:'short',day:'numeric',month:'short'});
     }
 
+    /* ---- Antigüedad y vacaciones (desde fecha de ingreso del maestro) ---- */
+    function antiguedad(ing){
+      if(!ing) return null; var a=new Date(String(ing)+"T00:00:00"); if(isNaN(a)) return null;
+      var h=new Date(); var meses=(h.getFullYear()-a.getFullYear())*12+(h.getMonth()-a.getMonth());
+      if(h.getDate()<a.getDate()) meses--; if(meses<0) meses=0;
+      return {meses:meses, dias:Math.max(0,Math.round((h-a)/86400000))};
+    }
+    function antiguedadTxt(ing){ var x=antiguedad(ing); if(!x) return "—"; var y=Math.floor(x.meses/12), m=x.meses%12; var t=(y?y+" año"+(y>1?"s":""):"")+(y&&m?" ":"")+(m?m+" mes"+(m>1?"es":""):""); return t||"menos de 1 mes"; }
+    function vacGanadas(ing){ var x=antiguedad(ing); if(!x) return null; return Math.round(30*x.dias/365); }
+
     /* ---- Render por pestaña ---- */
     function vInicio(){
       var nombre=PERFIL.nombre||SESION.user.email, primer=(nombre||"").split(" ")[0];
@@ -163,7 +173,7 @@
       return ''+
       '<section class="hero"><h1>Hola, '+esc(primer)+'</h1><p>'+hoy+'</p></section>'+
       '<div class="kpis">'+
-        '<div class="kpi"><div class="v g" id="kpiVac">—</div><div class="l">Días de vacaciones</div></div>'+
+        '<div class="kpi"><div class="v g" id="kpiVac">'+(function(){var gan=vacGanadas(PERFIL.ingreso);if(gan==null)return "—";var tom=PERFIL._vacTomados||0;return (gan-tom)+"";})()+'</div><div class="l">Días de vacaciones (saldo)</div></div>'+
         '<div class="kpi"><div class="v">—</div><div class="l">Última boleta</div></div>'+
         '<div class="kpi"><div class="v">—</div><div class="l">Último depósito CTS</div></div>'+
         '<div class="kpi"><div class="v a">'+(proxFestivos(1)[0]?fechaCorta(proxFestivos(1)[0][0]).replace(/^\w+\.?\s/,''):'—')+'</div><div class="l">Próximo festivo</div></div>'+
@@ -194,6 +204,8 @@
         '<div class="it"><div class="k">DNI</div>'+val(p.dni)+'</div>'+
         '<div class="it"><div class="k">Tipo</div>'+val(p.tipo)+'</div>'+
         '<div class="it"><div class="k">Cargo</div>'+val(p.cargo)+'</div>'+
+        '<div class="it"><div class="k">Fecha de ingreso</div>'+val(p.ingreso)+'</div>'+
+        '<div class="it"><div class="k">Antigüedad</div>'+val(antiguedadTxt(p.ingreso))+'</div>'+
         '<div class="it"><div class="k">Área(s)</div>'+val(areas)+'</div>'+
         '<div class="it"><div class="k">Banco</div>'+val(p.banco)+'</div>'+
         '<div class="it"><div class="k">Cuenta de abono</div>'+val(p.cuenta)+'</div>'+
@@ -240,7 +252,7 @@
       return ''+
       '<div class="pagehead"><h1>Roster · '+esc(mesNombre)+'</h1><div class="s">Los días que has trabajado este mes.</div></div>'+
       '<div class="panel"><div class="cal">'+cells+'</div>'+
-        '<div class="leg-me" style="display:flex;gap:10px;flex-wrap:wrap;font-size:.72rem;color:var(--muted);margin-top:12px"><span>D · descanso</span><span>H1/H2/H3 · turnos</span><span>P</span><span>R1–R5 · rutas</span></div>'+'<div class="note">Lo marca Operaciones en el módulo de Roster. Si ves un día vacío, aún no se ha registrado.</div>'+
+        '<div class="leg-me" style="display:flex;gap:10px;flex-wrap:wrap;font-size:.72rem;color:var(--muted);margin-top:12px"><span>D · descanso</span><span>V · vacaciones</span><span>H1/H2/H3 · turnos</span><span>P</span><span>R1–R5 · rutas</span></div>'+'<div class="note">Lo marca Operaciones en el módulo de Roster. Si ves un día vacío, aún no se ha registrado.</div>'+
       '</div>';
     }
 
@@ -307,9 +319,10 @@
         }).join("");
       }).catch(function(){ el.innerHTML='<div class="empty">No se pudieron cargar (permisos pendientes).</div>'; });
     }
-    function enviarSolicitud(tipo,titulo,detalle,msgEl,btn){
+    function enviarSolicitud(tipo,titulo,detalle,msgEl,btn,extra){
       msgEl.innerHTML=""; if(btn){btn.disabled=true;}
       var reg={uid:UID,nombre:PERFIL.nombre||SESION.user.email,tipo:tipo,titulo:titulo,detalle:detalle,estado:"pendiente",ts:Date.now()};
+      if(extra) Object.keys(extra).forEach(function(k){reg[k]=extra[k];});
       db().collection("solicitudes").add(reg).then(function(){
         msgEl.innerHTML='<div class="ok-msg">✓ Solicitud enviada. Quedará como "pendiente" hasta que RRHH la revise.</div>';
         if(btn){btn.disabled=false;}
@@ -331,7 +344,7 @@
       btn.onclick=function(){
         var d=document.getElementById("vacD").value, h=document.getElementById("vacH").value, m=(document.getElementById("vacM").value||"").trim();
         if(!d||!h){ document.getElementById("vacMsg").innerHTML='<div class="err-msg">Elige las fechas desde y hasta.</div>'; return; }
-        enviarSolicitud("vacaciones","Vacaciones",d+" a "+h+(m?(" · "+m):""),document.getElementById("vacMsg"),btn);
+        enviarSolicitud("vacaciones","Vacaciones",d+" a "+h+(m?(" · "+m):""),document.getElementById("vacMsg"),btn,{desde:d,hasta:h,dni:String(PERFIL.dni||"")});
       };
     }
 
@@ -342,7 +355,16 @@
     MISAGI.requireLogin().then(function(s){
       SESION=s; PERFIL=s.perfil||{}; UID=s.user.uid;
       document.getElementById("logoutBtn").onclick=function(){MISAGI.logout();};
-      mostrar((location.hash||"#inicio").slice(1));
+      function arrancar(){ mostrar((location.hash||"#inicio").slice(1)); }
+      var dni=String(PERFIL.dni||"");
+      if(dni){
+        db().collection("personas").doc(dni).get().then(function(d){
+          if(d.exists){ var pp=d.data(); ["ingreso","nacimiento","cargo","area","empresa","celular","licencia","estado_civil","direccion"].forEach(function(k){ if(pp[k] && !PERFIL[k]) PERFIL[k]=pp[k]; }); }
+        }).catch(function(){})
+        .then(function(){ return db().collection("roster").where("dni","==",dni).get(); })
+        .then(function(rs){ PERFIL._vacTomados=rs.docs.filter(function(x){return String(x.data().estado||"").toUpperCase()==="V";}).length; }).catch(function(){})
+        .then(arrancar);
+      } else arrancar();
     });
   </script>
 </body>
