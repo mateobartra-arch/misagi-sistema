@@ -29,7 +29,7 @@
   <div class="container" id="app" style="display:none">
     <div class="page-head">
       <div><h1>Personas (maestro)</h1><div class="page-sub" id="sub">Cargando…</div></div>
-      <div style="display:flex;gap:10px"><button class="btn btn-ghost" id="btnExp">⬇ Excel</button><button class="btn btn-primary" id="btnNew">+ Nueva persona</button></div>
+      <div style="display:flex;gap:10px"><button class="btn btn-ghost" id="btnReemp">↻ Reemplazar con maestro</button><button class="btn btn-ghost" id="btnExp">⬇ Excel</button><button class="btn btn-primary" id="btnNew">+ Nueva persona</button></div>
     </div>
     <div class="imp-bar hidden" id="impBar"><div class="t">El directorio está vacío. ¿Cargar las personas del personal (conductores + administrativos)?</div><button class="btn btn-primary btn-sm" id="btnImp">Importar</button></div>
     <div class="chips" id="chips">
@@ -129,13 +129,33 @@
       if(!confirm("¿Borrar esta persona del directorio? (no borra su roster ni legajo histórico)")) return;
       db().collection("personas").doc(id).delete().then(function(){ cerrar(); cargar(); });
     };
-    document.getElementById("btnImp").onclick=function(){
+    function docFromSeed(c,i){
+      return {dni:String(c.dni),nombre:c.nombre||"",tipo:c.tipo||"conductor",cargo:c.cargo||"",
+        area:c.area||"",empresa:c.empresa||"",licencia:c.licencia||"",categoria:c.categoria||"",
+        celular:c.celular||"",correo:c.correo||"",nacimiento:c.nacimiento||"",estado_civil:c.estado_civil||"",
+        direccion:c.direccion||"",contacto_emergencia:c.contacto_emergencia||"",ingreso:c.ingreso||"",
+        fecha_salida:c.fecha_salida||"",activo:c.activo!==false,externo:c.externo===true,orden:(c.orden==null?i:c.orden)};
+    }
+    function importarSeed(reemplazar){
       var seed=window.MISAGI_SEED_PERSONAS||[]; if(!seed.length){ alert("No hay datos para importar."); return; }
-      var btn=this; btn.disabled=true; btn.textContent="Importando…";
-      var batch=db().batch();
-      seed.forEach(function(c,i){ batch.set(db().collection("personas").doc(String(c.dni)),{dni:String(c.dni),nombre:c.nombre,tipo:c.tipo||"conductor",cargo:c.cargo||"",empresa:c.empresa||"",area:c.area||"",activo:c.activo!==false,orden:(c.orden==null?i:c.orden)},{merge:true}); });
-      batch.commit().then(function(){ btn.textContent="✓"; cargar(); }).catch(function(e){ alert("Error: "+e.message); btn.disabled=false; btn.textContent="Importar"; });
-    };
+      function doImport(){
+        var rest=seed.slice(), done=0;
+        (function lote(){ if(!rest.length){ alert("✓ Directorio actualizado: "+seed.length+" personas."); cargar(); return; }
+          var chunk=rest.splice(0,400), b=db().batch();
+          chunk.forEach(function(c,i){ b.set(db().collection("personas").doc(String(c.dni)), docFromSeed(c,done+i)); });
+          b.commit().then(function(){ done+=chunk.length; lote(); }).catch(function(e){ alert("Error: "+e.message); });
+        })();
+      }
+      if(reemplazar){
+        if(!confirm("Esto BORRA el directorio actual y lo reemplaza con "+seed.length+" personas del Excel nuevo (limpio y unificado).\n\nEl roster y los legajos históricos NO se tocan. ¿Continuar?")) return;
+        db().collection("personas").get().then(function(sn){
+          var docs=sn.docs.slice();
+          (function del(){ if(!docs.length){ doImport(); return; } var chunk=docs.splice(0,400), b=db().batch(); chunk.forEach(function(d){ b.delete(d.ref); }); b.commit().then(del).catch(function(e){ alert("Error al limpiar: "+e.message); }); })();
+        }).catch(function(e){ alert("Error: "+e.message); });
+      } else doImport();
+    }
+    var _bi=document.getElementById("btnImp"); if(_bi) _bi.onclick=function(){ importarSeed(false); };
+    var _br=document.getElementById("btnReemp"); if(_br) _br.onclick=function(){ importarSeed(true); };
     document.getElementById("btnExp").onclick=function(){
       var head=["Apellidos y nombres","DNI","Tipo","Cargo","Empresa","Estado"].join(";");
       var rows=C.map(function(d){return ['"'+(d.nombre||"")+'"','"'+(d.dni||"")+'"',tipoDe(d),'"'+(d.cargo||"")+'"','"'+(d.empresa||"")+'"',(d.activo===false?"Inactivo":"Activo")].join(";");});
