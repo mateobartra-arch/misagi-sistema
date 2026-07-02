@@ -186,7 +186,7 @@
         }).catch(function(e){ alert("Error: "+e.message); btn.disabled=false; });
       } else doImport();
     }
-    function ensureXLSX(cb){ if(window.XLSX) return cb(); var sc=document.createElement("script"); sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; sc.onload=cb; sc.onerror=function(){alert("No se pudo cargar el lector de Excel.");}; document.head.appendChild(sc); }
+    function ensureXLSX(cb){ if(window.XLSX) return cb(); var sc=document.createElement("script"); sc.src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"; sc.onload=cb; sc.onerror=function(){alert("No se pudo cargar el lector de Excel.");}; document.head.appendChild(sc); }
     function importExcel(file){
       ensureXLSX(function(){
         var rd=new FileReader();

@@ -46,6 +46,11 @@
     return snap.exists ? snap.data() : null;
   }
 
+  // Fuerza el cambio de contraseña en el primer ingreso (flag debeCambiarClave).
+  // Fail-safe: solo actúa si el flag es true; nunca en la propia página /clave/.
+  function debeCambiar(perfil){ return !!(perfil && perfil.debeCambiarClave === true); }
+  function irACambioClave(){ if(!/\/clave\//.test(location.pathname)) location.href = ROOT + "clave/index.html"; }
+
   function esAdmin(perfil) {
     return perfil && Array.isArray(perfil.areas) && perfil.areas.includes("admin");
   }
@@ -75,6 +80,7 @@
       auth().onAuthStateChanged(async (user) => {
         if (!user) { location.href = ROOT + "index.html"; return; }
         const perfil = await fetchPerfil(user.uid);
+        if (debeCambiar(perfil)) { irACambioClave(); return; }
         if (!puedeVer(perfil, area)) {
           alert("No tienes acceso a este módulo.");
           location.href = ROOT + "index.html";
@@ -97,6 +103,7 @@
           location.href = ROOT + "index.html";
           return;
         }
+        if (debeCambiar(perfil)) { irACambioClave(); return; }
         resolve({ user, perfil });
       });
     });
@@ -109,5 +116,5 @@
     });
   }
 
-  global.MISAGI = { AREAS, ROOT, login, logout, requireAccess, requireLogin, onUser, puedeVer, esAdmin, fetchPerfil };
+  global.MISAGI = { AREAS, ROOT, login, logout, requireAccess, requireLogin, onUser, puedeVer, esAdmin, fetchPerfil, debeCambiar, irACambioClave };
 })(window);

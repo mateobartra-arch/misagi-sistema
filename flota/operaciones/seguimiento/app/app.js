@@ -1,3 +1,4 @@
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});}
 // ============================================================
 // MISASI S.A.C. - App Main Logic (Live Google Sheets Connection)
 // ============================================================
@@ -21,12 +22,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     ocultarEstadoCarga();
     renderCurrentPage();
 
-    setInterval(async () => {
-      await cargarDatosSheet();
-      todasMetricas = calcularTodasLasMetricas();
-      renderCurrentPage();
-      actualizarTimestamp();
-    }, 5 * 60 * 1000);
+    (function loop(){ setTimeout(async () => {
+      try { await cargarDatosSheet(); todasMetricas = calcularTodasLasMetricas(); renderCurrentPage(); actualizarTimestamp(); }
+      catch(e){}
+      loop();
+    }, 5 * 60 * 1000); })();
 
     actualizarTimestamp();
   } else {
@@ -182,8 +182,8 @@ function renderFleetStatus(metricas) {
     return '<div class="fleet-unit-card">' +
       '<div class="fleet-unit-header">' +
       '<div>' +
-      '<div class="fleet-unit-name">' + u.tracto + '</div>' +
-      '<div class="fleet-unit-empresa">' + u.empresa + '</div>' +
+      '<div class="fleet-unit-name">' + esc(u.tracto) + '</div>' +
+      '<div class="fleet-unit-empresa">' + esc(u.empresa) + '</div>' +
       '</div>' +
       '<span class="badge ' + (u.operatividad >= 70 ? 'badge-green' : u.operatividad >= 50 ? 'badge-yellow' : 'badge-red') + '">' +
       u.operatividad.toFixed(0) + '% Op.' +
@@ -220,7 +220,7 @@ function renderSeguimiento(metricas) {
   headerRow.innerHTML = headerHTML;
 
   container.innerHTML = metricas.unidades.map(function(u) {
-    var row = '<td class="col-fixed">' + u.id + '</td><td class="col-fixed">' + u.empresa + '</td><td class="col-fixed">' + u.tracto + '</td>';
+    var row = '<td class="col-fixed">' + esc(u.id) + '</td><td class="col-fixed">' + esc(u.empresa) + '</td><td class="col-fixed">' + esc(u.tracto) + '</td>';
     for (var d = 0; d < diasEnMes; d++) {
       var code = u.dias[d] || '';
       row += '<td><span class="day-cell" data-code="' + code + '" title="Dia ' + (d+1) + ': ' + (code || 'Sin asignar') + '">' + code + '</span></td>';
@@ -238,7 +238,7 @@ function renderSeguimientoResumen(metricas) {
   // RACIEMSA agregado como columna (color celeste)
   container.innerHTML = metricas.unidades.map(function(u) {
     return '<tr>' +
-      '<td class="font-bold">' + u.tracto + '</td>' +
+      '<td class="font-bold">' + esc(u.tracto) + '</td>' +
       '<td class="text-center text-blue font-bold">' + u.vueltasHudbay + '</td>' +
       '<td class="text-center text-green font-bold">' + u.vueltasSouthern + '</td>' +
       '<td class="text-center text-yellow font-bold">' + u.vueltasHierro + '</td>' +
@@ -323,8 +323,8 @@ function renderParadas(metricas) {
       var totalDiasU  = u.diasRuta + u.diasParados + u.diasMantenimiento + u.diasSinAsignar;
       var pctInactivo = totalDiasU > 0 ? ((u.diasParados + u.diasMantenimiento + u.diasSinAsignar) / totalDiasU * 100) : 0;
       return '<tr>' +
-        '<td class="font-bold">' + u.tracto + '</td>' +
-        '<td class="text-center">' + u.empresa + '</td>' +
+        '<td class="font-bold">' + esc(u.tracto) + '</td>' +
+        '<td class="text-center">' + esc(u.empresa) + '</td>' +
         '<td class="text-center text-green font-bold">' + u.diasRuta + '</td>' +
         '<td class="text-center text-yellow font-bold">' + u.diasParados + '</td>' +
         '<td class="text-center text-red font-bold">' + u.diasMantenimiento + '</td>' +

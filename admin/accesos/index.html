@@ -226,7 +226,7 @@
       var secAuth=altaApp().auth();
       secAuth.createUserWithEmailAndPassword(perfil.email, claveInicial).then(function(cred){
         var uid=cred.user.uid;
-        return db().collection("usuarios").doc(uid).set(Object.assign({_ts:firebase.firestore.FieldValue.serverTimestamp()},perfil)).then(function(){ return secAuth.signOut(); });
+        return db().collection("usuarios").doc(uid).set(Object.assign({_ts:firebase.firestore.FieldValue.serverTimestamp(),debeCambiarClave:true},perfil)).then(function(){ return secAuth.signOut(); });
       }).then(function(){ cerrar(); cargar(); }).catch(function(e){
         var m=e.code==="auth/email-already-in-use"?"Ya existe una cuenta con ese correo.":
               e.code==="auth/weak-password"?"La contraseña debe tener al menos 6 caracteres.":e.message;

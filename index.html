@@ -292,6 +292,7 @@
     MISAGI.onUser(function (sesion) {
       var bt=document.getElementById("booting"); if(bt) bt.style.display="none";
       if (sesion && sesion.perfil) {
+        if (MISAGI.debeCambiar(sesion.perfil)) { MISAGI.irACambioClave(); return; }
         REAL_UID = sesion.user.uid;
         var nombre = sesion.perfil.nombre || sesion.user.email;
         document.getElementById("userName").textContent = nombre;

@@ -98,7 +98,7 @@
           <div class="f"><label>N° Factura</label><input name="n_factura"></div>
           <div class="f"><label>Fecha factura</label><input name="fecha_factura" type="date"></div>
           <div class="f"><label>Estado de factura</label><select name="estado_factura"><option value=""></option><option>PENDIENTE</option><option>FACTORING</option><option>PAGADA</option></select></div>
-          <div class="f"><label>Importe detracción</label><input name="importe_detraccion" type="number" step="0.01"></div>
+          <div class="f"><label>Importe detracción (4% auto)</label><input name="importe_detraccion" type="number" step="0.01"></div>
           <div class="f"><label>N° constancia</label><input name="n_constancia"></div>
           <div class="f"><label>Estado detracción</label><select name="estado_detraccion"><option value=""></option><option>PENDIENTE</option><option>PAGADA</option></select></div>
         </div>
@@ -126,7 +126,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="../../assets/firebase-config.js"></script>
   <script src="../../assets/auth.js"></script>
   <script src="../../assets/maestros.js"></script>
@@ -192,6 +192,7 @@
       d.flete=flete||""; if(t&&!d.moneda) d.moneda=t.moneda;
       d.precio_sin_igv= tne&&flete ? +(tne*flete).toFixed(2) : (d.precio_sin_igv||"");
       d.precio_con_igv= d.precio_sin_igv ? +(d.precio_sin_igv*(1+igvPct/100)).toFixed(2) : (d.precio_con_igv||"");
+      d.importe_detraccion = d.precio_con_igv ? +(num(d.precio_con_igv)*0.04).toFixed(2) : (d.importe_detraccion||"");
       d.mes=(d.fecha_traslado||d.fecha_emision||"").split("/").reverse().join("-").slice(0,7);
       return d;
     }
@@ -215,7 +216,7 @@
       return new Promise(function(resolve,reject){
         var reader=new FileReader();
         reader.onload=function(){
-          pdfjsLib.getDocument({data:reader.result}).promise.then(function(pdf){
+          pdfjsLib.getDocument({data:reader.result, isEvalSupported:false}).promise.then(function(pdf){
             var proms=[]; for(var i=1;i<=pdf.numPages;i++) proms.push(pdf.getPage(i).then(function(p){return p.getTextContent();}));
             Promise.all(proms).then(function(pages){ resolve(pages.map(ordenarTexto).join("\n")); });
           }).catch(reject);
@@ -266,6 +267,7 @@
       var flete=num(f.flete.value)|| tarifaVigente(t, fechaISO(f.fecha_traslado.value));
       if(!num(f.flete.value) && flete) f.flete.value=flete;
       if(tne&&flete){ f.precio_sin_igv.value=(tne*flete).toFixed(2); f.precio_con_igv.value=(tne*flete*(1+igvPct/100)).toFixed(2); }
+      var pci=num(f.precio_con_igv.value); if(pci && f.importe_detraccion) f.importe_detraccion.value=(pci*0.04).toFixed(2);
     }
 
     function guardar(e){
@@ -387,7 +389,8 @@
             Object.keys(M).forEach(function(k){ if(M[k]>=0) reg[k]=fmtCell(k,row[M[k]]); });
             reg.tracto=placaFmt(reg.tracto); reg.tolva=placaFmt(reg.tolva);
             reg.mes=(reg.fecha_traslado||reg.fecha_emision||"").split("/").reverse().join("-").slice(0,7);
-            if(!reg.moneda){ var tf=tarifaDe(reg.cliente); reg.moneda=tf?tf.moneda:"USD"; }
+            if(!reg.moneda){ var tf=tarifaDe(reg.cliente); reg.moneda=tf?tf.moneda:""; }
+            if(!reg.importe_detraccion && reg.precio_con_igv){ reg.importe_detraccion=(num(reg.precio_con_igv)*0.04).toFixed(2); }
             regs.push(reg);
           }
         });

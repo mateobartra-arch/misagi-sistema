@@ -1,3 +1,4 @@
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});}
 // ============================================================
 // 🚀 MISAGI DRIVER TRACKING — Web Dashboard Engine
 // ============================================================
@@ -345,7 +346,7 @@ function renderDriverCards() {
             '<div class="driver-header">' +
             '<div class="driver-avatar" style="background:' + color + '">' + initials + '</div>' +
             '<div>' +
-            '<div class="driver-name">' + driver.name + '</div>' +
+            '<div class="driver-name">' + esc(driver.name) + '</div>' +
             '<div class="driver-status" style="color:' + lastOp.color + '">' +
             '<span class="dot" style="background:' + lastOp.color + '"></span>' +
             lastOp.label +
@@ -507,7 +508,7 @@ function showDriverDetail() {
     const detail = document.getElementById('driverDetail');
     detail.innerHTML =
         '<button class="close-btn" onclick="this.parentElement.classList.remove(\'active\'); document.getElementById(\'driverChartCard\').style.display=\'none\';">✕</button>' +
-        '<h3>👤 ' + driver.name + '</h3>' +
+        '<h3>👤 ' + esc(driver.name) + '</h3>' +
         '<div class="detail-stats-grid">' +
         '<div class="detail-stat"><div class="val" style="color:' + lastOp.color + '">' + stats.worked + '</div><div class="lbl">Días Trabajados</div></div>' +
         '<div class="detail-stat"><div class="val" style="color:#374151">' + stats.rest + '</div><div class="lbl">Descanso</div></div>' +
@@ -587,7 +588,7 @@ function generateReport() {
 
     for (const driver of globalData.drivers) {
         html += '<tr>';
-        html += '<td class="driver-name-cell">' + driver.name + '</td>';
+        html += '<td class="driver-name-cell">' + esc(driver.name) + '</td>';
 
         let worked = 0, rest = 0, stopped = 0;
         const opsThisMonth = {};
@@ -724,7 +725,7 @@ function showPage(pageId) {
 
 function populateSelectors() {
     const driverOptions = globalData.drivers.map(function (d, i) {
-        return '<option value="' + i + '">' + d.name + '</option>';
+        return '<option value="' + i + '">' + esc(d.name) + '</option>';
     }).join('');
 
     document.getElementById('selectDriver').innerHTML = '<option value="">— Seleccionar conductor —</option>' + driverOptions;

@@ -33,7 +33,7 @@
   <script>
     var db=function(){return firebase.firestore();};
     var COLS=["usuarios","rrhh","operaciones","mantenimiento","roster","roster_conductores","documentos","enlaces","solicitudes","asistencia","config","prefs_enlaces"];
-    function ensureXLSX(cb){ if(window.XLSX) return cb(); var sc=document.createElement("script"); sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; sc.onload=cb; sc.onerror=function(){alert("No se pudo cargar el generador de Excel.");}; document.head.appendChild(sc); }
+    function ensureXLSX(cb){ if(window.XLSX) return cb(); var sc=document.createElement("script"); sc.src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"; sc.onload=cb; sc.onerror=function(){alert("No se pudo cargar el generador de Excel.");}; document.head.appendChild(sc); }
     function leerTodo(cb){
       var est=document.getElementById("estado"); est.textContent="Leyendo colecciones…";
       var data={}, pend=COLS.length;
